@@ -14,6 +14,16 @@
 
 namespace myAnalyzerTEman {
 
+  class AnalysisDarkMatter : public edimarcoTree_v2 {
+  public:
+
+  AnalysisDarkMatter(TTree *tree) : edimarcoTree_v2(tree) {      
+      Init(tree);
+    }
+
+    virtual ~AnalysisDarkMatter() { std::cout<<"~AnalysisDarkMatter() called"<<std::endl; }
+    
+  };
 
   class zlljets_Axe_noSkim_light : public edimarcoTree_v2 /*,public edimarcoTreeFriend*/ {
   public:
