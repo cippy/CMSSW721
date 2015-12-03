@@ -332,8 +332,8 @@ int main(int argc, char* argv[]) {
     if (signalRegion_flag == 1) {
     
       selectionDefinition.push_back("entry point");  
-      selectionDefinition.push_back("preselection");
-      // preselection includes metNoMu (only that for now)
+      selectionDefinition.push_back("met filters");
+      selectionDefinition.push_back("metNoMu > 200");
       selectionDefinition.push_back("bjet veto");
       selectionDefinition.push_back("jet1pt");
       selectionDefinition.push_back("dphiMin(j,Met)");

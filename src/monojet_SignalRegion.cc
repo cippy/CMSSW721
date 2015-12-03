@@ -109,7 +109,7 @@ void monojet_SignalRegion::loop(const char* configFileName, const Int_t ISDATA_F
      // fChain->SetBranchStatus("GenPart_mass",1);
      // fChain->SetBranchStatus("GenPart_motherIndex",1);
 
-     fChain->SetBranchStatus("vtxW",1);   // weight to have better agreement between data and MC (will not be always used)
+     //fChain->SetBranchStatus("vtxW",1);   // weight to have better agreement between data and MC (will not be always used)  ** NOW OBSOLETE **
      fChain->SetBranchStatus("vtxWeight",1);   // weight to have better agreement between data and MC (added the 10th of October, substituting vtxW in the new set of trees, keeping both for backward compatibility)
      fChain->SetBranchStatus("xsec",1);   // weight to have better agreement between data and MC
    }
@@ -440,7 +440,7 @@ void monojet_SignalRegion::loop(const char* configFileName, const Int_t ISDATA_F
        else newwgt = LUMI * weight;   // for older trees (backward compatibility)
        */
 
-       newwgt = LUMI * vtxWeight * weight / events_ntot;  // starting from 17 November, "events_ntot" substitutes SUMWEIGHT and is already present in the trees. Same for weight, which is now defined as "1000 * xsec * genWeight" (1000*xsec is the cross section in fb, since xsec is in pb.)
+       newwgt = LUMI * vtxWeight * weight /* / events_ntot*/;  // starting from 17 November, "events_ntot" substitutes SUMWEIGHT and is already present in the trees. Same for weight, which is now defined as "1000 * xsec * genWeight" (1000*xsec is the cross section in fb, since xsec is in pb.)
 
      }
 
@@ -563,7 +563,8 @@ void monojet_SignalRegion::loop(const char* configFileName, const Int_t ISDATA_F
    
    vector<Int_t> selStep;   //array to store index of step to form selection flow (might want to consider two or more steps together and not separated)
 
-   selStep.push_back(monojet_SignalRegion.whichStepHas(metNoMuC.get2ToId()));
+   selStep.push_back(monojet_SignalRegion.whichStepHas(metFiltersC.get2ToId()));
+   selStep.push_back(monojet_SignalRegion.whichStepHas(metNoMuC.get2ToId()));  
    selStep.push_back(monojet_SignalRegion.whichStepHas(bjetVetoC.get2ToId()));
    selStep.push_back(monojet_SignalRegion.whichStepHas(jet1C.get2ToId()));
    selStep.push_back(monojet_SignalRegion.whichStepHas(jetMetDphiMinC.get2ToId()));
