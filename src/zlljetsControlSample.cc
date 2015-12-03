@@ -42,7 +42,7 @@ using namespace myAnalyzerTEman;
 
 #ifdef zlljetsControlSample_cxx
 
-zlljetsControlSample::zlljetsControlSample(TTree *tree, const char* inputSuffix) : edimarcoTree_v2(tree) {
+zlljetsControlSample::zlljetsControlSample(TTree *tree, const char* inputSuffix) : AnalysisDarkMatter(tree) {
   //cout <<"check in constructor "<<endl;
   suffix = inputSuffix;  // it is the sample name (e.g. QCD, ZJetsToNuNu ecc...)
   Init(tree);
@@ -123,6 +123,12 @@ void zlljetsControlSample::loop(const char* configFileName, const Int_t ISDATA_F
    fChain->SetBranchStatus("metNoMu_phi",1);
 
    fChain->SetBranchStatus("nVert",1);  // number of good vertices 
+
+   // met filters to be used (the config file has a parameter saying whether they should be used or not)
+   fChain->SetBranchStatus("cscfilter",1);
+   fChain->SetBranchStatus("ecalfilter",1);
+   fChain->SetBranchStatus("hbheFilterNew25ns",1);
+   fChain->SetBranchStatus("hbheFilterIso",1);
 
    //added on November 2015. These are new variables (except for weight, which has just changed in the definition)
    fChain->SetBranchStatus("nBTag15",1);  // for b-jet veto
