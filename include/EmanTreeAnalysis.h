@@ -10,22 +10,11 @@
 #include <cstdlib>
 #include <vector>
 
-#include "edimarcoTree_v2.h"
+#include "AnalysisDarkMatter.h"
 
 namespace myAnalyzerTEman {
 
-  class AnalysisDarkMatter : public edimarcoTree_v2 {
-  public:
-
-  AnalysisDarkMatter(TTree *tree) : edimarcoTree_v2(tree) {      
-      Init(tree);
-    }
-
-    virtual ~AnalysisDarkMatter() { std::cout<<"~AnalysisDarkMatter() called"<<std::endl; }
-    
-  };
-
-  class zlljets_Axe_noSkim_light : public edimarcoTree_v2 /*,public edimarcoTreeFriend*/ {
+  class zlljets_Axe_noSkim_light : public AnalysisDarkMatter /*,public edimarcoTreeFriend*/ {
   public:
 
     // only computes acceptance and efficiency in order to be faster
@@ -36,7 +25,7 @@ namespace myAnalyzerTEman {
 
   };
 
-  class zlljets_resoResp : public edimarcoTree_v2 /*,public edimarcoTreeFriend*/ {
+  class zlljets_resoResp : public AnalysisDarkMatter /*,public edimarcoTreeFriend*/ {
   public:
 
     zlljets_resoResp(TTree *tree);
@@ -46,7 +35,7 @@ namespace myAnalyzerTEman {
 
   };
 
-  class zlljetsControlSample : public edimarcoTree_v2 {
+  class zlljetsControlSample : public AnalysisDarkMatter {
   public:
 
     zlljetsControlSample(TTree *tree, const char*);  // the char* is the sample's name (e.g. QCD, Znunu, ecc...)
@@ -56,7 +45,7 @@ namespace myAnalyzerTEman {
     std::string suffix;
   };
 
-  class monojet_SignalRegion : public edimarcoTree_v2 {
+  class monojet_SignalRegion : public AnalysisDarkMatter {
   public:
 
     monojet_SignalRegion(TTree *tree, const char*);  // the char* is the sample's name (e.g. QCD, Znunu, ecc...)
@@ -66,7 +55,7 @@ namespace myAnalyzerTEman {
     std::string suffix;
   };
 
-  class zlljets_metResoResp : public edimarcoTree_v2 {
+  class zlljets_metResoResp : public AnalysisDarkMatter {
   public:
 
     zlljets_metResoResp(TTree *tree, const char*);  // the char* is the sample's name (e.g. QCD, Znunu, ecc...)
