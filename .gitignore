@@ -1,0 +1,19 @@
+# txt files#
+###################
+*.txt
+#
+###################
+# some directories#
+#*/
+.SCRAM/
+mySrcTest/
+output/
+config/
+src/*/
+include/*/
+#
+###################
+# other files#
+Makefile_from_local
+*~
+#
