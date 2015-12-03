@@ -45,15 +45,15 @@ AnalysisDarkMatter::AnalysisDarkMatter(TTree *tree) : edimarcoTree_v3(tree) {
 }
 
 Int_t AnalysisDarkMatter::GetEntry(Long64_t entry) {
-  edimarcoTree_v2::GetEntry(entry);
+  edimarcoTree_v3::GetEntry(entry);
 }
 
 Long64_t AnalysisDarkMatter::LoadTree(Long64_t entry) {
-  edimarcoTree_v2::LoadTree(entry);
+  edimarcoTree_v3::LoadTree(entry);
 }
 
 void AnalysisDarkMatter::Init(TTree *tree) {
-  edimarcoTree_v2::Init(tree);
+  edimarcoTree_v3::Init(tree);
 } 
 
 #endif
