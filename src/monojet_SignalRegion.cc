@@ -42,7 +42,7 @@ using namespace myAnalyzerTEman;
 
 #ifdef monojet_SignalRegion_cxx
 
-monojet_SignalRegion::monojet_SignalRegion(TTree *tree, const char* inputSuffix) : edimarcoTree_v2(tree) {
+monojet_SignalRegion::monojet_SignalRegion(TTree *tree, const char* inputSuffix) : AnalysisDarkMatter(tree) {
   //cout <<"check in constructor "<<endl;
   suffix = inputSuffix;  // it is the sample name (e.g. QCD, ZJetsToNuNu ecc...)
   Init(tree);
@@ -124,6 +124,11 @@ void monojet_SignalRegion::loop(const char* configFileName, const Int_t ISDATA_F
 
    fChain->SetBranchStatus("nVert",1);  // number of good vertices 
 
+   // met filters to be used (the config file has a parameter saying whether they should be used or not)
+   fChain->SetBranchStatus("cscfilter",1);
+   fChain->SetBranchStatus("ecalfilter",1);
+   fChain->SetBranchStatus("hbheFilterNew25ns",1);
+   fChain->SetBranchStatus("hbheFilterIso",1);
    //added on November 2015. These are new variables (except for weight, which has just changed in the definition)
    fChain->SetBranchStatus("nBTag15",1);  // for b-jet veto
    fChain->SetBranchStatus("dphijm",1);          // flag for dphi minimum between met and any of the jets in the event (using only the first four jets
@@ -136,19 +141,16 @@ void monojet_SignalRegion::loop(const char* configFileName, const Int_t ISDATA_F
    char TEX_FNAME[100];
 
    Double_t LUMI;
-   Int_t NJETS;
+   //Int_t NJETS;
    Double_t J1PT;
    Double_t J1ETA;
-   Double_t J2PT;
-   Double_t J2ETA;
-   Double_t J1J2DPHI;
+   //Double_t J2PT;
+   //Double_t J2ETA;
+   //Double_t J1J2DPHI;
    Int_t TAU_VETO_FLAG;
    // Int_t HLT_FLAG;                  // not needed: monojet default trigger paths should be 100% efficient wrt offline selection
-   // Double_t HLT_LEP1PT;    
-   // Double_t HLT_LEP2PT;
-   // Double_t HLT_LEP1ETA;
-   // Double_t HLT_LEP2ETA;
    Double_t METNOLEP_START;
+   Int_t MET_FILTERS_FLAG;
    Double_t JMET_DPHI_MIN;
    string FILENAME_BASE;
    string DIRECTORY_TO_SAVE_FILES;
@@ -177,14 +179,15 @@ void monojet_SignalRegion::loop(const char* configFileName, const Int_t ISDATA_F
 	 cout << right << setw(20) << parameterName << "  " << left << value << endl;
 
 	 if (parameterName == "LUMI") LUMI = value;
-	 else if (parameterName == "NJETS") NJETS = value;
+	 //else if (parameterName == "NJETS") NJETS = value;
 	 else if (parameterName == "J1PT") J1PT = value;
 	 else if (parameterName == "J1ETA") J1ETA = value;
-	 else if (parameterName == "J2PT") J2PT = value;
-	 else if (parameterName == "J2ETA") J2ETA = value;
-	 else if (parameterName == "J1J2DPHI") J1J2DPHI = value;
+	 //else if (parameterName == "J2PT") J2PT = value;
+	 //else if (parameterName == "J2ETA") J2ETA = value;
+	 //else if (parameterName == "J1J2DPHI") J1J2DPHI = value;
 	 else if (parameterName == "TAU_VETO_FLAG") TAU_VETO_FLAG = value;
 	 else if (parameterName == "METNOLEP_START") METNOLEP_START = value;
+	 else if (parameterName == "MET_FILTERS_FLAG") MET_FILTERS_FLAG = value;
 	 else if (parameterName == "JMET_DPHI_MIN") JMET_DPHI_MIN = value;
 
        } else if (parameterType == "STRING") {
@@ -271,8 +274,10 @@ void monojet_SignalRegion::loop(const char* configFileName, const Int_t ISDATA_F
    // metCut.push_back(400);
    // metCut.push_back(500);
 
+   selection metFiltersC("metFiltersC","met filters","cscfilter, ecalfilter, hbheFilterNew25ns, hbheFilterIso");
    selection metNoMuC("metNoMuC",Form("metNoMu > %4.0lf",METNOLEP_START),"first cut on met");
-   selection jet1C("jet1C","jet1",Form("nJetClean >= 1 && JetClean1_pt > %4.0lf && abs(JetClean1_eta) < %1.1lf",(Double_t)J1PT,J1ETA));
+   // selection jet1C("jet1C","jet1",Form("nJetClean >= 1 && JetClean1_pt > %4.0lf && abs(JetClean1_eta) < %1.1lf",(Double_t)J1PT,J1ETA));
+   selection jet1C("jet1C","jet1",Form("nJetClean >= 1 && JetClean1_pt > %4.0lf",(Double_t)J1PT));
    selection jetMetDphiMinC("jetMetDphiMinC",Form("min[dphi(jets,MET)] > %1.1lf",JMET_DPHI_MIN),"minimum dphi between jets and MET (using only the first 4 jets)");
    selection jetNoiseCleaningC("jetNoiseCleaningC","noise cleaning","energy fractions (only for jet1): CH > 0.1; NH < 0.8");
    selection bjetVetoC("bjetVetoC","b-jets veto");
@@ -329,7 +334,8 @@ void monojet_SignalRegion::loop(const char* configFileName, const Int_t ISDATA_F
 
    mask monojet_SignalRegion("monojet signal selection");
 
-   if (METNOLEP_START) monojet_SignalRegion.append(metNoMuC.get2ToId());
+   if (MET_FILTERS_FLAG != 0) monojet_SignalRegion.append(metFiltersC.get2ToId());
+   if (METNOLEP_START != 0) monojet_SignalRegion.append(metNoMuC.get2ToId());
    monojet_SignalRegion.append(bjetVetoC.get2ToId());
    monojet_SignalRegion.append(jet1C.get2ToId());
    monojet_SignalRegion.append(jetMetDphiMinC.get2ToId());
@@ -434,7 +440,7 @@ void monojet_SignalRegion::loop(const char* configFileName, const Int_t ISDATA_F
        else newwgt = LUMI * weight;   // for older trees (backward compatibility)
        */
 
-       newwgt = LUMI * weight / events_ntot;  // starting from 17 November, "events_ntot" substitutes SUMWEIGHT and is already present in the trees. Same for weight, which is now defined as "1000 * xsec * genWeight" (1000*xsec is the cross section in fb, since xsec is in pb.)
+       newwgt = LUMI * vtxWeight * weight / events_ntot;  // starting from 17 November, "events_ntot" substitutes SUMWEIGHT and is already present in the trees. Same for weight, which is now defined as "1000 * xsec * genWeight" (1000*xsec is the cross section in fb, since xsec is in pb.)
 
      }
 
@@ -443,7 +449,7 @@ void monojet_SignalRegion::loop(const char* configFileName, const Int_t ISDATA_F
      // beginning of eventMask building
      
      //eventMask += jet1C.addToMask(nJetClean30 >= 1 && JetClean_pt[0] > J1PT && fabs(JetClean_eta[0] < J1ETA && jetclean1 > 0.5));  //could skip cut on eta 
-     eventMask += jet1C.addToMask(nJetClean30 >= 1 && JetClean_pt[0] > J1PT && fabs(JetClean_eta[0]) < J1ETA);
+     eventMask += jet1C.addToMask(nJetClean30 >= 1 && JetClean_pt[0] > J1PT /* && fabs(JetClean_eta[0]) < J1ETA*/);
      eventMask += jetMetDphiMinC.addToMask(fabs(dphijm > JMET_DPHI_MIN));
      eventMask += jetNoiseCleaningC.addToMask(JetClean_leadClean[0] > 0.5);
      eventMask += bjetVetoC.addToMask(nBTag15 == 0);
@@ -452,6 +458,7 @@ void monojet_SignalRegion::loop(const char* configFileName, const Int_t ISDATA_F
      eventMask += tauLooseVetoC.addToMask(nTauClean18V == 0);
      eventMask += gammaLooseVetoC.addToMask(nGamma15V == 0);
      eventMask += metNoMuC.addToMask(metNoMu_pt > METNOLEP_START);
+     eventMask += metFiltersC.addToMask(cscfilter == 1 && ecalfilter == 1 && hbheFilterNew25ns == 1 && hbheFilterIso == 1);
      
      // end of eventMask building
 
