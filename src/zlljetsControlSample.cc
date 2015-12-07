@@ -1,5 +1,6 @@
 #define zlljetsControlSample_cxx
 #include "EmanTreeAnalysis.h"
+//#include "AnalysisDarkMatter.h" // already included in EmanTreeAnalysis.h
 //C or C++ header files
 #include <stdio.h>
 #include <stdlib.h>
@@ -45,7 +46,8 @@ using namespace myAnalyzerTEman;
 zlljetsControlSample::zlljetsControlSample(TTree *tree, const char* inputSuffix) : AnalysisDarkMatter(tree) {
   //cout <<"check in constructor "<<endl;
   suffix = inputSuffix;  // it is the sample name (e.g. QCD, ZJetsToNuNu ecc...)
-  Init(tree);
+  //edimarcoTree_v3::Init(tree);
+  AnalysisDarkMatter::Init(tree);  // could also be just Init(tree)
 
 }
 
@@ -622,6 +624,7 @@ void zlljetsControlSample::loop(const char* configFileName, const Int_t ISDATA_F
 
        if (using_zlljets_MCsample_flag) {
 
+	 //genLepFound_flag = 1;
 	 genLepFound_flag = myPartGenAlgo(nGenPart, GenPart_pdgId, GenPart_motherId, LEP_PDG_ID, 23, firstIndexGen, secondIndexGen, Z_index, GenPart_motherIndex); 
 	 //if (!genLepFound_flag) continue;  // if not found gen ee or mumu for MC DYJetsToLL ( l = mu or e) skip the event. This makes things faster
 	 if (genLepFound_flag != 0) {
@@ -642,12 +645,15 @@ void zlljetsControlSample::loop(const char* configFileName, const Int_t ISDATA_F
 
      }
 
+     //cout << "LepGood_pdgId[0]; LepGood_pdgId[1] --> " << LepGood_pdgId[0] << "   " << LepGood_pdgId[1] << endl;
+
      // recoLepFound_flag = myGetPairIndexInArray(LEP_PDG_ID, nLepGood, LepGood_pdgId, firstIndex, secondIndex);  
 
      // look if the first two good leptons are OS/SF (flavour depending on config file)
      // the check for 2 OS/SF leptons in LepGood list is just useful to speed up things, but would not be necessary if other variables or computations that require this condition are only used at the end of selection (which already includes 2 OS/SF condition).
      // thus, we evaluate this right now and use this pice of information for later use
-     if ( (fabs(LepGood_pdgId[firstIndex]) ==  LEP_PDG_ID) && ((LepGood_pdgId[firstIndex] + LepGood_pdgId[secondIndex]) == 0) ) recoLepFound_flag = 1;
+
+     if ( (fabs(LepGood_pdgId[firstIndex]) ==  LEP_PDG_ID) && (LepGood_pdgId[firstIndex] == (-1) * LepGood_pdgId[secondIndex]) ) recoLepFound_flag = 1;
      else recoLepFound_flag = 0;
 
      if (recoLepFound_flag) {
@@ -711,16 +717,16 @@ void zlljetsControlSample::loop(const char* configFileName, const Int_t ISDATA_F
      eventMask += tauLooseVetoC.addToMask(nTauClean18V == 0);
      eventMask += gammaLooseVetoC.addToMask(nGamma15V == 0);
      eventMask += metNoLepStartC.addToMask(metNoLepPt > METNOLEP_START);
-     eventMask += metFiltersC.addToMask(cscfilter == 1 && ecalfilter == 1 && hbheFilterNew25ns == 1 && hbheFilterIso == 1);
-     
+     eventMask += metFiltersC.addToMask(cscfilter == 1 && ecalfilter == 1 && hbheFilterNew25ns == 1 && hbheFilterIso == 1);  
+
      // the following make sense only if recoLepFound_flag == 1 (i.e. flag is true), which means that fabs(LepGood_pdgId[firstIndex/secondIndex]) == LEP_PDG_ID) is 
      // true
      // also, 2 OS/SF leptons are present
-     if (recoLepFound_flag) {
 
+     if (recoLepFound_flag == 1) {
        eventMask += HLTlepC.addToMask(HLT_passed_flag);     
-       eventMask += oppChargeLeptonsC.addToMask(1); // include in recoLepFound_flag togehter with correct flavour
-       eventMask += twoLepLooseC.addToMask(nLepLoose == 2);
+       eventMask += oppChargeLeptonsC.addToMask(1); // included in recoLepFound_flag togehter with correct flavour 
+       eventMask += twoLepLooseC.addToMask(((Int_t) nLepLoose) == 2);
        eventMask += tightLepC.addToMask(nLepTight > 0);
        // eventMask += lep1ptC.addToMask((LepGood_pt[firstIndex] > LEP1PT)); 
        // eventMask += lep1etaC.addToMask( (fabs(LepGood_eta[firstIndex]) < LEP1ETA) );
@@ -729,7 +735,7 @@ void zlljetsControlSample::loop(const char* configFileName, const Int_t ISDATA_F
        eventMask += invMassC.addToMask((mZ1 > DILEPMASS_LOW) && (mZ1 < DILEPMASS_UP));     
        // eventMask += lep1tightIdIso04C.addToMask((LepGood_tightId[firstIndex] > 0.5 ) && (LepGood_relIso04[firstIndex] < LEP_ISO_04 ) );
        // eventMask += lep2tightIdIso04C.addToMask((LepGood_tightId[secondIndex] > 0.5) && (LepGood_relIso04[secondIndex] < LEP_ISO_04 ) );
-      
+       
      }
 
      // end of eventMask building
