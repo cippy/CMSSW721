@@ -539,7 +539,7 @@ void zlljetsControlSample::loop(const char* configFileName, const Int_t ISDATA_F
 
    if (MET_FILTERS_FLAG != 0) zlljetsControlSample.append(metFiltersC.get2ToId());
 
-   if ( HLT_FLAG ) zlljetsControlSample.append(HLTlepC.get2ToId());
+   if ( HLT_FLAG != 0 ) zlljetsControlSample.append(HLTlepC.get2ToId());
 
    if (fabs(LEP_PDG_ID) == 13) {  
 
@@ -778,7 +778,7 @@ void zlljetsControlSample::loop(const char* configFileName, const Int_t ISDATA_F
      
      // genLepC added to mask above if ISDATA_FLAG == false (in order not to repeat here the check) 
      
-     eventMask += jet1C.addToMask(nJetClean30 >= 1 && JetClean_pt[0] > J1PT && fabs(JetClean_eta[0]) < J1ETA);
+     eventMask += jet1C.addToMask(nJetClean30 >= 1 && JetClean_pt[0] > J1PT /*&& fabs(JetClean_eta[0]) < J1ETA*/);
      eventMask += jetMetDphiMinC.addToMask(fabs(dphijm > JMET_DPHI_MIN));
      eventMask += jetNoiseCleaningC.addToMask(JetClean_leadClean[0] > 0.5);
      eventMask += bjetVetoC.addToMask(nBTag15 == 0);
@@ -786,6 +786,7 @@ void zlljetsControlSample::loop(const char* configFileName, const Int_t ISDATA_F
      eventMask += tauLooseVetoC.addToMask(nTauClean18V == 0);
      eventMask += gammaLooseVetoC.addToMask(nGamma15V == 0);
      eventMask += metNoLepStartC.addToMask(metNoLepPt > METNOLEP_START);
+     eventMask += metFiltersC.addToMask(cscfilter == 1 && ecalfilter == 1 && hbheFilterNew25ns == 1 && hbheFilterIso == 1);
      
      // the following make sense only if recoLepFound_flag == 1 (i.e. flag is true), which means that fabs(LepGood_pdgId[firstIndex/secondIndex]) == LEP_PDG_ID) is 
      // true
