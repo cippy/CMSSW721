@@ -61,7 +61,7 @@ void zlljetsControlSample::loop(const char* configFileName, const Int_t ISDATA_F
 
    //fChain->SetBranchStatus("LHEorigWeight",1); // contains negative values: the weight in the event is weight*LHEorigWeight
 
-   fChain->SetBranchStatus("genWeight",1); 
+   //fChain->SetBranchStatus("genWeight",1); 
 
    fChain->SetBranchStatus("nMu10V",1);  // # of muons passing loose selection
    fChain->SetBranchStatus("nEle10V",1);  // # of electrons passing loose selection for electron veto
@@ -72,8 +72,6 @@ void zlljetsControlSample::loop(const char* configFileName, const Int_t ISDATA_F
    fChain->SetBranchStatus("nTauClean18V",1);
 
    fChain->SetBranchStatus("dphijj",1);          // dphi between 1st and 2nd jet, 999 if second jet doesn't exist
-   fChain->SetBranchStatus("jetclean1",1);      // 1 if jet is cleaned, 0 otherwise
-   fChain->SetBranchStatus("jetclean2",1);      // 1 if jet is cleaned, 0 otherwise
    fChain->SetBranchStatus("nJetClean30",1);    // # of jet with pt > 30 & eta < 2.5 and cleaning for against muons misidentified as PFjets   
    fChain->SetBranchStatus("JetClean_pt",1);  
    fChain->SetBranchStatus("JetClean_eta",1);  
@@ -109,8 +107,7 @@ void zlljetsControlSample::loop(const char* configFileName, const Int_t ISDATA_F
      fChain->SetBranchStatus("GenPart_mass",1);
      fChain->SetBranchStatus("GenPart_motherIndex",1);
 
-     fChain->SetBranchStatus("vtxW",1);   // weight to have better agreement between data and MC
-     fChain->SetBranchStatus("xsec",1);   // weight to have better agreement between data and MC
+     //fChain->SetBranchStatus("xsec",1);
 
      fChain->SetBranchStatus("vtxWeight",1);   // weight to have better agreement between data and MC (added in tree from 06/10/15)
    }
@@ -376,7 +373,7 @@ void zlljetsControlSample::loop(const char* configFileName, const Int_t ISDATA_F
    //Double_t nEventsAfterMatchRecoGen = 0.0;
    Int_t HLT_passed_flag = 1;          // some computations (for e) require a trigger preselection, while others don't. The former will be done if the flag is set to 1
                                                        // it's set to 1 because if the trigger selection is not applied every event must be considered to be a "good" event having passed all preselections
-                                                       // Actually in this code the trigger is necessary, but I keep it like this nonetheless.
+                                                       // Actually in this code the trigger is not always necessary, but I keep it like this nonetheless.
 
 
    Float_t *ptr_nLepLoose = NULL;    // depending on lepton flavour in Z-->ll, it will point to different branches
@@ -396,47 +393,6 @@ void zlljetsControlSample::loop(const char* configFileName, const Int_t ISDATA_F
    Double_t metNoLepPt = 0.0;        // this variable will be assigned with *ptr_metNoLepPt, where the pointer will point to the branch metNoMu_pt for mu, and with a hand-defined variable for e
    //Double_t metNoLepEta = 0.0;
    Double_t metNoLepPhi = 0.0;   // same story as above
-
-   // Int_t using_phys14_sample_flag = 0;
-   // if (FILENAME_BASE.find("phys14") != std::string::npos) {
-   //   using_phys14_sample_flag = 1;    
-   //   cout << "Using phys14 samples" << endl;
-   // }
-
-   // Int_t using_spring15_sample_flag = 0;
-   // if (FILENAME_BASE.find("spring15") != std::string::npos) {
-   //   using_spring15_sample_flag = 1;    
-   //   cout << "Using spring15 samples" << endl;
-   // }
-
-   // Int_t using_spring15_25ns_sample_flag = 0;
-   // if (FILENAME_BASE.find("spring15_25ns") != std::string::npos) {
-   //   using_spring15_25ns_sample_flag = 1;    
-   //   cout << "Using spring15_25ns samples" << endl;
-   // }
-
-   // Int_t skim_metNoMu200or2lep_1or2_flag = 0;
-   // string checkSkimInConfigFileName(configFileName);
-
-   // if (!ISDATA_FLAG) {
-
-   //   if (checkSkimInConfigFileName.find("metNoMuSkim200") != std::string::npos) {
-
-   //     skim_metNoMu200or2lep_1or2_flag = 1;    
-   //     cout << "Using metNoMuSkim200" << endl;
-   //     mySumWeight_filler_spring15_25ns(suffix, sumWeightVector);  // this function fills the vector with the proper values of sumWeight depending on the sample
-   //     myEventsInSubsamples_filler_spring15_25ns(suffix, eventsInSubsamples); 
-
-   //   } else if (checkSkimInConfigFileName.find("2lepSkim") != std::string::npos) {
-
-   //     skim_metNoMu200or2lep_1or2_flag = 2;    
-   //     cout << "Using 2lepSkim" << endl;
-   //     mySumWeight_filler_spring15_25ns_2lepSkim(suffix, sumWeightVector);  // this function fills the vector with the proper values of sumWeight depending on the sample
-   //     myEventsInSubsamples_filler_spring15_25ns_2lepSkim(suffix, eventsInSubsamples); 
-
-   //   }
-
-   // }
 
    if ( !ISDATA_FLAG && unweighted_event_flag) cout << "Warning: no weight applied to events (w = 1)" << endl;  // if MC with unit weight, make user know
 
@@ -622,12 +578,7 @@ void zlljetsControlSample::loop(const char* configFileName, const Int_t ISDATA_F
    }
 
    // deciding  what is the event weight
-   Double_t newwgt;
-
-   Int_t eventCounter = 0;  // support variable: at the beginning it is set to the number of entries of the first subsample (e.g. HT100to200 or whatever): when the number of 
-                                                 // event analyzed reaches this value, it's increased by the number of entries in the following subsample and so on. Basically, it's needed to keep track of
-                                                 // the specific subsample that is being analyzed (so that the proper value of sumWeight is used)
-   Int_t htbin = 0;  // 
+   Double_t newwgt; 
 
    if (ISDATA_FLAG || unweighted_event_flag) newwgt = 1.0;
 
@@ -649,32 +600,6 @@ void zlljetsControlSample::loop(const char* configFileName, const Int_t ISDATA_F
      UInt_t eventMask = 0; 
 
      if(!ISDATA_FLAG && !unweighted_event_flag) {
-
-       /*
-       if (using_spring15_25ns_sample_flag) {
-
-	 if (jentry == eventCounter) {
-	   eventCounter += eventsInSubsamples[htbin];
-	   SUMWEIGHTS = sumWeightVector[htbin];
-	   htbin++;
-	   cout << endl;
-	   cout << "entry = " << jentry << ":   " ;
-	   cout << "htbin = " << htbin << "  --->  ";   // it will print 1, 2, 3 ... but as an index it would be 0, 1, 2 ...
-	   cout << "sumWeight = " << SUMWEIGHTS << endl;
-	   cout << endl;
-	 }
-
-	 // trees spring15_25ns with skim MetNoMu > 200 don't have vtxWeight (they have vtxW but it should not be used)
-	 // trees spring15_25ns with skim 2 leptons have vtxWeight which helps have same vertices distribution in data and MC
-	 if (skim_metNoMu200or2lep_1or2_flag == 1) newwgt = 1000 * LUMI * xsec * genWeight / SUMWEIGHTS; 
-	 else if (skim_metNoMu200or2lep_1or2_flag == 2) newwgt = 1000 * LUMI * xsec * vtxWeight * genWeight / SUMWEIGHTS; 
-
-       } else if (using_spring15_sample_flag && using_spring15_25ns_sample_flag == 0) newwgt = 1000 * LUMI * vtxW  * xsec * genWeight / SUMWEIGHTS;    
-       // 1000 is because LUMI is in fb^-1 and xsec is in pb
-       // old wrong one:     newwgt = LUMI * vtxW * weight * LHEorigWeight; 
-       else if (using_phys14_sample_flag) newwgt = LUMI * weight;   // for older trees (backward compatibility)
-       else newwgt = LUMI * weight;   // for older trees (backward compatibility)
-       */
 
        newwgt = LUMI * weight /*/ events_ntot*/;  // starting from 17 November, "events_ntot" substitutes SUMWEIGHT and is already present in the trees. Same for weight, which is now defined as "1000 * xsec * genWeight" (1000*xsec is the cross section in fb, since xsec is in pb.)
        // I found out that division by events_ntot was already included in weight definition
@@ -699,8 +624,8 @@ void zlljetsControlSample::loop(const char* configFileName, const Int_t ISDATA_F
 
 	 genLepFound_flag = myPartGenAlgo(nGenPart, GenPart_pdgId, GenPart_motherId, LEP_PDG_ID, 23, firstIndexGen, secondIndexGen, Z_index, GenPart_motherIndex); 
 	 //if (!genLepFound_flag) continue;  // if not found gen ee or mumu for MC DYJetsToLL ( l = mu or e) skip the event. This makes things faster
-	 if (genLepFound_flag) {
-	   eventMask += genLepC.addToMask( genLepFound_flag );
+	 if (genLepFound_flag != 0) {
+	   eventMask += genLepC.addToMask(1);
 	   l1gen.SetPtEtaPhiM(GenPart_pt[firstIndexGen],GenPart_eta[firstIndexGen],GenPart_phi[firstIndexGen],GenPart_mass[firstIndexGen]);
 	   l2gen.SetPtEtaPhiM(GenPart_pt[secondIndexGen],GenPart_eta[secondIndexGen],GenPart_phi[secondIndexGen],GenPart_mass[secondIndexGen]);
 	   Zgen = l1gen + l2gen;
@@ -722,7 +647,7 @@ void zlljetsControlSample::loop(const char* configFileName, const Int_t ISDATA_F
      // look if the first two good leptons are OS/SF (flavour depending on config file)
      // the check for 2 OS/SF leptons in LepGood list is just useful to speed up things, but would not be necessary if other variables or computations that require this condition are only used at the end of selection (which already includes 2 OS/SF condition).
      // thus, we evaluate this right now and use this pice of information for later use
-     if ( (fabs(LepGood_pdgId[firstIndex]) ==  LEP_PDG_ID) && (LepGood_pdgId[firstIndex] == -LepGood_pdgId[secondIndex]) ) recoLepFound_flag = 1;
+     if ( (fabs(LepGood_pdgId[firstIndex]) ==  LEP_PDG_ID) && ((LepGood_pdgId[firstIndex] + LepGood_pdgId[secondIndex]) == 0) ) recoLepFound_flag = 1;
      else recoLepFound_flag = 0;
 
      if (recoLepFound_flag) {
@@ -734,7 +659,7 @@ void zlljetsControlSample::loop(const char* configFileName, const Int_t ISDATA_F
 
      if (fabs(LEP_PDG_ID) == 13) { 
 
-       if ( HLT_FLAG ) {
+       if ( HLT_FLAG != 0) {
 
 	 // use the dimuon trigger, not the metNoLep trigger
        	 if ( recoLepFound_flag && (fabs(LepGood_eta[firstIndex]) < HLT_LEP1ETA) && (fabs(LepGood_eta[secondIndex]) < HLT_LEP2ETA) && 
@@ -751,7 +676,7 @@ void zlljetsControlSample::loop(const char* configFileName, const Int_t ISDATA_F
 
      } else if (fabs(LEP_PDG_ID) == 11) { 
 
-       if ( HLT_FLAG ) {
+       if ( HLT_FLAG != 0 ) {
 
        	 if ( recoLepFound_flag && (LepGood_tightId[firstIndex] > 0.5) && (LepGood_tightId[secondIndex]  > 0.5) && 
        	      (fabs(LepGood_eta[firstIndex]) < HLT_LEP1ETA) && (fabs(LepGood_eta[secondIndex]) < HLT_LEP2ETA) && 
@@ -960,16 +885,22 @@ void zlljetsControlSample::loop(const char* configFileName, const Int_t ISDATA_F
    // filling with yields and efficiency: I will use efficiency with respect to total and not to previous step, but I could make this choice in the config file
 
    // entry point
-   yRow.push_back(nTotalWeightedEvents);
-   eRow.push_back(1.0000);
-   uncRow.push_back(sqrt(nTotalWeightedEvents));
-   
+   if (using_zlljets_MCsample_flag == 1 || using_ztautaujets_MCsample_flag == 1) {
+     yRow.push_back(zlljetsControlSample.nEvents[0]); // [0] refers to genLep, which is the first selection in these cases
+     eRow.push_back(1.0000);
+     uncRow.push_back(sqrt(zlljetsControlSample.nEvents[0]));
+   } else {
+     yRow.push_back(nTotalWeightedEvents); // [0] 
+     eRow.push_back(1.0000);
+     uncRow.push_back(sqrt(nTotalWeightedEvents));
+   }
+
    vector<Int_t> selStep;   //array to store index of step to form selection flow (might want to consider two or more steps together and not separated)
    //first step is the preselection before OS condition: doing like this because it might change (there can be or not MetNoLep cut, but I want the last step)
 
    // in case a step wold be present for some sample but not for others (e.g. the RecoGen match done only in Zll MC), the step is referred to as -1 and the corresponding values are set to -1, so that, when printing the table, yields will be filled with " / / " which means " uneffected" (because that step was not done)
 
-   selStep.push_back(zlljetsControlSample.whichStepHas(twoLepLooseC.get2ToId()) - 1);  
+   if (MET_FILTERS_FLAG != 0) selStep.push_back(zlljetsControlSample.whichStepHas(metFiltersC.get2ToId()));
    selStep.push_back(zlljetsControlSample.whichStepHas(twoLepLooseC.get2ToId()));
    selStep.push_back(zlljetsControlSample.whichStepHas(tightLepC.get2ToId()));
    selStep.push_back(zlljetsControlSample.whichStepHas(oppChargeLeptonsC.get2ToId()));  

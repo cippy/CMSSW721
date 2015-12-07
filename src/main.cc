@@ -46,6 +46,7 @@ int main(int argc, char* argv[]) {
   Int_t isdata_flag;
   Int_t tau_veto_flag;
   Double_t metnolep_start;
+  Int_t met_filters_flag;
   string treePath;
   string friendTreePath;
   string option = "";
@@ -137,10 +138,19 @@ int main(int argc, char* argv[]) {
 
 	if (parameterName == "METNOLEP_START") {
 
-	  metnolep_start = (Double_t) value;
+	  metnolep_start = value;
 
-	  if (tau_veto_flag == 0) std::cout << "Not applying tau veto" << std::endl;
-	  else std::cout << "Applying tau veto" << std::endl;
+	  if (metnolep_start != 0) std::cout << "Cutting on recoil > " << metnolep_start << " GeV" << std::endl;
+	  else std::cout << "No cut on recoil" << std::endl;
+
+	}
+
+	if (parameterName == "MET_FILTERS_FLAG") {
+
+	  met_filters_flag = (Int_t) value;
+
+	  if (met_filters_flag != 0) std::cout << "Applying met filters" << std::endl;
+	  else std::cout << "Not applying met filters" << std::endl;
 
 	}
 
@@ -342,21 +352,21 @@ int main(int argc, char* argv[]) {
     if (signalRegion_flag == 1) {
     
       selectionDefinition.push_back("entry point");  
-      selectionDefinition.push_back("met filters");
-      selectionDefinition.push_back("metNoMu > 200");
-      selectionDefinition.push_back("bjet veto");
-      selectionDefinition.push_back("jet1pt");
-      selectionDefinition.push_back("dphiMin(j,Met)");
-      selectionDefinition.push_back("jet1 cleaning");
+      if (met_filters_flag == 1) selectionDefinition.push_back("met filters");
       selectionDefinition.push_back("muon veto");
       selectionDefinition.push_back("electron veto");
       if (tau_veto_flag) selectionDefinition.push_back("tau veto");
       selectionDefinition.push_back("photon veto");
+      selectionDefinition.push_back("bjet veto");
+      selectionDefinition.push_back("metNoMu > 200");
+      selectionDefinition.push_back("jet1pt");
+      selectionDefinition.push_back("jet1 cleaning");
+      selectionDefinition.push_back("dphiMin(j,Met)");    
 
     } else if (controlSample_flag == 1) {
 
-      selectionDefinition.push_back("entry point");        
-      selectionDefinition.push_back("preselection");   // include genLep, HLT
+      selectionDefinition.push_back("entry point"); // include genLep for DY
+      if (met_filters_flag == 1) selectionDefinition.push_back("met filters");
       selectionDefinition.push_back("2lep loose");
       selectionDefinition.push_back(">0 tight lep");
       selectionDefinition.push_back("2lep SF/OS");

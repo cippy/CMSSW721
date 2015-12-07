@@ -61,7 +61,7 @@ void monojet_SignalRegion::loop(const char* configFileName, const Int_t ISDATA_F
 
    //fChain->SetBranchStatus("LHEorigWeight",1); // contains negative values: the weight in the event is weight*LHEorigWeight
 
-   fChain->SetBranchStatus("genWeight",1); 
+   //fChain->SetBranchStatus("genWeight",1); 
 
    fChain->SetBranchStatus("nMu10V",1);  // # of muons passing loose selection
    fChain->SetBranchStatus("nEle10V",1);  // # of electrons passing loose selection for electron veto
@@ -111,7 +111,7 @@ void monojet_SignalRegion::loop(const char* configFileName, const Int_t ISDATA_F
 
      //fChain->SetBranchStatus("vtxW",1);   // weight to have better agreement between data and MC (will not be always used)  ** NOW OBSOLETE **
      fChain->SetBranchStatus("vtxWeight",1);   // weight to have better agreement between data and MC (added the 10th of October, substituting vtxW in the new set of trees, keeping both for backward compatibility)
-     fChain->SetBranchStatus("xsec",1);   // weight to have better agreement between data and MC
+     //fChain->SetBranchStatus("xsec",1);   
    }
 
    //fChain->SetBranchStatus("met_pt",1);
@@ -336,16 +336,16 @@ void monojet_SignalRegion::loop(const char* configFileName, const Int_t ISDATA_F
    mask monojet_SignalRegion("monojet signal selection");
 
    if (MET_FILTERS_FLAG != 0) monojet_SignalRegion.append(metFiltersC.get2ToId());
-   if (METNOLEP_START != 0) monojet_SignalRegion.append(metNoMuC.get2ToId());
-   monojet_SignalRegion.append(bjetVetoC.get2ToId());
-   monojet_SignalRegion.append(jet1C.get2ToId());
-   monojet_SignalRegion.append(jetMetDphiMinC.get2ToId());
-   monojet_SignalRegion.append(jetNoiseCleaningC.get2ToId());
    monojet_SignalRegion.append(muonLooseVetoC.get2ToId());
    monojet_SignalRegion.append(electronLooseVetoC.get2ToId());
    if (TAU_VETO_FLAG) monojet_SignalRegion.append(tauLooseVetoC.get2ToId());
    monojet_SignalRegion.append(gammaLooseVetoC.get2ToId());
-
+   monojet_SignalRegion.append(bjetVetoC.get2ToId());
+   if (METNOLEP_START != 0) monojet_SignalRegion.append(metNoMuC.get2ToId());  
+   monojet_SignalRegion.append(jet1C.get2ToId());
+   monojet_SignalRegion.append(jetNoiseCleaningC.get2ToId());
+   monojet_SignalRegion.append(jetMetDphiMinC.get2ToId());
+   
    cout << "Opening file " <<ROOT_FNAME<< " in folder " << outputFolder << endl;
 
    TFile *rootFile = new TFile((outputFolder + ROOT_FNAME).c_str(),"RECREATE");
@@ -564,16 +564,16 @@ void monojet_SignalRegion::loop(const char* configFileName, const Int_t ISDATA_F
    
    vector<Int_t> selStep;   //array to store index of step to form selection flow (might want to consider two or more steps together and not separated)
 
-   selStep.push_back(monojet_SignalRegion.whichStepHas(metFiltersC.get2ToId()));
-   selStep.push_back(monojet_SignalRegion.whichStepHas(metNoMuC.get2ToId()));  
-   selStep.push_back(monojet_SignalRegion.whichStepHas(bjetVetoC.get2ToId()));
-   selStep.push_back(monojet_SignalRegion.whichStepHas(jet1C.get2ToId()));
-   selStep.push_back(monojet_SignalRegion.whichStepHas(jetMetDphiMinC.get2ToId()));
-   selStep.push_back(monojet_SignalRegion.whichStepHas(jetNoiseCleaningC.get2ToId()));
+   if (MET_FILTERS_FLAG != 0) selStep.push_back(monojet_SignalRegion.whichStepHas(metFiltersC.get2ToId()));
    selStep.push_back(monojet_SignalRegion.whichStepHas(muonLooseVetoC.get2ToId()));
    selStep.push_back(monojet_SignalRegion.whichStepHas(electronLooseVetoC.get2ToId()));
    if (TAU_VETO_FLAG) selStep.push_back(monojet_SignalRegion.whichStepHas(tauLooseVetoC.get2ToId()));
    selStep.push_back(monojet_SignalRegion.whichStepHas(gammaLooseVetoC.get2ToId()));
+   selStep.push_back(monojet_SignalRegion.whichStepHas(bjetVetoC.get2ToId()));
+   selStep.push_back(monojet_SignalRegion.whichStepHas(metNoMuC.get2ToId())); 
+   selStep.push_back(monojet_SignalRegion.whichStepHas(jet1C.get2ToId()));
+   selStep.push_back(monojet_SignalRegion.whichStepHas(jetNoiseCleaningC.get2ToId()));
+   selStep.push_back(monojet_SignalRegion.whichStepHas(jetMetDphiMinC.get2ToId()));
 
    for(Int_t i = 0; i < selStep.size(); i++) {
   
