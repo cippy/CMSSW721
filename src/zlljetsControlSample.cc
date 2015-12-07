@@ -66,7 +66,8 @@ void zlljetsControlSample::loop(const char* configFileName, const Int_t ISDATA_F
    fChain->SetBranchStatus("nMu10V",1);  // # of muons passing loose selection
    fChain->SetBranchStatus("nEle10V",1);  // # of electrons passing loose selection for electron veto
    fChain->SetBranchStatus("nGamma15V",1);  // # of photons passing loose selection for photon veto
-   //fChain->SetBranchStatus("nMu20T",1);  // # of muons passing tight selection (pt > 20 + everything else)
+   fChain->SetBranchStatus("nMu20T",1);  // # of muons passing tight selection (isolation included)
+   fChain->SetBranchStatus("nEle20T",1);  // # of electrons passing tight selection (isolation included)
    //fChain->SetBranchStatus("nTau18V",1);
    fChain->SetBranchStatus("nTauClean18V",1);
 
@@ -172,6 +173,7 @@ void zlljetsControlSample::loop(const char* configFileName, const Int_t ISDATA_F
    Double_t HLT_LEP1ETA;
    Double_t HLT_LEP2ETA;
    Double_t METNOLEP_START;
+   Int_t MET_FILTERS_FLAG;
    Double_t JMET_DPHI_MIN;
    // Double_t XSEC_OVER_NPROCESSED;
    // Double_t SUMWEIGHTS;
@@ -223,6 +225,7 @@ void zlljetsControlSample::loop(const char* configFileName, const Int_t ISDATA_F
 	 else if (parameterName == "HLT_LEP1ETA") HLT_LEP1ETA = value;
 	 else if (parameterName == "HLT_LEP2ETA") HLT_LEP2ETA = value;
 	 else if (parameterName == "METNOLEP_START") METNOLEP_START = value;
+	 else if (parameterName == "MET_FILTERS_FLAG") MET_FILTERS_FLAG = value;
 	 else if (parameterName == "JMET_DPHI_MIN") JMET_DPHI_MIN = value;
 
 	 if (!ISDATA_FLAG) {
@@ -316,6 +319,7 @@ void zlljetsControlSample::loop(const char* configFileName, const Int_t ISDATA_F
    }
   
    // monojet selection (muon or electron veto set afterwards, depending on the sample)
+   selection metFiltersC("metFiltersC","met filters","cscfilter, ecalfilter, hbheFilterNew25ns, hbheFilterIso");
    selection jet1C("jet1C","jet1",Form("nJetClean >= 1 && JetClean1_pt > %4.0lf && abs(JetClean1_eta) < %1.1lf",(Double_t)J1PT,J1ETA));
    selection jetMetDphiMinC("jetMetDphiMinC",Form("min[dphi(jets,MET)] > %1.1lf",JMET_DPHI_MIN),"minimum dphi between jets and MET (using only the first 4 jets)");
    selection jetNoiseCleaningC("jetNoiseCleaningC","noise cleaning","energy fractions (only for jet1): CH > 0.1; NH < 0.8");
@@ -329,19 +333,20 @@ void zlljetsControlSample::loop(const char* configFileName, const Int_t ISDATA_F
    // following selections are set differently in the next "if" statements depending on the lepton flavour 
    //selection metNoLepC[metCut.size()];
    selection lepLooseVetoC;
-   selection twoLeptonsC;
+   // selection twoLeptonsC;
    selection twoLepLooseC;
-   selection lep1tightIdIso04C;
-   selection twoLepTightC;
-   selection lep1ptC;
-   selection lep2ptC;
-   selection lep1etaC;  
-   selection lep2etaC;
+   selection tightLepC;
+   // selection lep1tightIdIso04C;
+   // selection twoLepTightC;
+   // selection lep1ptC;
+   // selection lep2ptC;
+   // selection lep1etaC;  
+   //selection lep2etaC;
    selection genLepC;  
    selection metNoLepStartC;
    selection HLTlepC;
-   // the following are only for electrons
-   selection lep2tightIdIso04C;
+   selection recoGenLepMatchC;
+   //selection lep2tightIdIso04C;
 
    TVector2 metNoLepTV, ele;
 
@@ -363,9 +368,9 @@ void zlljetsControlSample::loop(const char* configFileName, const Int_t ISDATA_F
    Int_t genTauFound_flag = 0;
    Int_t Z_index = 0; 
 
-   Double_t SUMWEIGHTS;
-   vector<Double_t> sumWeightVector;  // used for spring15_25ns
-   vector<Int_t> eventsInSubsamples;
+   // Double_t SUMWEIGHTS;
+   // vector<Double_t> sumWeightVector;  // used for spring15_25ns
+   // vector<Int_t> eventsInSubsamples;
 
    Double_t nTotalWeightedEvents = 0.0;     
    //Double_t nEventsAfterMatchRecoGen = 0.0;
@@ -373,12 +378,11 @@ void zlljetsControlSample::loop(const char* configFileName, const Int_t ISDATA_F
                                                        // it's set to 1 because if the trigger selection is not applied every event must be considered to be a "good" event having passed all preselections
                                                        // Actually in this code the trigger is necessary, but I keep it like this nonetheless.
 
-   // following 2 variable are used for acceptance and efficiency selection, define below in the loop: if selection is passed they are set to 1, otherwise they are set to 0
-   // Int_t acceptanceSelectionDef = 0;
-   // Int_t efficiencySelectionDef = 0;
 
    Float_t *ptr_nLepLoose = NULL;    // depending on lepton flavour in Z-->ll, it will point to different branches
    Float_t *ptr_nLep10V = NULL;   
+
+   Float_t *ptr_nLepTight = NULL;    // depending on lepton flavour in Z-->ll, it will point to different branches 
 
    Float_t *ptr_metNoLepPt = NULL;       // only needed for muons, it will point to the branches with the metNoMu_pt, then metNoLepPt = *ptr_metNoLepPt (metNoLepPt defined below)
    //Float_t *ptr_metNoLepEta = NULL; 
@@ -386,6 +390,8 @@ void zlljetsControlSample::loop(const char* configFileName, const Int_t ISDATA_F
 
    Float_t nLepLoose = 0.0;               // this variable and the following should be an integer, but in Emanuele's trees they are float, so I keep them as such
    Float_t nLep10V = 0.0;
+
+   Float_t nLepTight = 0.0;               // this variable and the following should be an integer, but in Emanuele's trees they are float, so I keep them as such
 
    Double_t metNoLepPt = 0.0;        // this variable will be assigned with *ptr_metNoLepPt, where the pointer will point to the branch metNoMu_pt for mu, and with a hand-defined variable for e
    //Double_t metNoLepEta = 0.0;
@@ -461,23 +467,29 @@ void zlljetsControlSample::loop(const char* configFileName, const Int_t ISDATA_F
          
      ptr_nLepLoose = &nMu10V;                      // ask 2 muons
      ptr_nLep10V = &nEle10V;                         // veto on electrons
+     ptr_nLepTight = &nMu20T;                                            
      ptr_metNoLepPt = &metNoMu_pt;               // for muons  get this variable from the tree 
      //ptr_metNoLepEta = &metNoMu_eta;               // for muons  get this variable from the tree 
      ptr_metNoLepPhi = &metNoMu_phi;         // for muons  get this variable from the tree
 
      lepLooseVetoC.set("eLooseVetoC","electrons veto");
-     twoLeptonsC.set("twomuonsC","muons");
+     //twoLeptonsC.set("twomuonsC","muons");
      twoLepLooseC.set("twomuLooseC","2 loose muons");
-     lep1tightIdIso04C.set("mu1tightIdIso04C","leading muon tight","tight ID + relIso04 (as Emanuele)");
-     twoLepTightC.set("twomuTightC","2 tight muons");
-     lep1ptC.set("mu1ptC",Form("mu1pt > %3.0lf",LEP1PT),"leading muon pt");
-     lep2ptC.set("mu2ptC",Form("mu2pt > %3.0lf",LEP2PT),"trailing muon pt");
-     lep1etaC.set("mu1etaC",Form("|mu1eta| < %1.1lf",LEP1ETA),"leading muon eta");  
-     lep2etaC.set("mu2etaC",Form("|mu2eta| < %1.1lf",LEP2ETA),"trailing muon eta");
-      if (!ISDATA_FLAG && using_zlljets_MCsample_flag) genLepC.set("genMuonsC","muons generated");     
+     tightLepC.set("tightMuC",">0 tight muons");
+     // lep1tightIdIso04C.set("mu1tightIdIso04C","leading muon tight","tight ID + relIso04 (as Emanuele)");
+     // twoLepTightC.set("twomuTightC","2 tight muons");
+     // lep1ptC.set("mu1ptC",Form("mu1pt > %3.0lf",LEP1PT),"leading muon pt");
+     // lep2ptC.set("mu2ptC",Form("mu2pt > %3.0lf",LEP2PT),"trailing muon pt");
+     // lep1etaC.set("mu1etaC",Form("|mu1eta| < %1.1lf",LEP1ETA),"leading muon eta");  
+     // lep2etaC.set("mu2etaC",Form("|mu2eta| < %1.1lf",LEP2ETA),"trailing muon eta");
+     if (!ISDATA_FLAG && using_zlljets_MCsample_flag) {
+       genLepC.set("genMuonsC","muons generated");     
+       recoGenLepMatchC.set("recoGenMuMatchC","reco-gen match (DR = 0.1)","only for zlljets: looks for matching of reco and gen particles");      
+     }
+
      metNoLepStartC.set("metNoMu200C",Form("metNoMu > %2.0lf",METNOLEP_START));
      HLTlepC.set("HLTmuonC","HLT for muons");
-     lep2tightIdIso04C.set("mu2tightIdIso04C","trailing muon tight","tight ID + relIso04 (as Emanuele)");
+     // lep2tightIdIso04C.set("mu2tightIdIso04C","trailing muon tight","tight ID + relIso04 (as Emanuele)");
 
 
    } else if (fabs(LEP_PDG_ID) == 11) {   // if we have Z -> ee do different stuff...
@@ -488,29 +500,27 @@ void zlljetsControlSample::loop(const char* configFileName, const Int_t ISDATA_F
 
      ptr_nLepLoose = &nEle10V;                      // ask 2 electrons
      ptr_nLep10V = &nMu10V;                         // veto on muons   
-     
+     ptr_nLepTight = &nEle20T;
+
      lepLooseVetoC.set("muLooseVetoC","muons veto");
-     twoLeptonsC.set("twoelectronsC","electrons");
+     //twoLeptonsC.set("twoelectronsC","electrons");
      twoLepLooseC.set("twoeleLooseC","2 loose electrons");
-     lep1tightIdIso04C.set("ele1tightIdIso04C","leading electron tight","tight ID + relIso04 (as Emanuele)");
-     twoLepTightC.set("twoeleTightC","2 tight electrons");
-     lep1ptC.set("ele1ptC",Form("ele1pt > %3.0lf",LEP1PT),"leading electron pt");
-     lep2ptC.set("ele2ptC",Form("ele2pt > %3.0lf",LEP2PT),"trailing electron pt");
-     lep1etaC.set("ele1etaC",Form("|ele1eta| < %1.1lf",LEP1ETA),"leading electron eta");  
-     lep2etaC.set("ele2etaC",Form("|ele2eta| < %1.1lf",LEP2ETA),"trailing electron eta");
-     if (!ISDATA_FLAG && using_zlljets_MCsample_flag) genLepC.set("genElectronsC","electrons generated");     
+     tightLepC.set("tightEleC",">0 tight electrons");
+     // lep1tightIdIso04C.set("ele1tightIdIso04C","leading electron tight","tight ID + relIso04 (as Emanuele)");
+     // twoLepTightC.set("twoeleTightC","2 tight electrons");
+     // lep1ptC.set("ele1ptC",Form("ele1pt > %3.0lf",LEP1PT),"leading electron pt");
+     // lep2ptC.set("ele2ptC",Form("ele2pt > %3.0lf",LEP2PT),"trailing electron pt");
+     // lep1etaC.set("ele1etaC",Form("|ele1eta| < %1.1lf",LEP1ETA),"leading electron eta");  
+     // lep2etaC.set("ele2etaC",Form("|ele2eta| < %1.1lf",LEP2ETA),"trailing electron eta");
+     if (!ISDATA_FLAG && using_zlljets_MCsample_flag) {
+       genLepC.set("genElectronsC","electrons generated");     
+       recoGenLepMatchC.set("recoGenEleMatchC","reco-gen match (DR = 0.1)","only for zlljets: looks for matching of reco and gen particles");    
+     }
+
      metNoLepStartC.set("metNoEle200C",Form("metNoEle > %2.0lf",METNOLEP_START));
      HLTlepC.set("HLTelectronC","HLT for electrons");
-     lep2tightIdIso04C.set("ele2tightIdIso04C","trailing electron tight","tight ID + relIso04 (as Emanuele)");
+     // lep2tightIdIso04C.set("ele2tightIdIso04C","trailing electron tight","tight ID + relIso04 (as Emanuele)");
 
-   }
-
-   selection recoGenLepMatchC;
-   if (!ISDATA_FLAG && using_zlljets_MCsample_flag) {
-
-     if (fabs(LEP_PDG_ID) == 13) recoGenLepMatchC.set("recoGenMuMatchC","reco-gen match (DR = 0.1)","only for zlljets: looks for matching of reco and gen particles");      
-     else if (fabs(LEP_PDG_ID) == 11) recoGenLepMatchC.set("recoGenEleMatchC","reco-gen match (DR = 0.1)","only for zlljets: looks for matching of reco and gen particles");    
-  
    }
 
    selection genTauC;
@@ -527,40 +537,40 @@ void zlljetsControlSample::loop(const char* configFileName, const Int_t ISDATA_F
      if (using_ztautaujets_MCsample_flag) zlljetsControlSample.append(genTauC.get2ToId());
    }
 
-   if ( HLT_FLAG ) zlljetsControlSample.append(HLTlepC.get2ToId());
+   if (MET_FILTERS_FLAG != 0) zlljetsControlSample.append(metFiltersC.get2ToId());
 
-   if (METNOLEP_START) zlljetsControlSample.append(metNoLepStartC.get2ToId());
+   if ( HLT_FLAG ) zlljetsControlSample.append(HLTlepC.get2ToId());
 
    if (fabs(LEP_PDG_ID) == 13) {  
 
-     maskTightTag = lep1tightIdIso04C.get2ToId() + /* lep2tightIdIso04C.get2ToId() +*/lep1ptC.get2ToId() + lep2ptC.get2ToId() + lep1etaC.get2ToId() + lep2etaC.get2ToId();  ;  // for now tight requirements on pt and eta are already included in the loose condition because they coincide (not true for electrons)
+     // maskTightTag = lep1tightIdIso04C.get2ToId() + /* lep2tightIdIso04C.get2ToId() +*/lep1ptC.get2ToId() + lep2ptC.get2ToId() + lep1etaC.get2ToId() + lep2etaC.get2ToId();  ;  // for now tight requirements on pt and eta are already included in the loose condition because they coincide (not true for electrons)
 
-     zlljetsControlSample.append(oppChargeLeptonsC.get2ToId());
      zlljetsControlSample.append(twoLepLooseC.get2ToId());
-     zlljetsControlSample.append(twoLeptonsC.get2ToId());
-     zlljetsControlSample.append(maskTightTag); 
+     zlljetsControlSample.append(tightLepC.get2ToId());
+     zlljetsControlSample.append(oppChargeLeptonsC.get2ToId());     
      zlljetsControlSample.append(invMassC.get2ToId());
 
    } else if (fabs(LEP_PDG_ID) == 11) {  
 
-     maskTightTag = lep1tightIdIso04C.get2ToId() /*+ lep2tightIdIso04C.get2ToId() */+ lep1ptC.get2ToId() + lep2ptC.get2ToId() + lep1etaC.get2ToId() + lep2etaC.get2ToId();
+     //maskTightTag = lep1tightIdIso04C.get2ToId() /*+ lep2tightIdIso04C.get2ToId() */+ lep1ptC.get2ToId() + lep2ptC.get2ToId() + lep1etaC.get2ToId() + lep2etaC.get2ToId();
 
-     zlljetsControlSample.append(oppChargeLeptonsC.get2ToId());
      zlljetsControlSample.append(twoLepLooseC.get2ToId());
-     zlljetsControlSample.append(twoLeptonsC.get2ToId());
-     zlljetsControlSample.append(maskTightTag);
+     zlljetsControlSample.append(tightLepC.get2ToId());
+     zlljetsControlSample.append(oppChargeLeptonsC.get2ToId());
      zlljetsControlSample.append(invMassC.get2ToId());
 
    }
    
-   zlljetsControlSample.append(bjetVetoC.get2ToId());
-   zlljetsControlSample.append(jet1C.get2ToId());
-   zlljetsControlSample.append(jetMetDphiMinC.get2ToId());
-   zlljetsControlSample.append(jetNoiseCleaningC.get2ToId());
    zlljetsControlSample.append(lepLooseVetoC.get2ToId());
-   zlljetsControlSample.append(gammaLooseVetoC.get2ToId());
-
    if (TAU_VETO_FLAG) zlljetsControlSample.append(tauLooseVetoC.get2ToId());
+   zlljetsControlSample.append(gammaLooseVetoC.get2ToId());
+   zlljetsControlSample.append(bjetVetoC.get2ToId());
+   if (METNOLEP_START != 0) zlljetsControlSample.append(metNoLepStartC.get2ToId());
+   zlljetsControlSample.append(jet1C.get2ToId());
+   zlljetsControlSample.append(jetNoiseCleaningC.get2ToId());
+   zlljetsControlSample.append(jetMetDphiMinC.get2ToId());
+   
+   
   
    if (!ISDATA_FLAG && using_zlljets_MCsample_flag) zlljetsControlSample.append(recoGenLepMatchC.get2ToId());
 
@@ -674,6 +684,7 @@ void zlljetsControlSample::loop(const char* configFileName, const Int_t ISDATA_F
 
      nLepLoose = *ptr_nLepLoose;          
      nLep10V = *ptr_nLep10V;
+     nLepTight = *ptr_nLepTight;
 
      //Double_t ZgenMass;        // not used for now
      Double_t ZtoLLGenPt = 0;    // filled below (only if running on MC DYJetsToLL)
@@ -705,7 +716,13 @@ void zlljetsControlSample::loop(const char* configFileName, const Int_t ISDATA_F
 
      }
 
-     recoLepFound_flag = myGetPairIndexInArray(LEP_PDG_ID, nLepGood, LepGood_pdgId, firstIndex, secondIndex);  
+     // recoLepFound_flag = myGetPairIndexInArray(LEP_PDG_ID, nLepGood, LepGood_pdgId, firstIndex, secondIndex);  
+
+     // look if the first two good leptons are OS/SF (flavour depending on config file)
+     // the check for 2 OS/SF leptons in LepGood list is just useful to speed up things, but would not be necessary if other variables or computations that require this condition are only used at the end of selection (which already includes 2 OS/SF condition).
+     // thus, we evaluate this right now and use this pice of information for later use
+     if ( (fabs(LepGood_pdgId[firstIndex]) ==  LEP_PDG_ID) && (LepGood_pdgId[firstIndex] == -LepGood_pdgId[secondIndex]) ) recoLepFound_flag = 1;
+     else recoLepFound_flag = 0;
 
      if (recoLepFound_flag) {
        l1reco.SetPtEtaPhiM(LepGood_pt[firstIndex],LepGood_eta[firstIndex],LepGood_phi[firstIndex],LepGood_mass[firstIndex]);
@@ -775,16 +792,16 @@ void zlljetsControlSample::loop(const char* configFileName, const Int_t ISDATA_F
      if (recoLepFound_flag) {
 
        eventMask += HLTlepC.addToMask(HLT_passed_flag);     
-       eventMask += oppChargeLeptonsC.addToMask(1);
-       eventMask += twoLeptonsC.addToMask(1);
+       eventMask += oppChargeLeptonsC.addToMask(1); // include in recoLepFound_flag togehter with correct flavour
        eventMask += twoLepLooseC.addToMask(nLepLoose == 2);
-       eventMask += lep1ptC.addToMask((LepGood_pt[firstIndex] > LEP1PT)); 
-       eventMask += lep1etaC.addToMask( (fabs(LepGood_eta[firstIndex]) < LEP1ETA) );
-       eventMask += lep2ptC.addToMask((LepGood_pt[secondIndex] > LEP2PT) );
-       eventMask += lep2etaC.addToMask((fabs(LepGood_eta[secondIndex]) < LEP2ETA) );
+       eventMask += tightLepC.addToMask(nLepTight > 0);
+       // eventMask += lep1ptC.addToMask((LepGood_pt[firstIndex] > LEP1PT)); 
+       // eventMask += lep1etaC.addToMask( (fabs(LepGood_eta[firstIndex]) < LEP1ETA) );
+       // eventMask += lep2ptC.addToMask((LepGood_pt[secondIndex] > LEP2PT) );
+       // eventMask += lep2etaC.addToMask((fabs(LepGood_eta[secondIndex]) < LEP2ETA) );
        eventMask += invMassC.addToMask((mZ1 > DILEPMASS_LOW) && (mZ1 < DILEPMASS_UP));     
-       eventMask += lep1tightIdIso04C.addToMask((LepGood_tightId[firstIndex] > 0.5 ) && (LepGood_relIso04[firstIndex] < LEP_ISO_04 ) );
-       eventMask += lep2tightIdIso04C.addToMask((LepGood_tightId[secondIndex] > 0.5) && (LepGood_relIso04[secondIndex] < LEP_ISO_04 ) );
+       // eventMask += lep1tightIdIso04C.addToMask((LepGood_tightId[firstIndex] > 0.5 ) && (LepGood_relIso04[firstIndex] < LEP_ISO_04 ) );
+       // eventMask += lep2tightIdIso04C.addToMask((LepGood_tightId[secondIndex] > 0.5) && (LepGood_relIso04[secondIndex] < LEP_ISO_04 ) );
       
      }
 
@@ -792,12 +809,14 @@ void zlljetsControlSample::loop(const char* configFileName, const Int_t ISDATA_F
 
      // test matching of reco and gen lep for DY MC 
      if (!ISDATA_FLAG && using_zlljets_MCsample_flag) {
-
-       //enter this part if 2 OS/SF leptons were found among gen and reco particles. Now checking compatibilities between pairs
-       // e.g. l1gen = e+, l2gen = e- ; l1reco = e+, l2reco = e- (but the charge order might not coincide)
-       // now we require a DeltaR cut between them to assess that lreco comes from lgen
-       // since 2 OS/SF were found to get inside here, if !(l1gen->l1reco && l2gen->l2reco) then for sure l1gen->l2reco && l2gen->l1reco
+    
+       // now we require a DeltaR cut between gen-level and reco-level leptons (mu or e) from Z in Drell-Yan events to assess that lreco comes from lgen
        
+       // since genLepFound_flag && recoLepFound_flag require 2 OS/SF leptons (with correct flavour) to be found in their lists, we have two possible cases:
+       // 1) the first gen lepton and the first reco lepton have same charge
+       // 2) the first gen lepton and the first reco lepton have opposite charge
+       // if the first case is not satisfied, then the second will automatically be
+
        if (genLepFound_flag && recoLepFound_flag) {       
 
 	 Double_t DeltaR_lreco_lgen_pair1 = 0.0;
@@ -948,19 +967,19 @@ void zlljetsControlSample::loop(const char* configFileName, const Int_t ISDATA_F
 
    // in case a step wold be present for some sample but not for others (e.g. the RecoGen match done only in Zll MC), the step is referred to as -1 and the corresponding values are set to -1, so that, when printing the table, yields will be filled with " / / " which means " uneffected" (because that step was not done)
 
-   selStep.push_back(zlljetsControlSample.whichStepHas(oppChargeLeptonsC.get2ToId()) - 1);  
-   selStep.push_back(zlljetsControlSample.whichStepHas(oppChargeLeptonsC.get2ToId()));
+   selStep.push_back(zlljetsControlSample.whichStepHas(twoLepLooseC.get2ToId()) - 1);  
    selStep.push_back(zlljetsControlSample.whichStepHas(twoLepLooseC.get2ToId()));
-   selStep.push_back(zlljetsControlSample.whichStepHas(twoLeptonsC.get2ToId()));
-   selStep.push_back(zlljetsControlSample.whichStepHas(maskTightTag));
+   selStep.push_back(zlljetsControlSample.whichStepHas(tightLepC.get2ToId()));
+   selStep.push_back(zlljetsControlSample.whichStepHas(oppChargeLeptonsC.get2ToId()));  
    selStep.push_back(zlljetsControlSample.whichStepHas(invMassC.get2ToId()));
-   selStep.push_back(zlljetsControlSample.whichStepHas(bjetVetoC.get2ToId()));
-   selStep.push_back(zlljetsControlSample.whichStepHas(jet1C.get2ToId()));
-   selStep.push_back(zlljetsControlSample.whichStepHas(jetMetDphiMinC.get2ToId()));
-   selStep.push_back(zlljetsControlSample.whichStepHas(jetNoiseCleaningC.get2ToId()));
    selStep.push_back(zlljetsControlSample.whichStepHas(lepLooseVetoC.get2ToId()));
-   selStep.push_back(zlljetsControlSample.whichStepHas(gammaLooseVetoC.get2ToId()));
    if (TAU_VETO_FLAG) selStep.push_back(zlljetsControlSample.whichStepHas(tauLooseVetoC.get2ToId()));
+   selStep.push_back(zlljetsControlSample.whichStepHas(gammaLooseVetoC.get2ToId()));
+   selStep.push_back(zlljetsControlSample.whichStepHas(bjetVetoC.get2ToId()));
+   if (METNOLEP_START != 0) selStep.push_back(zlljetsControlSample.whichStepHas(metNoLepStartC.get2ToId()));
+   selStep.push_back(zlljetsControlSample.whichStepHas(jet1C.get2ToId()));
+   selStep.push_back(zlljetsControlSample.whichStepHas(jetNoiseCleaningC.get2ToId()));
+   selStep.push_back(zlljetsControlSample.whichStepHas(jetMetDphiMinC.get2ToId()));
    if (!ISDATA_FLAG && using_zlljets_MCsample_flag)  selStep.push_back(zlljetsControlSample.whichStepHas(recoGenLepMatchC.get2ToId()));
    else selStep.push_back(selStep.back());  // in this case copy the previous entry
 
