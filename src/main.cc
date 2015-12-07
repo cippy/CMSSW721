@@ -42,9 +42,10 @@ int main(int argc, char* argv[]) {
   char configFileName[200];
   std::strcpy(configFileName,argv[1]);
 
-  Double_t lepton_PDGID;
+  Int_t lepton_PDGID;
   Int_t isdata_flag;
   Int_t tau_veto_flag;
+  Double_t metnolep_start;
   string treePath;
   string friendTreePath;
   string option = "";
@@ -128,6 +129,15 @@ int main(int argc, char* argv[]) {
 	if (parameterName == "TAU_VETO_FLAG") {
 
 	  tau_veto_flag = (Int_t) value;
+
+	  if (tau_veto_flag == 0) std::cout << "Not applying tau veto" << std::endl;
+	  else std::cout << "Applying tau veto" << std::endl;
+
+	}
+
+	if (parameterName == "METNOLEP_START") {
+
+	  metnolep_start = (Double_t) value;
 
 	  if (tau_veto_flag == 0) std::cout << "Not applying tau veto" << std::endl;
 	  else std::cout << "Applying tau veto" << std::endl;
@@ -346,21 +356,20 @@ int main(int argc, char* argv[]) {
     } else if (controlSample_flag == 1) {
 
       selectionDefinition.push_back("entry point");        
-      selectionDefinition.push_back("preselection");   // include genLep, HLT, MetNoLep
-      selectionDefinition.push_back("2lep SF/OS");
+      selectionDefinition.push_back("preselection");   // include genLep, HLT
       selectionDefinition.push_back("2lep loose");
-      if (fabs(lepton_PDGID) == 13) selectionDefinition.push_back("muons");
-      else if (fabs(lepton_PDGID) == 11) selectionDefinition.push_back("electrons");
-      selectionDefinition.push_back("tight Tag");
+      selectionDefinition.push_back(">0 tight lep");
+      selectionDefinition.push_back("2lep SF/OS");
       selectionDefinition.push_back("mll");
-      selectionDefinition.push_back("bjet veto");
-      selectionDefinition.push_back("jet1pt");
-      selectionDefinition.push_back("dphiMin(j,Met)");
-      selectionDefinition.push_back("jet1 cleaning");
       if (fabs(lepton_PDGID) == 13) selectionDefinition.push_back("electron veto");
       else if (fabs(lepton_PDGID) == 11) selectionDefinition.push_back("muon veto");
-      selectionDefinition.push_back("photon veto");
       if (tau_veto_flag) selectionDefinition.push_back("tau veto");
+      selectionDefinition.push_back("photon veto");
+      if (metnolep_start != 0) selectionDefinition.push_back("recoil > 200");
+      selectionDefinition.push_back("bjet veto");
+      selectionDefinition.push_back("jet1pt");
+      selectionDefinition.push_back("jet1 cleaning");
+      selectionDefinition.push_back("dphiMin(j,Met)");        
       selectionDefinition.push_back("lep match");
 
     } else if (metResolutionAndResponse_flag == 1) {
