@@ -129,6 +129,7 @@ void monojet_SignalRegion::loop(const char* configFileName, const Int_t ISDATA_F
    fChain->SetBranchStatus("ecalfilter",1);
    fChain->SetBranchStatus("hbheFilterNew25ns",1);
    fChain->SetBranchStatus("hbheFilterIso",1);
+
    //added on November 2015. These are new variables (except for weight, which has just changed in the definition)
    fChain->SetBranchStatus("nBTag15",1);  // for b-jet veto
    fChain->SetBranchStatus("dphijm",1);          // flag for dphi minimum between met and any of the jets in the event (using only the first four jets
