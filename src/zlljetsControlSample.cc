@@ -603,7 +603,7 @@ void zlljetsControlSample::loop(const char* configFileName, const Int_t ISDATA_F
 
      if(!ISDATA_FLAG && !unweighted_event_flag) {
 
-       newwgt = LUMI * weight /*/ events_ntot*/;  // starting from 17 November, "events_ntot" substitutes SUMWEIGHT and is already present in the trees. Same for weight, which is now defined as "1000 * xsec * genWeight" (1000*xsec is the cross section in fb, since xsec is in pb.)
+       newwgt = LUMI * weight * vtxWeight/*/ events_ntot*/;  // starting from 17 November, "events_ntot" substitutes SUMWEIGHT and is already present in the trees. Same for weight, which is now defined as "1000 * xsec * genWeight" (1000*xsec is the cross section in fb, since xsec is in pb.)
        // I found out that division by events_ntot was already included in weight definition
 
      }
