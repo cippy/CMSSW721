@@ -70,4 +70,6 @@ void mySumWeight_filler_spring15_25ns_2lepSkim(const std::string,  std::vector<D
 
 void myEventsInSubsamples_filler_spring15_25ns_2lepSkim(const std::string,  std::vector<Int_t> &);
 
+Double_t myGetUncertainty(const mask*, const Int_t, const std::string);
+
 #endif
