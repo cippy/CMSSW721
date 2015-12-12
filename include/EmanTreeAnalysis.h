@@ -38,21 +38,23 @@ namespace myAnalyzerTEman {
   class zlljetsControlSample : public AnalysisDarkMatter {
   public:
 
-    zlljetsControlSample(TTree *tree, const char*);  // the char* is the sample's name (e.g. QCD, Znunu, ecc...)
+    zlljetsControlSample(TTree *tree, const char*, const std::string);  // the char* is the sample's name (e.g. QCD, Znunu, ecc...)
     virtual ~zlljetsControlSample() { std::cout<<"~zlljetsControlSample() called"<<std::endl; }
   
     void loop(const char* configFileName, const Int_t ISDATA_FLAG, const Int_t unweighted_event_flag, std::vector< Double_t > &, std::vector< Double_t > &, std::vector< Double_t > &);
     std::string suffix;
+    std::string uncertainty;
   };
 
   class monojet_SignalRegion : public AnalysisDarkMatter {
   public:
 
-    monojet_SignalRegion(TTree *tree, const char*);  // the char* is the sample's name (e.g. QCD, Znunu, ecc...)
+    monojet_SignalRegion(TTree *tree, const char*, const std::string);  // the char* is the sample's name (e.g. QCD, Znunu, ecc...)
     virtual ~monojet_SignalRegion() { std::cout<<"~monojet_SignalRegion() called"<<std::endl; }
   
     void loop(const char* configFileName, const Int_t ISDATA_FLAG, const Int_t unweighted_event_flag, std::vector< Double_t > &, std::vector< Double_t > &, std::vector< Double_t > &);
     std::string suffix;
+    std::string uncertainty;
   };
 
   class zlljets_metResoResp : public AnalysisDarkMatter {
