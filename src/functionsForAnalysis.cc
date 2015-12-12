@@ -1167,7 +1167,8 @@ Double_t myGetUncertainty(const mask* m, const Int_t mstep, const std::string un
     std::size_t pos = uncDef.find("%");  // e.g. uncDef = "20.5%" 
     std::string substr = uncDef.substr(0,pos);  //copy till %, e.g. 20.5
     char *p; 
-    return strtod(substr.c_str(),&p);      // return 3.5 as a double number
+    Double_t unc = strtod(substr.c_str(),&p) / 100.; //e.g. 20% --> 0.2
+    return  unc * m->getEvents(mstep);      // return fraction of yield according to percentage
   }
 
 }
