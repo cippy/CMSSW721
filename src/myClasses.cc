@@ -597,7 +597,8 @@ void selection::printActiveSelections(ostream & myOutStream) {
   myOutStream<<"------------------------------------------------------------------------------------------"<<endl;
   myOutStream<<"Printing list of activated selections"<<endl;
   myOutStream<<"------------------------------------------------------------------------------------------"<<endl;
-  for (Int_t i = 0; i < selection::getNSelections(); i++ ) {
+  Int_t nsel = selection::getNSelections();
+  for (Int_t i = 0; i < nsel; i++ ) {
     if ( selection::listOfSelections[i]->isActive() ) {
       selection::listOfSelections[i]->printAllInfo(myOutStream);
     }

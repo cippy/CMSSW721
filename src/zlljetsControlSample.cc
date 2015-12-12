@@ -445,8 +445,8 @@ void zlljetsControlSample::loop(const char* configFileName, const Int_t ISDATA_F
        recoGenLepMatchC.set("recoGenMuMatchC","reco-gen match (DR = 0.1)","only for zlljets: looks for matching of reco and gen particles");      
      }
 
-     metNoLepStartC.set("metNoMu200C",Form("metNoMu > %2.0lf",METNOLEP_START));
-     HLTlepC.set("HLTmuonC","HLT for muons");
+     if (METNOLEP_START != 0) metNoLepStartC.set("metNoMu200C",Form("metNoMu > %2.0lf",METNOLEP_START));
+     if (HLT_FLAG != 0) HLTlepC.set("HLTmuonC","HLT for muons");
      // lep2tightIdIso04C.set("mu2tightIdIso04C","trailing muon tight","tight ID + relIso04 (as Emanuele)");
 
 
@@ -475,8 +475,8 @@ void zlljetsControlSample::loop(const char* configFileName, const Int_t ISDATA_F
        recoGenLepMatchC.set("recoGenEleMatchC","reco-gen match (DR = 0.1)","only for zlljets: looks for matching of reco and gen particles");    
      }
 
-     metNoLepStartC.set("metNoEle200C",Form("metNoEle > %2.0lf",METNOLEP_START));
-     HLTlepC.set("HLTelectronC","HLT for electrons");
+     if (METNOLEP_START != 0) metNoLepStartC.set("metNoEle200C",Form("metNoEle > %2.0lf",METNOLEP_START));
+     if (HLT_FLAG != 0) HLTlepC.set("HLTelectronC","HLT for electrons");
      // lep2tightIdIso04C.set("ele2tightIdIso04C","trailing electron tight","tight ID + relIso04 (as Emanuele)");
 
    }
@@ -496,29 +496,11 @@ void zlljetsControlSample::loop(const char* configFileName, const Int_t ISDATA_F
    }
 
    if (MET_FILTERS_FLAG != 0) zlljetsControlSample.append(metFiltersC.get2ToId());
-
    if ( HLT_FLAG != 0 ) zlljetsControlSample.append(HLTlepC.get2ToId());
-
-   if (fabs(LEP_PDG_ID) == 13) {  
-
-     // maskTightTag = lep1tightIdIso04C.get2ToId() + /* lep2tightIdIso04C.get2ToId() +*/lep1ptC.get2ToId() + lep2ptC.get2ToId() + lep1etaC.get2ToId() + lep2etaC.get2ToId();  ;  // for now tight requirements on pt and eta are already included in the loose condition because they coincide (not true for electrons)
-
-     zlljetsControlSample.append(twoLepLooseC.get2ToId());
-     zlljetsControlSample.append(tightLepC.get2ToId());
-     zlljetsControlSample.append(oppChargeLeptonsC.get2ToId());     
-     zlljetsControlSample.append(invMassC.get2ToId());
-
-   } else if (fabs(LEP_PDG_ID) == 11) {  
-
-     //maskTightTag = lep1tightIdIso04C.get2ToId() /*+ lep2tightIdIso04C.get2ToId() */+ lep1ptC.get2ToId() + lep2ptC.get2ToId() + lep1etaC.get2ToId() + lep2etaC.get2ToId();
-
-     zlljetsControlSample.append(twoLepLooseC.get2ToId());
-     zlljetsControlSample.append(tightLepC.get2ToId());
-     zlljetsControlSample.append(oppChargeLeptonsC.get2ToId());
-     zlljetsControlSample.append(invMassC.get2ToId());
-
-   }
-   
+   zlljetsControlSample.append(twoLepLooseC.get2ToId());
+   zlljetsControlSample.append(tightLepC.get2ToId());
+   zlljetsControlSample.append(oppChargeLeptonsC.get2ToId());     
+   zlljetsControlSample.append(invMassC.get2ToId());
    zlljetsControlSample.append(lepLooseVetoC.get2ToId());
    if (TAU_VETO_FLAG) zlljetsControlSample.append(tauLooseVetoC.get2ToId());
    zlljetsControlSample.append(gammaLooseVetoC.get2ToId());
@@ -528,8 +510,6 @@ void zlljetsControlSample::loop(const char* configFileName, const Int_t ISDATA_F
    zlljetsControlSample.append(jetNoiseCleaningC.get2ToId());
    zlljetsControlSample.append(jetMetDphiMinC.get2ToId());
    
-   
-  
    if (!ISDATA_FLAG && using_zlljets_MCsample_flag) zlljetsControlSample.append(recoGenLepMatchC.get2ToId());
 
 
