@@ -42,9 +42,10 @@ using namespace myAnalyzerTEman;
 
 #ifdef monojet_SignalRegion_cxx
 
-monojet_SignalRegion::monojet_SignalRegion(TTree *tree, const char* inputSuffix) : AnalysisDarkMatter(tree) {
+monojet_SignalRegion::monojet_SignalRegion(TTree *tree, const char* inputSuffix, const string inputUncertainty) : AnalysisDarkMatter(tree) {
   //cout <<"check in constructor "<<endl;
   suffix = inputSuffix;  // it is the sample name (e.g. QCD, ZJetsToNuNu ecc...)
+  uncertainty = inputUncertainty; //sample uncertainty (poisson, MC, X%), 
   Init(tree);
 
 }

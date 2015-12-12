@@ -47,6 +47,7 @@ int main(int argc, char* argv[]) {
   Int_t tau_veto_flag;
   Double_t metnolep_start;
   Int_t met_filters_flag;
+  string uncertainty; // say which uncertainty is to be used for yields in a sample. Can be "poisson", "MC", "X%"
   string treePath;
   string friendTreePath;
   string option = "";
@@ -441,6 +442,13 @@ int main(int argc, char* argv[]) {
 
 	    }  
 
+	    if (parameterName == "UNCERTAINTY") {
+
+	      uncertainty = name;
+	      std::cout << setw(20) << "sample uncetainty : " << name <<std::endl;
+
+	    }  
+
 	    if (parameterName == "TREE_PATH") {
 
 	      treePath = name;
@@ -480,12 +488,12 @@ int main(int argc, char* argv[]) {
  
 	  if (signalRegion_flag == 1) {
 
-	    monojet_SignalRegion tree( chain , sampleName[nSample].c_str());
+	    monojet_SignalRegion tree( chain , sampleName[nSample].c_str(), uncertainty);
 	    tree.loop(configFileName, isdata_flag, unweighted_event_flag, yieldsRow, efficiencyRow, uncertaintyRow); 
 
 	  } else if (controlSample_flag == 1) {
 
-	    zlljetsControlSample tree( chain , sampleName[nSample].c_str());
+	    zlljetsControlSample tree( chain , sampleName[nSample].c_str(), uncertainty);
 	    tree.loop(configFileName, isdata_flag, unweighted_event_flag, yieldsRow, efficiencyRow, uncertaintyRow); 
 
 	  } else if (metResolutionAndResponse_flag == 1) {

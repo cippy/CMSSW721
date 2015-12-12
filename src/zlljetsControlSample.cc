@@ -43,9 +43,10 @@ using namespace myAnalyzerTEman;
 
 #ifdef zlljetsControlSample_cxx
 
-zlljetsControlSample::zlljetsControlSample(TTree *tree, const char* inputSuffix) : AnalysisDarkMatter(tree) {
+zlljetsControlSample::zlljetsControlSample(TTree *tree, const char* inputSuffix, const string inputUncertainty = "") : AnalysisDarkMatter(tree) {
   //cout <<"check in constructor "<<endl;
   suffix = inputSuffix;  // it is the sample name (e.g. QCD, ZJetsToNuNu ecc...)
+  uncertainty = inputUncertainty;  // sample uncertainty
   //edimarcoTree_v3::Init(tree);
   AnalysisDarkMatter::Init(tree);  // could also be just Init(tree)
 
@@ -905,7 +906,8 @@ void zlljetsControlSample::loop(const char* configFileName, const Int_t ISDATA_F
    for(Int_t i = 0; i < selStep.size(); i++) {
      
      yRow.push_back(zlljetsControlSample.nEvents[selStep[i]]);
-     uncRow.push_back(sqrt(yRow.back()));
+     //uncRow.push_back(sqrt(yRow.back()));
+     uncRow.push_back(myGetUncertainty(&zlljetsControlSample, selStep[i], uncertainty));
      if (i == 0) eRow.push_back(zlljetsControlSample.nEvents[selStep[i]]/nTotalWeightedEvents);
      else if( (i != 0) && (zlljetsControlSample.nEvents[selStep[i]-1] == 0) ) eRow.push_back(1.0000);
      else eRow.push_back(zlljetsControlSample.nEvents[selStep[i]]/zlljetsControlSample.nEvents[selStep[i]-1]);
