@@ -1158,3 +1158,16 @@ void myEventsInSubsamples_filler_spring15_25ns_2lepSkim(const std::string suffix
 
 }
 
+
+Double_t myGetUncertainty(const mask* m, const Int_t mstep, const std::string uncDef) {
+
+  if (uncDef == "" || uncDef == "poisson") return  m->getSqrtEvents(mstep);
+  else if (uncDef == "MC") return m->getEventsErr(mstep);
+  else if (uncDef.find("%") != std::string::npos) {
+    std::size_t pos = uncDef.find("%");  // e.g. uncDef = "20.5%" 
+    std::string substr = uncDef.substr(0,pos);  //copy till %, e.g. 20.5
+    char *p; 
+    return strtod(substr.c_str(),&p);      // return 3.5 as a double number
+  }
+
+}
