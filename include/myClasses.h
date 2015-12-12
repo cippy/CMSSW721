@@ -158,8 +158,9 @@ class selection {
    std::string definition_;
    std::string comment_;
    Int_t id_;          //identifies selection in the mask (is 0 for the first selection, 1 for the second, 2 for the third ecc...)
-   UInt_t twoToId_;
-   static Int_t nSelections_; // total number of variables on which a selection is applied (or now, if I need different thresholds for the same variable, each one counts as a different selection
+   UInt_t twoToId_;     // 2^id_; this number has all 0 digits except for the bit corresponding to the selection, which is set to 1.
+   static Int_t nSelections_; // total number of variables on which a selection is applied 
+   // a selection can consist of more than 1 cut e.g. for invariant mass, where we have an interval
 
 };
 
