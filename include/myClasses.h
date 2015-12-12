@@ -25,6 +25,7 @@ class mask {
   std::string getName() const { return name_; }
   Int_t getMaskSize() const { return singleMask.size(); }
   Double_t getEvents(const Int_t i) const { return nEvents.at(i); }
+  Double_t getSqrtEvents(const Int_t i) const { return sqrt(nEvents.at(i)); }
   Double_t getEvents2(const Int_t i) const { return nEvents.at(i) * nEvents.at(i); }
   Double_t getEventsErr(const Int_t i) const { return sqrt(nEventsErr2.at(i)); }
   Double_t getEventsErr2(const Int_t i) const { return nEventsErr2.at(i); }
