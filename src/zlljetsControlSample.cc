@@ -77,12 +77,7 @@ void zlljetsControlSample::loop(const char* configFileName, const Int_t ISDATA_F
    fChain->SetBranchStatus("dphijj",1);          // dphi between 1st and 2nd jet, 999 if second jet doesn't exist
    fChain->SetBranchStatus("nJetClean30",1);    // # of jet with pt > 30 & eta < 2.5 and cleaning for against muons misidentified as PFjets   
    fChain->SetBranchStatus("JetClean_pt",1);  
-   fChain->SetBranchStatus("JetClean_eta",1);  
-   // fChain->SetBranchStatus("nJet",1);         // # of jets with pt > 25 && |eta| < 2.5
-   // fChain->SetBranchStatus("nJet30",1);         // # of jets with pt > 30 && |eta| < 2.4
-   // fChain->SetBranchStatus("nJet30a",1);       // # of jets with pt > 30 && |eta| < 4.7 
-   // fChain->SetBranchStatus("Jet_pt",1);  
-   // fChain->SetBranchStatus("Jet_eta",1);  
+   fChain->SetBranchStatus("JetClean_eta",1); 
  
    fChain->SetBranchStatus("nLepGood",1);
    fChain->SetBranchStatus("LepGood_pdgId",1);  // must be 13 for muons ( -13 for mu+), 11 for electrons and 15 for taus
@@ -875,11 +870,11 @@ void zlljetsControlSample::loop(const char* configFileName, const Int_t ISDATA_F
    if (using_zlljets_MCsample_flag == 1 || using_ztautaujets_MCsample_flag == 1) {
      yRow.push_back(zlljetsControlSample.nEvents[0]); // [0] refers to genLep, which is the first selection in these cases
      eRow.push_back(1.0000);
-     uncRow.push_back(sqrt(zlljetsControlSample.nEvents[0]));
+     uncRow.push_back(myGetUncertainty(&zlljetsControlSample, zlljetsControlSample.whichStepHas(genLepC.get2ToId()), uncertainty));
    } else {
      yRow.push_back(nTotalWeightedEvents); // [0] 
      eRow.push_back(1.0000);
-     uncRow.push_back(sqrt(nTotalWeightedEvents));
+     uncRow.push_back(sqrt(nTotalWeightedEvents)); //should use a kind of myGetUncertainty function, but I don't save sum of newwgt^2 so I can't use MC uncertainty
    }
 
    vector<Int_t> selStep;   //array to store index of step to form selection flow (might want to consider two or more steps together and not separated)

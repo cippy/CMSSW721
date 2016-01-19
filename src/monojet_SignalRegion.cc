@@ -72,18 +72,10 @@ void monojet_SignalRegion::loop(const char* configFileName, const Int_t ISDATA_F
    fChain->SetBranchStatus("nTauClean18V",1);
 
    fChain->SetBranchStatus("dphijj",1);          // dphi between 1st and 2nd jet, 999 if second jet doesn't exist
-   fChain->SetBranchStatus("jetclean1",1);      // 1 if jet is cleaned, 0 otherwise
-   fChain->SetBranchStatus("jetclean2",1);      // 1 if jet is cleaned, 0 otherwise
    fChain->SetBranchStatus("nJetClean30",1);    // # of jet with pt > 30 & eta < 2.5 and cleaning for against muons misidentified as PFjets   
    fChain->SetBranchStatus("JetClean_pt",1);  
    fChain->SetBranchStatus("JetClean_eta",1);  
    
-   // fChain->SetBranchStatus("nJet",1);         // # of jets with pt > 25 && |eta| < 2.5
-   // fChain->SetBranchStatus("nJet30",1);         // # of jets with pt > 30 && |eta| < 2.4
-   // fChain->SetBranchStatus("nJet30a",1);       // # of jets with pt > 30 && |eta| < 4.7 
-   // fChain->SetBranchStatus("Jet_pt",1);  
-   // fChain->SetBranchStatus("Jet_eta",1);  
- 
    fChain->SetBranchStatus("nLepGood",1);
    fChain->SetBranchStatus("LepGood_pdgId",1);  // must be 13 for muons ( -13 for mu+), 11 for electrons and 15 for taus
    fChain->SetBranchStatus("LepGood_pt",1);
@@ -561,7 +553,7 @@ void monojet_SignalRegion::loop(const char* configFileName, const Int_t ISDATA_F
    // entry point
    yRow.push_back(nTotalWeightedEvents);
    eRow.push_back(1.0000);
-   uncRow.push_back(sqrt(nTotalWeightedEvents));
+   uncRow.push_back(sqrt(nTotalWeightedEvents)); //should use a kind of myGetUncertainty function, but I don't save sum of newwgt^2 so I can't use MC uncertainty
    
    vector<Int_t> selStep;   //array to store index of step to form selection flow (might want to consider two or more steps together and not separated)
 
@@ -579,7 +571,7 @@ void monojet_SignalRegion::loop(const char* configFileName, const Int_t ISDATA_F
    for(Int_t i = 0; i < selStep.size(); i++) {
   
      yRow.push_back(monojet_SignalRegion.nEvents[selStep[i]]);
-     uncRow.push_back(sqrt(yRow.back()));
+     uncRow.push_back(myGetUncertainty(&monojet_SignalRegion, selStep[i], uncertainty));
      if (i == 0) eRow.push_back(monojet_SignalRegion.nEvents[selStep[i]]/nTotalWeightedEvents);
      else if( (i != 0) && (monojet_SignalRegion.nEvents[selStep[i]-1] == 0) ) eRow.push_back(1.0000);
      else eRow.push_back(monojet_SignalRegion.nEvents[selStep[i]]/monojet_SignalRegion.nEvents[selStep[i]-1]);
