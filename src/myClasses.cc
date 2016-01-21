@@ -609,7 +609,7 @@ void selection::printActiveSelections(ostream & myOutStream) {
 
 void selection::checkMaskLength() {
 
-  if (selection::getNSelections() > 8*sizeof(UInt_t)) {
+  if ( (UInt_t) selection::getNSelections() > 8*sizeof(UInt_t)) {
     cout<<"Warning: not enough bits in the mask to accomodate all "<<selection::getNSelections()<<" selections (max is "<<8*sizeof(UInt_t)<<")"<<endl;
     cout<<"End of programme."<<endl;
     exit(EXIT_FAILURE);
