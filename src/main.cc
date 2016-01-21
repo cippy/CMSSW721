@@ -488,18 +488,18 @@ int main(int argc, char* argv[]) {
  
 	  if (signalRegion_flag == 1) {
 
-	    monojet_SignalRegion tree( chain , sampleName[nSample].c_str(), uncertainty);
-	    tree.loop(configFileName, isdata_flag, unweighted_event_flag, yieldsRow, efficiencyRow, uncertaintyRow); 
+	    monojet_SignalRegion tree( chain , sampleName[nSample].c_str(), uncertainty, configFileName, isdata_flag, unweighted_event_flag);
+	    tree.loop(yieldsRow, efficiencyRow, uncertaintyRow); 
 
 	  } else if (controlSample_flag == 1) {
 
-	    zlljetsControlSample tree( chain , sampleName[nSample].c_str(), uncertainty);
-	    tree.loop(configFileName, isdata_flag, unweighted_event_flag, yieldsRow, efficiencyRow, uncertaintyRow); 
+	    zlljetsControlSample tree( chain , sampleName[nSample].c_str(), uncertainty, configFileName, isdata_flag, unweighted_event_flag);
+	    tree.loop(yieldsRow, efficiencyRow, uncertaintyRow); 
 
 	  } else if (metResolutionAndResponse_flag == 1) {
 
-	    zlljets_metResoResp tree( chain , sampleName[nSample].c_str());
-	    tree.loop(configFileName, isdata_flag, unweighted_event_flag, yieldsRow, efficiencyRow, uncertaintyRow); 
+	    zlljets_metResoResp tree( chain , sampleName[nSample].c_str(), configFileName, isdata_flag, unweighted_event_flag);
+	    tree.loop(yieldsRow, efficiencyRow, uncertaintyRow); 
 
 	  }
 
