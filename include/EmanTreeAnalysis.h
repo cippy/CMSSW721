@@ -38,33 +38,31 @@ namespace myAnalyzerTEman {
   class zlljetsControlSample : public AnalysisDarkMatter {
   public:
 
-    zlljetsControlSample(TTree *tree, const char*, const std::string);  // the char* is the sample's name (e.g. QCD, Znunu, ecc...)
+    zlljetsControlSample(TTree *tree, const char*, const std::string, const char*, const Int_t, const Int_t);  // the char* is the sample's name (e.g. QCD, Znunu, ecc...), then configFileName, isDataFlag and unweightedEventFlag
     virtual ~zlljetsControlSample() { std::cout<<"~zlljetsControlSample() called"<<std::endl; }
   
-    void loop(const char* configFileName, const Int_t ISDATA_FLAG, const Int_t unweighted_event_flag, std::vector< Double_t > &, std::vector< Double_t > &, std::vector< Double_t > &);
-    std::string suffix;
-    std::string uncertainty;
+    void loop(std::vector< Double_t > &, std::vector< Double_t > &, std::vector< Double_t > &);
+    
   };
 
   class monojet_SignalRegion : public AnalysisDarkMatter {
   public:
 
-    monojet_SignalRegion(TTree *tree, const char*, const std::string);  // the char* is the sample's name (e.g. QCD, Znunu, ecc...)
+    monojet_SignalRegion(TTree *tree, const char*, const std::string, const char*, const Int_t, const Int_t);  // the char* is the sample's name (e.g. QCD, Znunu, ecc...), then configFileName, isDataFlag and unweightedEventFlag
     virtual ~monojet_SignalRegion() { std::cout<<"~monojet_SignalRegion() called"<<std::endl; }
   
-    void loop(const char* configFileName, const Int_t ISDATA_FLAG, const Int_t unweighted_event_flag, std::vector< Double_t > &, std::vector< Double_t > &, std::vector< Double_t > &);
-    std::string suffix;
-    std::string uncertainty;
+    void loop(std::vector< Double_t > &, std::vector< Double_t > &, std::vector< Double_t > &);
+
   };
 
   class zlljets_metResoResp : public AnalysisDarkMatter {
   public:
 
-    zlljets_metResoResp(TTree *tree, const char*);  // the char* is the sample's name (e.g. QCD, Znunu, ecc...)
+    zlljets_metResoResp(TTree *tree, const char*, const char*, const Int_t, const Int_t);  // the char* is the sample's name (e.g. QCD, Znunu, ecc...), then configFileName, isDataFlag and unweightedEventFlag
     virtual ~zlljets_metResoResp() { std::cout<<"~zlljets_metResoResp() called"<<std::endl; }
   
-    void loop(const char* configFileName, const Int_t ISDATA_FLAG, const Int_t unweighted_event_flag, std::vector< Double_t > &, std::vector< Double_t > &, std::vector< Double_t > &);
-    std::string suffix;
+    void loop(std::vector< Double_t > &, std::vector< Double_t > &, std::vector< Double_t > &);
+  
   };
 
 
