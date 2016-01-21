@@ -42,17 +42,21 @@ using namespace myAnalyzerTEman;
 
 #ifdef monojet_SignalRegion_cxx
 
-monojet_SignalRegion::monojet_SignalRegion(TTree *tree, const char* inputSuffix, const string inputUncertainty) : AnalysisDarkMatter(tree) {
+monojet_SignalRegion::monojet_SignalRegion(TTree *tree, const char* inputSuffix, const string inputUncertainty, const char* inputConfigFileName, const Int_t inputIsDataFlag, const Int_t inputUnweightedEeventFlag) : AnalysisDarkMatter(tree) {
   //cout <<"check in constructor "<<endl;
   suffix = inputSuffix;  // it is the sample name (e.g. QCD, ZJetsToNuNu ecc...)
-  uncertainty = inputUncertainty; //sample uncertainty (poisson, MC, X%), 
+  uncertainty = inputUncertainty; //sample uncertainty (poisson, MC, X%),
+  configFileName = (char*) inputConfigFileName;
+  ISDATA_FLAG = inputIsDataFlag;
+  unweighted_event_flag = inputUnweightedEeventFlag;
+
   Init(tree);
 
 }
 
 #endif
 
-void monojet_SignalRegion::loop(const char* configFileName, const Int_t ISDATA_FLAG, const Int_t unweighted_event_flag, vector< Double_t > &yRow, vector< Double_t > &eRow, vector< Double_t > &uncRow)
+void monojet_SignalRegion::loop(vector< Double_t > &yRow, vector< Double_t > &eRow, vector< Double_t > &uncRow)
 {
 
    if (fChain == 0) return;

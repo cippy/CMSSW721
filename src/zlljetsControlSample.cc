@@ -43,10 +43,13 @@ using namespace myAnalyzerTEman;
 
 #ifdef zlljetsControlSample_cxx
 
-zlljetsControlSample::zlljetsControlSample(TTree *tree, const char* inputSuffix, const string inputUncertainty = "") : AnalysisDarkMatter(tree) {
+zlljetsControlSample::zlljetsControlSample(TTree *tree, const char* inputSuffix, const string inputUncertainty, const char* inputConfigFileName, const Int_t inputIsDataFlag, const Int_t inputUnweightedEeventFlag) : AnalysisDarkMatter(tree) {
   //cout <<"check in constructor "<<endl;
   suffix = inputSuffix;  // it is the sample name (e.g. QCD, ZJetsToNuNu ecc...)
   uncertainty = inputUncertainty;  // sample uncertainty
+  configFileName = (char*) inputConfigFileName;
+  ISDATA_FLAG = inputIsDataFlag;
+  unweighted_event_flag = inputUnweightedEeventFlag;
   //edimarcoTree_v3::Init(tree);
   AnalysisDarkMatter::Init(tree);  // could also be just Init(tree)
 
@@ -54,7 +57,7 @@ zlljetsControlSample::zlljetsControlSample(TTree *tree, const char* inputSuffix,
 
 #endif
 
-void zlljetsControlSample::loop(const char* configFileName, const Int_t ISDATA_FLAG, const Int_t unweighted_event_flag, vector< Double_t > &yRow, vector< Double_t > &eRow, vector< Double_t > &uncRow)
+void zlljetsControlSample::loop(vector< Double_t > &yRow, vector< Double_t > &eRow, vector< Double_t > &uncRow)
 {
 
    if (fChain == 0) return;

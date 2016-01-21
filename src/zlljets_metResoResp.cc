@@ -42,18 +42,25 @@ using namespace myAnalyzerTEman;
 
 #ifdef zlljets_metResoResp_cxx
 
-zlljets_metResoResp::zlljets_metResoResp(TTree *tree, const char* inputSuffix) : edimarcoTree_v2(tree) {
+zlljets_metResoResp::zlljets_metResoResp(TTree *tree, const char* inputSuffix, const char* inputConfigFileName, const Int_t inputIsDataFlag, const Int_t inputUnweightedEeventFlag) : AnalysisDarkMatter(tree) {
   //cout <<"check in constructor "<<endl;
   suffix = inputSuffix;  // it is the sample name (e.g. QCD, ZJetsToNuNu ecc...)
+  configFileName = (char*) inputConfigFileName;
+  ISDATA_FLAG = inputIsDataFlag;
+  unweighted_event_flag = inputUnweightedEeventFlag;
   Init(tree);
 
 }
 
 #endif
 
-void zlljets_metResoResp::loop(const char* configFileName, const Int_t ISDATA_FLAG, const Int_t unweighted_event_flag, vector< Double_t > &yRow, vector< Double_t > &eRow, vector< Double_t > &uncRow)
+void zlljets_metResoResp::loop(vector< Double_t > &yRow, vector< Double_t > &eRow, vector< Double_t > &uncRow)
 {
 
+  //TO BE MODIFIED: COPIED FROM OLD FILE
+
+  /*
+  
    if (fChain == 0) return;
 
    fChain->SetBranchStatus("*",0);  
@@ -555,7 +562,7 @@ void zlljets_metResoResp::loop(const char* configFileName, const Int_t ISDATA_FL
 
    if (fabs(LEP_PDG_ID) == 13) {  
 
-     maskTightTag = lep1tightIdIso04C.get2ToId() + /* lep2tightIdIso04C.get2ToId() +*/lep1ptC.get2ToId() + lep2ptC.get2ToId() + lep1etaC.get2ToId() + lep2etaC.get2ToId();  ;  // for now tight requirements on pt and eta are already included in the loose condition because they coincide (not true for electrons)
+   maskTightTag = lep1tightIdIso04C.get2ToId() + /**//* lep2tightIdIso04C.get2ToId() +*//*lep1ptC.get2ToId() + lep2ptC.get2ToId() + lep1etaC.get2ToId() + lep2etaC.get2ToId();  ;  // for now tight requirements on pt and eta are already included in the loose condition because they coincide (not true for electrons)
    
      resoAndResponse.append(oppChargeLeptonsC.get2ToId());
      resoAndResponse.append(twoLepLooseC.get2ToId());
@@ -1007,11 +1014,11 @@ void zlljets_metResoResp::loop(const char* configFileName, const Int_t ISDATA_FL
 	   }       
     
 	 }  // end of   if ((nvtxBin >= 0) && (nVert < lastnvtx))
-
+											*/
 	 /**************************************************/
 	 // computing met responses
 	 /**************************************************/
-
+  /*
 	 // first of all I make sure that wzpt is in the appropriate range
 	 if ( ZtoLLRecoPt < ZptBinEdgesVector[nBinsForResponse] ) {
 
@@ -1055,11 +1062,11 @@ void zlljets_metResoResp::loop(const char* configFileName, const Int_t ISDATA_FL
        
    }                        // end of loop on entries
 
-   
+  */
    /************************************/
    //                    MET|| & MET_|_ VS NVTX & ZpT
    /************************************/
-
+  /*
    //resolution vs nvtx
 
    Double_t xValues[NVTXS];
@@ -1428,6 +1435,7 @@ void zlljets_metResoResp::loop(const char* configFileName, const Int_t ISDATA_FL
 
    // end of tex file
 
+   */
 }
 
 
