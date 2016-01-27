@@ -420,6 +420,7 @@ Double_t myResolutionFunctionNoB(double* x, double* par) {
 
 }
 
+
 void myAddDefaultPackages(FILE *fp, const char* filename) {
 
   if (fp == NULL) {
@@ -620,6 +621,26 @@ void makeTableTexNoEff(FILE *fp, const Double_t lumi, const Double_t nTotalWeigh
 }
 
 
+void myCreateTexTable(const char* texFileName, const string outputFolder, const Double_t integratedLumi, const Double_t nTotalWeightedEvents, const mask* m) {
+
+  FILE *fp;
+  fp = fopen((outputFolder + texFileName).c_str(),"w");
+
+  if ( fp == NULL)  cout<<"Error: '"<<texFileName<<"' not opened"<<endl;
+  else {
+
+    cout<<"creating file '"<<texFileName<<" in folder " << outputFolder << "' ..."<<endl;
+    myAddDefaultPackages(fp,texFileName);
+    fprintf(fp,"\\begin{document}\n");
+    fprintf(fp,"\n");
+    makeTableTex(fp, integratedLumi, nTotalWeightedEvents, m);
+    fprintf(fp,"\\end{document}\n");      
+    fclose(fp);
+
+  }
+
+}
+
 char myAskToSaveFile(const char* filename) {
 
   char answer = '\0';
@@ -819,6 +840,121 @@ Int_t myPartGenAlgo(const Int_t nGenParticles, const Int_t* particleId, const In
   return found; 
 
 }
+
+
+Int_t myPartGenWLNuAlgo(const Int_t nGenParticles, const Int_t* particleId, const Int_t* particleMotherId, const Int_t part_pdgId, Int_t &firstIndex) {
+
+  // This function looks whether there are a lepton and a neutrino from a W in
+  //the array. It works when using Emanuele's tree.
+  // It also looks for the index of the mother in the list of particles, that is a W
+  // The algorithm looks for a lepton and neutrino (or antineutrino) originating from mother in the list of generated particles.
+  // The function returns 1 if the search is successful, and 0 otherwise
+
+  // first it looks for first leptons; if it's found, flag gets 1, thus only the else if will be evaluated until the secon is found
+
+  Int_t found = 0;  // will become 1 if search is successful, that is to say, two OS particles coming from Z are found
+  //Int_t flag = 0;   // will become 1 when charged lepton from W is found 
+  Int_t i = 0;      // index of the array
+  Int_t Windex = 0;
+  Int_t Wid = 0;
+  Int_t absLepPdgId = fabs(part_pdgId);
+  Int_t negLepPdgId = (-1) * absLepPdgId;
+  Int_t lepPdgId = 0; //will be set as the pdgId of l from W, with right sign
+  Int_t j = 0;
+  Int_t Wfound = 0;
+
+  //first look for a W (assuming there's only 1)
+  while (!Wfound && (j < nGenParticles)) {
+
+    if (fabs(particleId[j]) == 24) {
+
+      Windex = j;
+      Wid = particleId[j];
+      lepPdgId =  (Wid < 0) ? absLepPdgId : negLepPdgId;  // W+ generates l+ which have negative pdgId
+      Wfound = 1;
+    }
+    j++;
+  }
+
+  //if W is found, look for the charged lepton from W decay (we assume that if it is found, there will be the neutrino but we don't check since we don't need parameters for the neutrino)
+
+  if (Wfound) {
+    //cout << "W found: Windex - Wid - lepPdgId - found?" << Windex<< " " <<Wid << " " <<lepPdgId << " " << endl;
+    while ( !found && (i < nGenParticles)) {
+      if ( (particleId[i] == lepPdgId) && (particleMotherId[i] == Wid) ) {
+	firstIndex = i;
+	found = 1;
+	//cout << "particleId[i] : " <<particleId[i] <<" YES" << endl;
+      } 
+      i++;
+    } 
+ 
+    if (!found) {
+      // in case charged lepton from W is not found, assign first element in the list (but function will return 0)
+      firstIndex = 0;
+    
+    }
+
+  }
+
+  return found; 
+
+}
+
+
+Int_t myPartGenWLNuAlgo(const Int_t nGenParticles, const Int_t* particleId, const Int_t* particleMotherId, const Int_t part_pdgId) {
+
+  // This function looks whether there are a lepton and a neutrino from a W in
+  //the array. It works when using Emanuele's tree.
+  // It also looks for the index of the mother in the list of particles, that is a W
+  // The algorithm looks for a lepton and neutrino (or antineutrino) originating from mother in the list of generated particles.
+  // The function returns 1 if the search is successful, and 0 otherwise
+
+  // first it looks for first leptons; if it's found, flag gets 1, thus only the else if will be evaluated until the secon is found
+
+  Int_t found = 0;  // will become 1 if search is successful, that is to say, two OS particles coming from Z are found
+  //Int_t flag = 0;   // will become 1 when charged lepton from W is found 
+  Int_t i = 0;      // index of the array
+  Int_t Windex = 0;
+  Int_t Wid = 0;
+  Int_t absLepPdgId = fabs(part_pdgId);
+  Int_t negLepPdgId = (-1) * absLepPdgId;
+  Int_t lepPdgId = 0; //will be set as the pdgId of l from W, with right sign
+  Int_t j = 0;
+  Int_t Wfound = 0;
+
+  //first look for a W (assuming there's only 1)
+  while (!found && (j < nGenParticles)) {
+
+    if (fabs(particleId[j]) == 24) {
+
+      Windex = j;
+      Wid = particleId[j];
+      lepPdgId =  (Wid > 0) ? absLepPdgId : negLepPdgId;
+      Wfound = 1;
+
+    }
+    j++;
+  }
+
+  //if W is found, look for the charged lepton from W decay (we assume that if it is found, there will be the neutrino but we don't check since we don't need parameters for the neutrino)
+
+  if (Wfound) {
+
+    while (!found && (i < nGenParticles)) {
+      if ( (particleId[i] == lepPdgId) && (particleMotherId[i] == Wid) ) {
+	found = 1;
+      } 
+      i++;
+    } 
+
+  }
+
+  return found; 
+
+}
+
+
 
 Int_t myGetPairIndexInArray(const Int_t id, const Int_t nLep, const Int_t *lep_pdgId, Int_t &firstIndex, Int_t &secondIndex) {
 

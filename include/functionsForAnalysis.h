@@ -41,6 +41,7 @@ void makeTableTex(FILE *, const Double_t, const Double_t, const mask*, const std
 void makeTableTex(FILE *, const Double_t, const Double_t, const mask*);
 void makeTableTexNoEff(FILE *, const Double_t, const Double_t, const mask*, const std::string);
 void makeTableTexNoEff(FILE *, const Double_t, const Double_t, const mask*);
+void myCreateTexTable(const char*, const std::string, const Double_t, const Double_t, const mask*);
 
 char myAskToSaveFile(const char*);
 
@@ -53,6 +54,8 @@ void myPrintEventYields(ostream &, const Double_t, const std::vector<Double_t>);
 Int_t myPartGenAlgo(const Int_t, const Int_t*, const Int_t*, const Int_t, const Int_t);
 Int_t myPartGenAlgo(const Int_t, const Int_t*, const Int_t*, const Int_t, const Int_t, Int_t &, Int_t &);
 Int_t myPartGenAlgo(const Int_t, const Int_t*, const Int_t*, const Int_t, const Int_t, Int_t &, Int_t &, Int_t &, const Int_t*);
+Int_t myPartGenWLNuAlgo(const Int_t, const Int_t*, const Int_t*, const Int_t, Int_t &);
+Int_t myPartGenWLNuAlgo(const Int_t, const Int_t*, const Int_t*, const Int_t);
 
 Int_t myGetPairIndexInArray(const Int_t, const Int_t, const Int_t *, Int_t &, Int_t &);
 Int_t myGetPartIndex(const Int_t, const Int_t, const Int_t*);
