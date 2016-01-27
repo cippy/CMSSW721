@@ -42,12 +42,8 @@ using namespace myAnalyzerTEman;
 
 #ifdef zlljets_metResoResp_cxx
 
-zlljets_metResoResp::zlljets_metResoResp(TTree *tree, const char* inputSuffix, const char* inputConfigFileName, const Int_t inputIsDataFlag, const Int_t inputUnweightedEeventFlag) : AnalysisDarkMatter(tree) {
+zlljets_metResoResp::zlljets_metResoResp(TTree *tree) : AnalysisDarkMatter(tree) {
   //cout <<"check in constructor "<<endl;
-  suffix = inputSuffix;  // it is the sample name (e.g. QCD, ZJetsToNuNu ecc...)
-  configFileName = (char*) inputConfigFileName;
-  ISDATA_FLAG = inputIsDataFlag;
-  unweighted_event_flag = inputUnweightedEeventFlag;
   Init(tree);
 
 }

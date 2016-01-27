@@ -50,6 +50,7 @@ int main(int argc, char* argv[]) {
   string uncertainty; // say which uncertainty is to be used for yields in a sample. Can be "poisson", "MC", "X%"
   string treePath;
   string friendTreePath;
+  string sf_friendTreePath; // friend with scale factor
   string option = "";
 
   Int_t unweighted_event_flag = 0;  // this flag tells the user if the MC uses unit weight (using w = 1 is basically for debugging purposes)
@@ -58,6 +59,7 @@ int main(int argc, char* argv[]) {
   // following are for CS analysis
   Int_t signalRegion_flag = 0;
   Int_t controlSample_flag = 0;
+  string controlSample_boson = ""; // Z, W, GAMMA
   Int_t metResolutionAndResponse_flag = 0;
   string fileWithSamplesPath = "";
   string filename_base = "";
@@ -110,9 +112,9 @@ int main(int argc, char* argv[]) {
 	  std::cout << "lepton_pdgID = " << value <<std::endl;
 
 	  if (fabs(lepton_PDGID) == 13) {
-	    std::cout << "Analysis of Z->mumu" << std::endl;
+	    std::cout << "Analysis of Z/W->muons" << std::endl;
 	  } else if (fabs(lepton_PDGID) == 11) {
-	    std::cout << "Analysis of Z->ee" << std::endl;
+	    std::cout << "Analysis of Z/W->electrons" << std::endl;
 	  } else if (fabs(lepton_PDGID) == 12 || fabs(lepton_PDGID) == 14 || fabs(lepton_PDGID) == 16) {
 	    std::cout << "Analysis of Z->nunu" << std::endl;
 	  }
@@ -173,6 +175,13 @@ int main(int argc, char* argv[]) {
 
 	}  
 
+	if (parameterName == "SF_FRIEND_TREE_PATH") {
+
+	  sf_friendTreePath = name;
+	  std::cout << setw(20) << "sf_friend tree : " << sf_friendTreePath <<std::endl;
+
+	}  
+
 	if (parameterName == "OPTION") {
 
 	  option = name;
@@ -203,6 +212,13 @@ int main(int argc, char* argv[]) {
 	  fileWithSamplesPath = name;
 	  std::cout << "Performing analysis on control samples." <<std::endl;
 	  std::cout << setw(20) << "File pointing to samples: " << fileWithSamplesPath<<std::endl;
+
+	} 
+
+	if (parameterName == "CONTROL_SAMPLE_BOSON") {  // path to file with control region's samples and some options
+
+	  controlSample_boson = name;
+	  std::cout << "Performing analysis on " << name << " control samples." <<std::endl;
 
 	} 
 
@@ -349,10 +365,11 @@ int main(int argc, char* argv[]) {
     std::vector<std::string> sampleName;
     
     std::vector<std::string> selectionDefinition;
+    selectionDefinition.push_back("entry point");
 
     if (signalRegion_flag == 1) {
     
-      selectionDefinition.push_back("entry point");  
+        
       if (met_filters_flag == 1) selectionDefinition.push_back("met filters");
       selectionDefinition.push_back("muon veto");
       selectionDefinition.push_back("electron veto");
@@ -366,26 +383,43 @@ int main(int argc, char* argv[]) {
 
     } else if (controlSample_flag == 1) {
 
-      selectionDefinition.push_back("entry point"); // include genLep for DY
-      if (met_filters_flag == 1) selectionDefinition.push_back("met filters");
-      selectionDefinition.push_back("2lep loose");
-      selectionDefinition.push_back(">0 tight lep");
-      selectionDefinition.push_back("2lep SF/OS");
-      selectionDefinition.push_back("mll");
-      if (fabs(lepton_PDGID) == 13) selectionDefinition.push_back("electron veto");
-      else if (fabs(lepton_PDGID) == 11) selectionDefinition.push_back("muon veto");
-      if (tau_veto_flag) selectionDefinition.push_back("tau veto");
-      selectionDefinition.push_back("photon veto");
-      if (metnolep_start != 0) selectionDefinition.push_back("recoil > 200");
-      selectionDefinition.push_back("bjet veto");
-      selectionDefinition.push_back("jet1pt");
-      selectionDefinition.push_back("jet1 cleaning");
-      selectionDefinition.push_back("dphiMin(j,Met)");        
-      selectionDefinition.push_back("lep match");
+      if (controlSample_boson == "Z") {
+
+	if (met_filters_flag == 1) selectionDefinition.push_back("met filters");
+	selectionDefinition.push_back("2lep loose");
+	selectionDefinition.push_back(">0 tight lep");
+	selectionDefinition.push_back("2lep SF/OS");
+	selectionDefinition.push_back("mll");
+	if (fabs(lepton_PDGID) == 13) selectionDefinition.push_back("electron veto");
+	else if (fabs(lepton_PDGID) == 11) selectionDefinition.push_back("muon veto");
+	if (tau_veto_flag) selectionDefinition.push_back("tau veto");
+	selectionDefinition.push_back("photon veto");
+	if (metnolep_start != 0) selectionDefinition.push_back("recoil > 200");
+	selectionDefinition.push_back("bjet veto");
+	selectionDefinition.push_back("jet1pt");
+	selectionDefinition.push_back("jet1 cleaning");
+	selectionDefinition.push_back("dphiMin(j,Met)");
+        
+      } else if (controlSample_boson == "W") {
+
+	if (met_filters_flag == 1) selectionDefinition.push_back("met filters");
+	selectionDefinition.push_back("1lep loose");
+	selectionDefinition.push_back("1 tight lep");
+	if (fabs(lepton_PDGID) == 13) selectionDefinition.push_back("electron veto");
+	else if (fabs(lepton_PDGID) == 11) selectionDefinition.push_back("muon veto");
+	if (tau_veto_flag) selectionDefinition.push_back("tau veto");
+	selectionDefinition.push_back("photon veto");
+	if (metnolep_start != 0) selectionDefinition.push_back("recoil > 200");
+	selectionDefinition.push_back("bjet veto");
+	selectionDefinition.push_back("jet1pt");
+	selectionDefinition.push_back("jet1 cleaning");
+	selectionDefinition.push_back("dphiMin(j,Met)");
+        
+      }
+
 
     } else if (metResolutionAndResponse_flag == 1) {
 
-      selectionDefinition.push_back("entry point");        
       selectionDefinition.push_back("preselection");   // include genLep, HLT, MetNoLep
       selectionDefinition.push_back("2lep SF/OS");
       selectionDefinition.push_back("2lep loose");
@@ -461,7 +495,14 @@ int main(int argc, char* argv[]) {
 	      friendTreePath = name;
 	      std::cout << setw(20) << "friend tree : " << friendTreePath <<std::endl;
 
-	    }  
+	    } 
+
+	    if (parameterName == "SF_FRIEND_TREE_PATH") {
+
+	      sf_friendTreePath = name;
+	      std::cout << setw(20) << "friend tree : " << sf_friendTreePath <<std::endl;
+
+	    } 
 
 	  }
 
@@ -476,6 +517,12 @@ int main(int argc, char* argv[]) {
 	  std::cout << "Adding friend to chain ..." << std::endl;
 	  TChain* chFriend = new TChain("mjvars/t");
 	  chain->AddFriend("mjvars/t",TString(friendTreePath.c_str()));
+
+	  TChain* chSfFriend = new TChain("sf/t");
+	  if (sf_friendTreePath != "") {
+	    std::cout << "Adding friend with scale factors to chain ..." << std::endl;	  
+	    chain->AddFriend("sf/t",TString(sf_friendTreePath.c_str()));
+	  }
 	
 	  if(!chain) {
 	    std::cout << "Error: chain not created. End of programme" << std::endl;
@@ -488,17 +535,27 @@ int main(int argc, char* argv[]) {
  
 	  if (signalRegion_flag == 1) {
 
-	    monojet_SignalRegion tree( chain , sampleName[nSample].c_str(), uncertainty, configFileName, isdata_flag, unweighted_event_flag);
+	    monojet_SignalRegion tree( chain);
+	    //cout << " CHECK IN MAIN " << endl;
+	    tree.setBasicConf(sampleName[nSample].c_str(), uncertainty, configFileName, isdata_flag, unweighted_event_flag);
 	    tree.loop(yieldsRow, efficiencyRow, uncertaintyRow); 
 
 	  } else if (controlSample_flag == 1) {
 
-	    zlljetsControlSample tree( chain , sampleName[nSample].c_str(), uncertainty, configFileName, isdata_flag, unweighted_event_flag);
-	    tree.loop(yieldsRow, efficiencyRow, uncertaintyRow); 
+	    if (controlSample_boson == "Z") {
+	      zlljetsControlSample tree( chain);
+	      tree.setBasicConf(sampleName[nSample].c_str(), uncertainty, configFileName, isdata_flag, unweighted_event_flag);
+	      tree.loop(yieldsRow, efficiencyRow, uncertaintyRow);
+	    } else if (controlSample_boson == "W") {
+	      wlnujetsControlSample tree( chain);
+	      tree.setBasicConf(sampleName[nSample].c_str(), uncertainty, configFileName, isdata_flag, unweighted_event_flag);
+	      tree.loop(yieldsRow, efficiencyRow, uncertaintyRow);
+	    } 
 
 	  } else if (metResolutionAndResponse_flag == 1) {
 
-	    zlljets_metResoResp tree( chain , sampleName[nSample].c_str(), configFileName, isdata_flag, unweighted_event_flag);
+	    zlljets_metResoResp tree( chain);
+	    tree.setBasicConf(sampleName[nSample].c_str(), uncertainty, configFileName, isdata_flag, unweighted_event_flag);
 	    tree.loop(yieldsRow, efficiencyRow, uncertaintyRow); 
 
 	  }

@@ -43,19 +43,197 @@ using namespace myAnalyzerTEman;
 
 #ifdef zlljetsControlSample_cxx
 
-zlljetsControlSample::zlljetsControlSample(TTree *tree, const char* inputSuffix, const string inputUncertainty, const char* inputConfigFileName, const Int_t inputIsDataFlag, const Int_t inputUnweightedEeventFlag) : AnalysisDarkMatter(tree) {
+zlljetsControlSample::zlljetsControlSample(TTree *tree) : AnalysisDarkMatter(tree) {
   //cout <<"check in constructor "<<endl;
-  suffix = inputSuffix;  // it is the sample name (e.g. QCD, ZJetsToNuNu ecc...)
-  uncertainty = inputUncertainty;  // sample uncertainty
-  configFileName = (char*) inputConfigFileName;
-  ISDATA_FLAG = inputIsDataFlag;
-  unweighted_event_flag = inputUnweightedEeventFlag;
   //edimarcoTree_v3::Init(tree);
+  suffix = "";
+  uncertainty = "";
+  configFileName = NULL;
+  ISDATA_FLAG = 0;
+  unweighted_event_flag = 0;
   AnalysisDarkMatter::Init(tree);  // could also be just Init(tree)
 
 }
 
 #endif
+
+//===============================================
+
+void zlljetsControlSample::setSelections() {
+
+  AnalysisDarkMatter::setSelections();
+
+  // ADD SELECTIONS SPECIFIC TO Z->LL
+  // muonLooseVetoC.set("muonLooseVetoC","muons veto");
+  // electronLooseVetoC.set("electronLooseVetoC","electrons veto"); 
+
+  oppChargeLeptonsC.set("oppChargeLeptonsC","OS/SF leptons");
+  invMassC.set("invMassC",Form("mass in [%3.0lf,%3.0lf]",DILEPMASS_LOW,DILEPMASS_UP));
+  twoLepLooseC.set("twoLepLooseC",Form("2 loose %s",FLAVOUR));
+  tightLepC.set("tightLepC",Form(">0 tight %s",FLAVOUR));
+  if (HLT_FLAG != 0) HLTlepC.set("HLTlepC",Form("HLT for %s",FLAVOUR));   
+
+  if (!ISDATA_FLAG && using_zlljets_MCsample_flag) {
+    genLepC.set("genLepC",Form("%s generated",FLAVOUR));     
+    recoGenLepMatchC.set("recoGenLepMatchC","reco-gen match (DR = 0.1)","only for zlljets: looks for matching of reco and gen particles");      
+  }
+  if (!ISDATA_FLAG && using_ztautaujets_MCsample_flag) genTauC.set("genTauC","taus generated"); 
+
+  if (fabs(LEP_PDG_ID) == 13) {  // if we have Z -> mumu do stuff...
+
+    //twoLeptonsC.set("twomuonsC","muons"); 
+    // lep1tightIdIso04C.set("mu1tightIdIso04C","leading muon tight","tight ID + relIso04 (as Emanuele)");
+    // twoLepTightC.set("twomuTightC","2 tight muons");
+    // lep1ptC.set("mu1ptC",Form("mu1pt > %3.0lf",LEP1PT),"leading muon pt");
+    // lep2ptC.set("mu2ptC",Form("mu2pt > %3.0lf",LEP2PT),"trailing muon pt");
+    // lep1etaC.set("mu1etaC",Form("|mu1eta| < %1.1lf",LEP1ETA),"leading muon eta");  
+    // lep2etaC.set("mu2etaC",Form("|mu2eta| < %1.1lf",LEP2ETA),"trailing muon eta");
+    // lep2tightIdIso04C.set("mu2tightIdIso04C","trailing muon tight","tight ID + relIso04 (as Emanuele)");
+
+    lepLooseVetoC.set("lepLooseVetoC","electrons veto");
+    if (METNOLEP_START != 0) metNoLepC.set("metNoMuC",Form("metNoMu > %2.0lf",METNOLEP_START));
+
+  } else if (fabs(LEP_PDG_ID) == 11) {   // if we have Z -> ee do different stuff...
+
+    if (METNOLEP_START != 0) metNoLepC.set("metNoEleC",Form("metNoEle > %2.0lf",METNOLEP_START));
+    lepLooseVetoC.set("lepLooseVetoC","muons veto");
+  }
+
+  selection::checkMaskLength();
+  selection::printActiveSelections(cout); 
+
+}
+
+//===============================================
+
+void zlljetsControlSample::setMask() {
+
+  analysisMask.setName(Form("%s control sample (%s gen if DYJetsToLL MC) with selection flow as Emanuele's",CONTROL_SAMPLE,FLAVOUR));
+
+   if (!ISDATA_FLAG) {
+     if (using_zlljets_MCsample_flag) {
+       analysisMask.append(genLepC.get2ToId());
+       analysisMask.append(recoGenLepMatchC.get2ToId());
+     }
+     if (using_ztautaujets_MCsample_flag) analysisMask.append(genTauC.get2ToId());
+   }
+   if (MET_FILTERS_FLAG != 0) analysisMask.append(metFiltersC.get2ToId());
+   if ( HLT_FLAG != 0 ) analysisMask.append(HLTlepC.get2ToId());
+   analysisMask.append(twoLepLooseC.get2ToId());
+   analysisMask.append(tightLepC.get2ToId());
+   analysisMask.append(oppChargeLeptonsC.get2ToId());     
+   analysisMask.append(invMassC.get2ToId());
+   analysisMask.append(lepLooseVetoC.get2ToId());
+   if (TAU_VETO_FLAG) analysisMask.append(tauLooseVetoC.get2ToId());
+   analysisMask.append(gammaLooseVetoC.get2ToId());
+   analysisMask.append(bjetVetoC.get2ToId());
+   if (METNOLEP_START != 0) analysisMask.append(metNoLepC.get2ToId());
+   analysisMask.append(jet1C.get2ToId());
+   analysisMask.append(jetNoiseCleaningC.get2ToId());
+   analysisMask.append(jetMetDphiMinC.get2ToId());
+
+   analysisSelectionManager.SetMaskPointer(&analysisMask);
+
+   if (MET_FILTERS_FLAG != 0) analysisSelectionManager.append(&metFiltersC);
+   analysisSelectionManager.append(&twoLepLooseC);
+   analysisSelectionManager.append(&tightLepC);
+   analysisSelectionManager.append(&oppChargeLeptonsC);  
+   analysisSelectionManager.append(&invMassC);
+   analysisSelectionManager.append(&lepLooseVetoC);
+   if (TAU_VETO_FLAG) analysisSelectionManager.append(&tauLooseVetoC);
+   analysisSelectionManager.append(&gammaLooseVetoC);
+   analysisSelectionManager.append(&bjetVetoC);
+   if (METNOLEP_START != 0) analysisSelectionManager.append(&metNoLepC);
+   analysisSelectionManager.append(&jet1C);
+   analysisSelectionManager.append(&jetNoiseCleaningC);
+   analysisSelectionManager.append(&jetMetDphiMinC);
+
+}
+
+//===============================================
+
+void zlljetsControlSample::setHistograms() {
+
+  AnalysisDarkMatter::setHistograms();
+  
+  HinvMass = new TH1D("HinvMass","",NinvMassBins,DILEPMASS_LOW,DILEPMASS_UP);    // for MC it's done on Z->mumu or Z->ee at gen level
+  HzptDistribution = new TH1D("HzptDistribution","",200,0.0,1000.0);    
+
+}
+
+//===============================================
+
+void zlljetsControlSample::setNumberParameterValue(const std::string parameterName, const Double_t value) {
+
+  AnalysisDarkMatter::setNumberParameterValue(parameterName, value);
+
+  if (parameterName == "LEP_PDG_ID") LEP_PDG_ID = value;
+  else if (parameterName == "LEP1PT") LEP1PT = value;
+  else if (parameterName == "LEP2PT") LEP2PT = value;
+  else if (parameterName == "LEP1ETA") LEP1ETA = value;
+  else if (parameterName == "LEP2ETA") LEP2ETA = value;
+  else if (parameterName == "DILEPMASS_LOW") DILEPMASS_LOW = value;
+  else if (parameterName == "DILEPMASS_UP") DILEPMASS_UP = value;
+  else if (parameterName == "LEP_ISO_04") LEP_ISO_04 = value;
+  else if (parameterName == "HLT_FLAG") HLT_FLAG = value;
+  else if (parameterName == "HLT_LEP1PT") HLT_LEP1PT = value;
+  else if (parameterName == "HLT_LEP2PT") HLT_LEP2PT = value;
+  else if (parameterName == "HLT_LEP1ETA") HLT_LEP1ETA = value;
+  else if (parameterName == "HLT_LEP2ETA") HLT_LEP2ETA = value;
+
+  if (!ISDATA_FLAG) {
+
+    if (parameterName == "GENLEP1PT") GENLEP1PT = value;
+    else if (parameterName == "GENLEP2PT") GENLEP2PT = value;
+    else if (parameterName == "GENLEP1ETA") GENLEP1ETA = value;
+    else if (parameterName == "GENLEP2ETA") GENLEP2ETA = value;
+    else if (parameterName == "GEN_ZMASS_LOW") GEN_ZMASS_LOW = value;
+    else if (parameterName == "GEN_ZMASS_UP") GEN_ZMASS_UP = value;
+
+  }
+
+}
+
+//===============================================
+
+void zlljetsControlSample::setControlSampleSpecificParameter() {
+
+  invMassBinWidth = 1.0;  // invariant mass histogram's bin width in GeV
+  NinvMassBins = (DILEPMASS_UP - DILEPMASS_LOW) / invMassBinWidth;
+  // the following flag is needed to enable search for Z->ll at generator level. For MC samples different from DYJetsToLL I must not require 2 gen leptons from Z
+  // unless it is Z->tautau, in which case I start from generated taus and apply selection (tau can produce muon or electron)
+  if ( !ISDATA_FLAG && ( suffix == "DYJetsToLL" )  )  using_zlljets_MCsample_flag = 1; 
+  else using_zlljets_MCsample_flag = 0;
+ 
+  if ( !ISDATA_FLAG && ( suffix == "ZJetsToTauTau" )) using_ztautaujets_MCsample_flag = 1; 
+  else using_ztautaujets_MCsample_flag = 0;  
+  
+  if (fabs(LEP_PDG_ID) == 13) {  // if we have Z -> mumu do stuff...
+
+    strcpy(FLAVOUR,"muons");
+    strcpy(LL_FLAVOUR,"mumu");
+    strcpy(CONTROL_SAMPLE,"Z-->mumu");
+
+  } else if (fabs(LEP_PDG_ID) == 11) {   // if we have Z -> ee do different stuff...
+
+    strcpy(FLAVOUR,"electrons");
+    strcpy(LL_FLAVOUR,"ee");
+    strcpy(CONTROL_SAMPLE,"Z-->ee");
+
+  }
+
+}
+
+//===============================================
+
+void zlljetsControlSample::setVarFromConfigFile() {
+
+  AnalysisDarkMatter::setVarFromConfigFile();
+  setControlSampleSpecificParameter();
+
+}
+
+//===============================================
 
 void zlljetsControlSample::loop(vector< Double_t > &yRow, vector< Double_t > &eRow, vector< Double_t > &uncRow)
 {
@@ -98,21 +276,6 @@ void zlljetsControlSample::loop(vector< Double_t > &yRow, vector< Double_t > &eR
    // fChain->SetBranchStatus("genLep_phi",1);
    fChain->SetBranchStatus("mZ1",1);  // best m(ll) SF/OS
 
-   if (!ISDATA_FLAG) {
-     fChain->SetBranchStatus("nGenPart",1);
-     fChain->SetBranchStatus("GenPart_pdgId",1);
-     fChain->SetBranchStatus("GenPart_motherId",1);
-     fChain->SetBranchStatus("GenPart_pt",1);
-     fChain->SetBranchStatus("GenPart_eta",1);
-     fChain->SetBranchStatus("GenPart_phi",1);
-     fChain->SetBranchStatus("GenPart_mass",1);
-     fChain->SetBranchStatus("GenPart_motherIndex",1);
-
-     //fChain->SetBranchStatus("xsec",1);
-
-     fChain->SetBranchStatus("vtxWeight",1);   // weight to have better agreement between data and MC (added in tree from 06/10/15)
-   }
-
    fChain->SetBranchStatus("met_pt",1);
    //fChain->SetBranchStatus("met_eta",1);
    fChain->SetBranchStatus("met_phi",1);
@@ -136,215 +299,42 @@ void zlljetsControlSample::loop(vector< Double_t > &yRow, vector< Double_t > &eR
    fChain->SetBranchStatus("events_ntot",1);    // equivalent to SUMWEIGHTS for samples before 17 November 2015
    fChain->SetBranchStatus("JetClean_leadClean",1); // has new cleaning on energy fractions (added on 17 November 2015) 
 
-   char ROOT_FNAME[100];
-   char TXT_FNAME[100];
-   char TEX_FNAME[100];
-   char FLAVOUR[10];                   // e.g. "ele", "mu"
-   char LL_FLAVOUR[10];             // e.g. "ee", "mumu"
-   char CONTROL_SAMPLE[10];   // e.g. "Z-->ee"
+   //added on 23/01/2016
+   fChain->SetBranchStatus("nEle40T",1);   
+   fChain->SetBranchStatus("nCalibEle",1);
+   fChain->SetBranchStatus("CalibEle_pt",1);
+   fChain->SetBranchStatus("CalibEle_energy",1);
+   fChain->SetBranchStatus("CalibEle_eta",1);
+   fChain->SetBranchStatus("CalibEle_phi",1);
+   fChain->SetBranchStatus("CalibEle_mass",1);
 
-   Double_t LUMI;
-   Int_t NJETS;
-   Double_t J1PT;
-   Double_t J1ETA;
-   Double_t J2PT;
-   Double_t J2ETA;
-   Double_t J1J2DPHI;
-   Int_t LEP_PDG_ID;
-   Double_t LEP1PT;
-   Double_t LEP2PT;
-   Double_t LEP1ETA;
-   Double_t LEP2ETA;
-   Double_t DILEPMASS_LOW;
-   Double_t DILEPMASS_UP;
-   Double_t LEP_ISO_04;
-   Double_t GENLEP1PT;
-   Double_t GENLEP2PT;
-   Double_t GENLEP1ETA;
-   Double_t GENLEP2ETA;
-   Double_t GEN_ZMASS_LOW;
-   Double_t GEN_ZMASS_UP;
-   Int_t TAU_VETO_FLAG;
-   Int_t HLT_FLAG;
-   Double_t HLT_LEP1PT;
-   Double_t HLT_LEP2PT;
-   Double_t HLT_LEP1ETA;
-   Double_t HLT_LEP2ETA;
-   Double_t METNOLEP_START;
-   Int_t MET_FILTERS_FLAG;
-   Double_t JMET_DPHI_MIN;
-   // Double_t XSEC_OVER_NPROCESSED;
-   // Double_t SUMWEIGHTS;
-   string FILENAME_BASE;
-   string DIRECTORY_TO_SAVE_FILES;
-   string DIRECTORY_NAME;
+    if (!ISDATA_FLAG) {
+     fChain->SetBranchStatus("nGenPart",1);
+     fChain->SetBranchStatus("GenPart_pdgId",1);
+     fChain->SetBranchStatus("GenPart_motherId",1);
+     fChain->SetBranchStatus("GenPart_pt",1);
+     fChain->SetBranchStatus("GenPart_eta",1);
+     fChain->SetBranchStatus("GenPart_phi",1);
+     fChain->SetBranchStatus("GenPart_mass",1);
+     fChain->SetBranchStatus("GenPart_motherIndex",1);
 
-   vector<Double_t> metBinEdgesVector;  // filled with values in file named configFileName
+     //fChain->SetBranchStatus("xsec",1);
+     fChain->SetBranchStatus("vtxWeight",1);   // weight to have better agreement between data and MC (added in tree from 06/10/15)
 
-   ifstream inputFile(configFileName);
-
-   if (inputFile.is_open()) {
-
-     Double_t value;
-     string name;
-     string parameterName;
-     string parameterType;
-
-     mySpaces(cout,2);
-     cout << "Printing content of " << configFileName << " file" << endl;
-     mySpaces(cout,1);
-
-     while (inputFile >> parameterType ) {
-
-       if (parameterType == "NUMBER") {
-
-	 inputFile >> parameterName >> value;
-	 cout << right << setw(20) << parameterName << "  " << left << value << endl;
-
-	 if (parameterName == "LUMI") LUMI = value;
-	 else if (parameterName == "NJETS") NJETS = value;
-	 else if (parameterName == "J1PT") J1PT = value;
-	 else if (parameterName == "J1ETA") J1ETA = value;
-	 else if (parameterName == "J2PT") J2PT = value;
-	 else if (parameterName == "J2ETA") J2ETA = value;
-	 else if (parameterName == "J1J2DPHI") J1J2DPHI = value;
-	 else if (parameterName == "LEP_PDG_ID") LEP_PDG_ID = value;
-	 else if (parameterName == "LEP1PT") LEP1PT = value;
-	 else if (parameterName == "LEP2PT") LEP2PT = value;
-	 else if (parameterName == "LEP1ETA") LEP1ETA = value;
-	 else if (parameterName == "LEP2ETA") LEP2ETA = value;
-	 else if (parameterName == "DILEPMASS_LOW") DILEPMASS_LOW = value;
-	 else if (parameterName == "DILEPMASS_UP") DILEPMASS_UP = value;
-	 else if (parameterName == "LEP_ISO_04") LEP_ISO_04 = value;
-	 else if (parameterName == "TAU_VETO_FLAG") TAU_VETO_FLAG = value;
-	 else if (parameterName == "HLT_FLAG") HLT_FLAG = value;
-	 else if (parameterName == "HLT_LEP1PT") HLT_LEP1PT = value;
-	 else if (parameterName == "HLT_LEP2PT") HLT_LEP2PT = value;
-	 else if (parameterName == "HLT_LEP1ETA") HLT_LEP1ETA = value;
-	 else if (parameterName == "HLT_LEP2ETA") HLT_LEP2ETA = value;
-	 else if (parameterName == "METNOLEP_START") METNOLEP_START = value;
-	 else if (parameterName == "MET_FILTERS_FLAG") MET_FILTERS_FLAG = value;
-	 else if (parameterName == "JMET_DPHI_MIN") JMET_DPHI_MIN = value;
-
-	 if (!ISDATA_FLAG) {
-
-	 if (parameterName == "GENLEP1PT") GENLEP1PT = value;
-	 else if (parameterName == "GENLEP2PT") GENLEP2PT = value;
-	 else if (parameterName == "GENLEP1ETA") GENLEP1ETA = value;
-	 else if (parameterName == "GENLEP2ETA") GENLEP2ETA = value;
-	 else if (parameterName == "GEN_ZMASS_LOW") GEN_ZMASS_LOW = value;
-	 else if (parameterName == "GEN_ZMASS_UP") GEN_ZMASS_UP = value;
-	 // else if (parameterName == "XSEC_OVER_NPROCESSED") XSEC_OVER_NPROCESSED = value;
-	 // else if (parameterName == "SUMWEIGHTS") SUMWEIGHTS = value;
-
-	 }
-	 
-
-       } else if (parameterType == "STRING") {
-	 
-	 inputFile >> parameterName >> name;
-	 cout << right << setw(20) << parameterName << "  " << left << name << endl;
-	 if (parameterName == "FILENAME_BASE") {
-
-	   FILENAME_BASE = name; 
-	   if ( !ISDATA_FLAG && unweighted_event_flag) FILENAME_BASE += "_weq1";  // if using unit weight, add _weq1 to filename (weq1 means weight = 1)
-
-	 }
-
-	 if (parameterName == "DIRECTORY_PATH") {  // name of directory where files are saved
-
-	  DIRECTORY_TO_SAVE_FILES = name;
-	  //std::cout << "Files will be saved in '" << name << "' ." <<std::endl;
-
-	} 
-
-	if (parameterName == "DIRECTORY_NAME") {  // name of directory where files are saved
-
-	  DIRECTORY_NAME = name;
-	  //std::cout << "Files will be saved in directory named '" << name << "' ." <<std::endl;
-
-	} 
-
-       } else if (parameterType == "ARRAY_NUM") {
-
-	 inputFile >> parameterName;
-
-	 if (parameterName == "MET_BIN_EDGES") { 
-
-	   cout << right << setw(20) << parameterName << "  ";
-	   string stringvalues;
-	   getline(inputFile, stringvalues);    // read whole line starting from current position (i.e. without reading ARRAY_NUM)
-	   istringstream iss(stringvalues);
-	   Double_t num;
-
-	   while(iss >> num) {
-	    
-	     metBinEdgesVector.push_back(num);
-	     cout << metBinEdgesVector.back() << " ";
-
-	   }
-
-	   cout << endl;
-
-	 }
-
-       }
-
-     }
-     
-     mySpaces(cout,2);
-
-     inputFile.close();
-                                                                                                                         
-   } else {
-
-     cout << "Error: could not open file " << configFileName << endl;
-     exit(EXIT_FAILURE);
+     //added on 23/01/2016
+     fChain->SetBranchStatus("SF_BTag",1);
+     //variables in sfFriend tree
+     fChain->SetBranchStatus("SF_trig1lep",1);
+     fChain->SetBranchStatus("SF_trigmetnomu",1);
+     fChain->SetBranchStatus("SF_LepTightLoose",1);
+     fChain->SetBranchStatus("SF_LepTight",1);
+     fChain->SetBranchStatus("SF_NLO",1); 
 
    }
 
-   string outputFolder =  DIRECTORY_TO_SAVE_FILES + DIRECTORY_NAME + "/";
-
-   //Double_t metBinEdges[] = {200., 250., 300., 350., 400., 500., 650., 1000.};
-   // Double_t metBinEdges[] = {200., 250., 300., 350., 400., 450., 500., 550., 600., 650., 750., 850., 1000.};
-   // Int_t nMetBins = (sizeof(metBinEdges)/sizeof(Double_t)) - 1;
-   Int_t nMetBins = (metBinEdgesVector.size()) - 1;
-
-   cout << "MetBinEdges: [ ";
-   for(Int_t i = 0; i <= nMetBins; i++) {
-     if (i != nMetBins) cout << metBinEdgesVector[i] << ", ";
-     else cout << metBinEdgesVector[i] << "]" << endl;
-   }
-  
-   // monojet selection (muon or electron veto set afterwards, depending on the sample)
-   selection metFiltersC("metFiltersC","met filters","cscfilter, ecalfilter, hbheFilterNew25ns, hbheFilterIso");
-   selection jet1C("jet1C","jet1",Form("nJetClean >= 1 && JetClean1_pt > %4.0lf && abs(JetClean1_eta) < %1.1lf",(Double_t)J1PT,J1ETA));
-   selection jetMetDphiMinC("jetMetDphiMinC",Form("min[dphi(jets,MET)] > %1.1lf",JMET_DPHI_MIN),"minimum dphi between jets and MET (using only the first 4 jets)");
-   selection jetNoiseCleaningC("jetNoiseCleaningC","noise cleaning","energy fractions (only for jet1): CH > 0.1; NH < 0.8");
-   selection bjetVetoC("bjetVetoC","b-jets veto");
-   selection gammaLooseVetoC("gammaLooseVetoC","photons veto");
-   selection tauLooseVetoC;
-   if (TAU_VETO_FLAG) tauLooseVetoC.set("tauLooseVetoC","tau veto");
-   // additional selections for control sample
-   selection oppChargeLeptonsC("oppChargeLeptonsC","OS/SF leptons");
-   selection invMassC("invMassC",Form("mass in [%3.0lf,%3.0lf]",DILEPMASS_LOW,DILEPMASS_UP));
-   // following selections are set differently in the next "if" statements depending on the lepton flavour 
-   //selection metNoLepC[metCut.size()];
-   selection lepLooseVetoC;
-   // selection twoLeptonsC;
-   selection twoLepLooseC;
-   selection tightLepC;
-   // selection lep1tightIdIso04C;
-   // selection twoLepTightC;
-   // selection lep1ptC;
-   // selection lep2ptC;
-   // selection lep1etaC;  
-   //selection lep2etaC;
-   selection genLepC;  
-   selection metNoLepStartC;
-   selection HLTlepC;
-   selection recoGenLepMatchC;
-   //selection lep2tightIdIso04C;
+   setVarFromConfigFile();
+   setSelections();
+   setMask();
 
    TVector2 metNoLepTV, ele;
 
@@ -366,12 +356,6 @@ void zlljetsControlSample::loop(vector< Double_t > &yRow, vector< Double_t > &eR
    Int_t genTauFound_flag = 0;
    Int_t Z_index = 0; 
 
-   // Double_t SUMWEIGHTS;
-   // vector<Double_t> sumWeightVector;  // used for spring15_25ns
-   // vector<Int_t> eventsInSubsamples;
-
-   Double_t nTotalWeightedEvents = 0.0;     
-   //Double_t nEventsAfterMatchRecoGen = 0.0;
    Int_t HLT_passed_flag = 1;          // some computations (for e) require a trigger preselection, while others don't. The former will be done if the flag is set to 1
                                                        // it's set to 1 because if the trigger selection is not applied every event must be considered to be a "good" event having passed all preselections
                                                        // Actually in this code the trigger is not always necessary, but I keep it like this nonetheless.
@@ -395,33 +379,8 @@ void zlljetsControlSample::loop(vector< Double_t > &yRow, vector< Double_t > &eR
    //Double_t metNoLepEta = 0.0;
    Double_t metNoLepPhi = 0.0;   // same story as above
 
-   if ( !ISDATA_FLAG && unweighted_event_flag) cout << "Warning: no weight applied to events (w = 1)" << endl;  // if MC with unit weight, make user know
-
-   // if using sample spring15, need to use vtxW to get same Nvtx distribution as seen in data. For older trees it's not used
-
-   // the following flag is needed to enable search for Z->ll at generator level. For MC samples different from DYJetsToLL I must not require 2 gen leptons from Z
-   Int_t using_zlljets_MCsample_flag = 0;
-   if ( !ISDATA_FLAG && ( suffix == "DYJetsToLL" )  )  using_zlljets_MCsample_flag = 1; 
-
-   Int_t using_ztautaujets_MCsample_flag = 0;
-   if ( !ISDATA_FLAG && ( suffix == "ZJetsToTauTau" )) using_ztautaujets_MCsample_flag = 1; 
-
-   if (ISDATA_FLAG) {
-     strcpy(ROOT_FNAME,(FILENAME_BASE + "_DATA.root").c_str());
-     strcpy(TXT_FNAME,(FILENAME_BASE + "_DATA.txt").c_str());
-     strcpy(TEX_FNAME,(FILENAME_BASE + "_DATA.tex").c_str());
-   } else {
-     strcpy(ROOT_FNAME,(FILENAME_BASE + "_" + suffix + ".root").c_str());
-     strcpy(TXT_FNAME,(FILENAME_BASE + "_" + suffix + ".txt").c_str());
-     strcpy(TEX_FNAME,(FILENAME_BASE + "_" + suffix + ".tex").c_str());
-   }
-
    if (fabs(LEP_PDG_ID) == 13) {  // if we have Z -> mumu do stuff...
-     
-     strcpy(FLAVOUR,"mu");
-     strcpy(LL_FLAVOUR,"mumu");
-     strcpy(CONTROL_SAMPLE,"Z-->mumu");
-         
+  
      ptr_nLepLoose = &nMu10V;                      // ask 2 muons
      ptr_nLep10V = &nEle10V;                         // veto on electrons
      ptr_nLepTight = &nMu20T;                                            
@@ -429,89 +388,15 @@ void zlljetsControlSample::loop(vector< Double_t > &yRow, vector< Double_t > &eR
      //ptr_metNoLepEta = &metNoMu_eta;               // for muons  get this variable from the tree 
      ptr_metNoLepPhi = &metNoMu_phi;         // for muons  get this variable from the tree
 
-     lepLooseVetoC.set("eLooseVetoC","electrons veto");
-     //twoLeptonsC.set("twomuonsC","muons");
-     twoLepLooseC.set("twomuLooseC","2 loose muons");
-     tightLepC.set("tightMuC",">0 tight muons");
-     // lep1tightIdIso04C.set("mu1tightIdIso04C","leading muon tight","tight ID + relIso04 (as Emanuele)");
-     // twoLepTightC.set("twomuTightC","2 tight muons");
-     // lep1ptC.set("mu1ptC",Form("mu1pt > %3.0lf",LEP1PT),"leading muon pt");
-     // lep2ptC.set("mu2ptC",Form("mu2pt > %3.0lf",LEP2PT),"trailing muon pt");
-     // lep1etaC.set("mu1etaC",Form("|mu1eta| < %1.1lf",LEP1ETA),"leading muon eta");  
-     // lep2etaC.set("mu2etaC",Form("|mu2eta| < %1.1lf",LEP2ETA),"trailing muon eta");
-     if (!ISDATA_FLAG && using_zlljets_MCsample_flag) {
-       genLepC.set("genMuonsC","muons generated");     
-       recoGenLepMatchC.set("recoGenMuMatchC","reco-gen match (DR = 0.1)","only for zlljets: looks for matching of reco and gen particles");      
-     }
-
-     if (METNOLEP_START != 0) metNoLepStartC.set("metNoMu200C",Form("metNoMu > %2.0lf",METNOLEP_START));
-     if (HLT_FLAG != 0) HLTlepC.set("HLTmuonC","HLT for muons");
-     // lep2tightIdIso04C.set("mu2tightIdIso04C","trailing muon tight","tight ID + relIso04 (as Emanuele)");
-
-
    } else if (fabs(LEP_PDG_ID) == 11) {   // if we have Z -> ee do different stuff...
-
-     strcpy(FLAVOUR,"ele");
-     strcpy(LL_FLAVOUR,"ee");
-     strcpy(CONTROL_SAMPLE,"Z-->ee");
 
      ptr_nLepLoose = &nEle10V;                      // ask 2 electrons
      ptr_nLep10V = &nMu10V;                         // veto on muons   
-     ptr_nLepTight = &nEle20T;
-
-     lepLooseVetoC.set("muLooseVetoC","muons veto");
-     //twoLeptonsC.set("twoelectronsC","electrons");
-     twoLepLooseC.set("twoeleLooseC","2 loose electrons");
-     tightLepC.set("tightEleC",">0 tight electrons");
-     // lep1tightIdIso04C.set("ele1tightIdIso04C","leading electron tight","tight ID + relIso04 (as Emanuele)");
-     // twoLepTightC.set("twoeleTightC","2 tight electrons");
-     // lep1ptC.set("ele1ptC",Form("ele1pt > %3.0lf",LEP1PT),"leading electron pt");
-     // lep2ptC.set("ele2ptC",Form("ele2pt > %3.0lf",LEP2PT),"trailing electron pt");
-     // lep1etaC.set("ele1etaC",Form("|ele1eta| < %1.1lf",LEP1ETA),"leading electron eta");  
-     // lep2etaC.set("ele2etaC",Form("|ele2eta| < %1.1lf",LEP2ETA),"trailing electron eta");
-     if (!ISDATA_FLAG && using_zlljets_MCsample_flag) {
-       genLepC.set("genElectronsC","electrons generated");     
-       recoGenLepMatchC.set("recoGenEleMatchC","reco-gen match (DR = 0.1)","only for zlljets: looks for matching of reco and gen particles");    
-     }
-
-     if (METNOLEP_START != 0) metNoLepStartC.set("metNoEle200C",Form("metNoEle > %2.0lf",METNOLEP_START));
-     if (HLT_FLAG != 0) HLTlepC.set("HLTelectronC","HLT for electrons");
-     // lep2tightIdIso04C.set("ele2tightIdIso04C","trailing electron tight","tight ID + relIso04 (as Emanuele)");
+     ptr_nLepTight = &nEle40T;
 
    }
 
-   selection genTauC;
-   if (!ISDATA_FLAG && using_ztautaujets_MCsample_flag) genTauC.set("genTauC","taus generated");                       
-
-   selection::checkMaskLength();
-   selection::printActiveSelections(cout); 
-
-   UInt_t maskTightTag;   // holds cuts for lepton tight selection, which is different between muons and electrons
-
-   mask zlljetsControlSample(Form("%s control sample (%s gen if DYJetsToLL MC) with selection flow as Emanuele's",CONTROL_SAMPLE,FLAVOUR));
-   if (!ISDATA_FLAG) {
-     if (using_zlljets_MCsample_flag) zlljetsControlSample.append(genLepC.get2ToId());
-     if (using_ztautaujets_MCsample_flag) zlljetsControlSample.append(genTauC.get2ToId());
-   }
-
-   if (MET_FILTERS_FLAG != 0) zlljetsControlSample.append(metFiltersC.get2ToId());
-   if ( HLT_FLAG != 0 ) zlljetsControlSample.append(HLTlepC.get2ToId());
-   zlljetsControlSample.append(twoLepLooseC.get2ToId());
-   zlljetsControlSample.append(tightLepC.get2ToId());
-   zlljetsControlSample.append(oppChargeLeptonsC.get2ToId());     
-   zlljetsControlSample.append(invMassC.get2ToId());
-   zlljetsControlSample.append(lepLooseVetoC.get2ToId());
-   if (TAU_VETO_FLAG) zlljetsControlSample.append(tauLooseVetoC.get2ToId());
-   zlljetsControlSample.append(gammaLooseVetoC.get2ToId());
-   zlljetsControlSample.append(bjetVetoC.get2ToId());
-   if (METNOLEP_START != 0) zlljetsControlSample.append(metNoLepStartC.get2ToId());
-   zlljetsControlSample.append(jet1C.get2ToId());
-   zlljetsControlSample.append(jetNoiseCleaningC.get2ToId());
-   zlljetsControlSample.append(jetMetDphiMinC.get2ToId());
    
-   if (!ISDATA_FLAG && using_zlljets_MCsample_flag) zlljetsControlSample.append(recoGenLepMatchC.get2ToId());
-
-
    cout << "Opening file " <<ROOT_FNAME<< " in folder " << outputFolder << endl;
 
    TFile *rootFile = new TFile((outputFolder + ROOT_FNAME).c_str(),"RECREATE");
@@ -525,25 +410,8 @@ void zlljetsControlSample::loop(vector< Double_t > &yRow, vector< Double_t > &eR
    //TH1::StatOverflows();                 //enable use of underflows and overflows for statistics computation 
    TVirtualFitter::SetDefaultFitter("Minuit");
 
-   //Int_t Hcolor[] = {1,2,3,4,5,6,7,8,9,12,18,30,38,41,42,46,47,49};       
+   setHistograms();
 
-   Float_t invMassBinWidth = 1.0;  // invariant mass histogram's bin width in GeV
-   Int_t NinvMassBins = (DILEPMASS_UP - DILEPMASS_LOW) / invMassBinWidth;
-
-   TH1D *HzlljetsYieldsMetBin = new TH1D("HYieldsMetBin",Form("yields of %s control sample (%s gen if DY MC) in bins of met; #slash{E}_{T};# of events",CONTROL_SAMPLE,CONTROL_SAMPLE),nMetBins,metBinEdgesVector.data());
-   
-   TH1D *HinvMass = new TH1D("HinvMass","",NinvMassBins,DILEPMASS_LOW,DILEPMASS_UP);    // for MC it's done on Z->mumu or Z->ee at gen level
-   TH1D *HvtxDistribution = new TH1D("HvtxDistribution","",40,-0.5,39.5);   
-   TH1D *HnjetsDistribution = new TH1D("HnjetsDistribution","njets using nJetClean30",10,-0.5,9.5);   
-   TH1D *Hj1j2dphiDistribution = new TH1D("Hj1j2dphiDistribution","",30,0.0,3.0);
-   TH1D *HjetMetDphiMinDistribution = new TH1D("HjetMetDphiMinDistribution","",30,0.0,3.2);
-   TH1D *Hjet1etaDistribution = new TH1D("Hjet1etaDistribution","",60,-3.0,3.0);
-   TH1D *Hjet2etaDistribution = new TH1D("Hjet2etaDistribution","",60,-3.0,3.0);
-   TH1D *HmetNoLepDistribution = new TH1D("HmetNoLepDistribution","",100,0.0,1000.0);
-   TH1D *HzptDistribution = new TH1D("HzptDistribution","",200,0.0,1000.0);
-   TH1D *Hjet1ptDistribution = new TH1D("Hjet1ptDistribution","",100,0.0,1000.0); 
-   TH1D *Hjet2ptDistribution = new TH1D("Hjet2ptDistribution","",100,0.0,1000.0);
-     
    TH1D *HzlljetsInvMassMetBinGenLep[nMetBins];
 
    for (Int_t i = 0; i < nMetBins; i++) {
@@ -552,12 +420,7 @@ void zlljetsControlSample::loop(vector< Double_t > &yRow, vector< Double_t > &eR
 
    } 
 
-   // saving histograms with bin edges of other histograms used (e.g. content of metBinEdges array ...)
-   TH1D *HmetBinEdges = new TH1D("HmetBinEdges","bin edges for met distributions",nMetBins+1,0.0,nMetBins+1);
-   for (Int_t i = 0; i <= nMetBins; i++) {
-     HmetBinEdges->SetBinContent(i+1,metBinEdgesVector[i]);
-   }
-
+   Double_t nTotalWeightedEvents = 0.0;     
    // deciding  what is the event weight
    Double_t newwgt; 
 
@@ -582,8 +445,11 @@ void zlljetsControlSample::loop(vector< Double_t > &yRow, vector< Double_t > &eR
 
      if(!ISDATA_FLAG && !unweighted_event_flag) {
 
-       newwgt = LUMI * weight * vtxWeight/*/ events_ntot*/;  // starting from 17 November, "events_ntot" substitutes SUMWEIGHT and is already present in the trees. Same for weight, which is now defined as "1000 * xsec * genWeight" (1000*xsec is the cross section in fb, since xsec is in pb.)
+       //newwgt = LUMI * weight * vtxWeight/*/ events_ntot*/;  // starting from 17 November, "events_ntot" substitutes SUMWEIGHT and is already present in the trees. Same for weight, which is now defined as "1000 * xsec * genWeight" (1000*xsec is the cross section in fb, since xsec is in pb.)
        // I found out that division by events_ntot was already included in weight definition
+
+       if (fabs(LEP_PDG_ID) == 13) newwgt = LUMI * weight * vtxWeight * SF_trigmetnomu * SF_LepTightLoose * SF_BTag * SF_NLO;
+       else if (fabs(LEP_PDG_ID) == 11) newwgt = LUMI * weight * vtxWeight;
 
      }
 
@@ -695,7 +561,7 @@ void zlljetsControlSample::loop(vector< Double_t > &yRow, vector< Double_t > &eR
      eventMask += lepLooseVetoC.addToMask(nLep10V == 0);
      eventMask += tauLooseVetoC.addToMask(nTauClean18V == 0);
      eventMask += gammaLooseVetoC.addToMask(nGamma15V == 0);
-     eventMask += metNoLepStartC.addToMask(metNoLepPt > METNOLEP_START);
+     eventMask += metNoLepC.addToMask(metNoLepPt > METNOLEP_START);
      eventMask += metFiltersC.addToMask(cscfilter == 1 && ecalfilter == 1 && hbheFilterNew25ns == 1 && hbheFilterIso == 1);  
 
      // the following make sense only if recoLepFound_flag == 1 (i.e. flag is true), which means that fabs(LepGood_pdgId[firstIndex/secondIndex]) == LEP_PDG_ID) is 
@@ -753,12 +619,12 @@ void zlljetsControlSample::loop(vector< Double_t > &yRow, vector< Double_t > &eR
 
      }
 
-     zlljetsControlSample.countEvents(eventMask,newwgt);
+     analysisMask.countEvents(eventMask,newwgt);
 
-     if ( ((eventMask & zlljetsControlSample.globalMask.back()) == zlljetsControlSample.globalMask.back()) ) {
+     if ( ((eventMask & analysisMask.globalMask.back()) == analysisMask.globalMask.back()) ) {
        
        // this histogram holds the final yields in bins of MET
-	 HzlljetsYieldsMetBin->Fill(metNoLepPt,newwgt);
+	 HYieldsMetBin->Fill(metNoLepPt,newwgt);
 	 
 	 HinvMass->Fill(mZ1,newwgt);
 	 HmetNoLepDistribution->Fill(metNoLepPt,newwgt);
@@ -783,12 +649,12 @@ void zlljetsControlSample::loop(vector< Double_t > &yRow, vector< Double_t > &eR
 
        Int_t bin = myGetBin(metNoLepPt,metBinEdgesVector.data(),nMetBins);
        
-       // if ((eventMask & zlljetsControlSample.globalMask.back()) == zlljetsControlSample.globalMask.back()) {
+       // if ((eventMask & analysisMask.globalMask.back()) == analysisMask.globalMask.back()) {
        //   // this histogram holds the invariant mass distribution (one for each met bin)
        //   HinvMass[bin]->Fill(mZ1,newwgt);   
        // }
 
-       if ( ((eventMask & zlljetsControlSample.globalMask.back()) == zlljetsControlSample.globalMask.back()) ) { 
+       if ( ((eventMask & analysisMask.globalMask.back()) == analysisMask.globalMask.back()) ) { 
  
 	 HzlljetsInvMassMetBinGenLep[bin]->Fill(mZ1,newwgt); 
 
@@ -799,10 +665,10 @@ void zlljetsControlSample::loop(vector< Double_t > &yRow, vector< Double_t > &eR
    }                        // end of loop on entries
 
    mySpaces(cout,2);
-   selection::printSelectionFlowAndYields(cout, LUMI, nTotalWeightedEvents, &zlljetsControlSample);
+   selection::printSelectionFlowAndYields(cout, LUMI, nTotalWeightedEvents, &analysisMask);
 
    mySpaces(cout,2);
-   myPrintYieldsMetBinInStream(cout, HzlljetsYieldsMetBin, metBinEdgesVector.data(), nMetBins);
+   myPrintYieldsMetBinInStream(cout, HYieldsMetBin, metBinEdgesVector.data(), nMetBins);
  
    cout<<"creating file '"<<TXT_FNAME<<"' in folder "<< outputFolder <<" ..."<<endl;
 
@@ -815,104 +681,68 @@ void zlljetsControlSample::loop(vector< Double_t > &yRow, vector< Double_t > &eR
      
    }
 
-   //opening inputFile named configFileName again to save content in myfile named TXT_FNAME
-   /*
-   inputFile.open(configFileName);
-
-   if (inputFile.is_open()) {
-     
-     mySpaces(myfile,2);
-     cout << "Saving content of " << configFileName << " file in "<< TXT_FNAME << endl;
-     myfile << "Content of " << configFileName << endl;
-     mySpaces(myfile,1);
-
-     Double_t value;
-     string name;
-     string parameterName;
-     string parameterType;
-
-     while (inputFile >> parameterType ) {
-
-       if (parameterType == "NUMBER") {
-
-	 inputFile >> parameterName >> value;
-	 myfile << setw(20) << parameterName << setw(7) << value << endl;
-
-       } else if (parameterType == "STRING") {
-	 
-	 inputFile >> parameterName >> name;
-	 myfile << right << setw(20) << parameterName << "  " << left << name << endl;
-
-       }
-
-     }
-     
-     inputFile.close();
-                                                                                                                         
-   } else {
-
-     cout << "Error: could not open file " << configFileName << " to save content in "<< TXT_FNAME << endl;
-     exit(EXIT_FAILURE);
-
-   }
-
-   mySpaces(myfile,2);
-   */
 
    if (!ISDATA_FLAG && unweighted_event_flag) myfile << "======   Using unweighted events (w = 1)   ======" << endl;
    mySpaces(myfile,3);
-   selection::printSelectionFlowAndYields(myfile, LUMI, nTotalWeightedEvents, &zlljetsControlSample);
+   selection::printSelectionFlowAndYields(myfile, LUMI, nTotalWeightedEvents, &analysisMask);
    mySpaces(myfile,2);
-   myPrintYieldsMetBinInStream(myfile, HzlljetsYieldsMetBin, metBinEdgesVector.data(), nMetBins);
+   myPrintYieldsMetBinInStream(myfile, HYieldsMetBin, metBinEdgesVector.data(), nMetBins);
 
    myfile.close();
 
    // filling with yields and efficiency: I will use efficiency with respect to total and not to previous step, but I could make this choice in the config file
 
    // entry point
+   // if (using_zlljets_MCsample_flag == 1 || using_ztautaujets_MCsample_flag == 1) {
+   //   yRow.push_back(analysisMask.nEvents[0]); // [0] refers to genLep, which is the first selection in these cases
+   //   eRow.push_back(1.0000);
+   //   uncRow.push_back(myGetUncertainty(&analysisMask, analysisMask.whichStepHas(genLepC.get2ToId()), uncertainty));
+   // } else {
+   //   yRow.push_back(nTotalWeightedEvents); // [0] 
+   //   eRow.push_back(1.0000);
+   //   uncRow.push_back(sqrt(nTotalWeightedEvents)); //should use a kind of myGetUncertainty function, but I don't save sum of newwgt^2 so I can't use MC uncertainty
+   // }
+
+   // for(Int_t i = 0; i < selStep.size(); i++) {
+     
+   //   yRow.push_back(analysisMask.nEvents[selStep[i]]);
+   //   //uncRow.push_back(sqrt(yRow.back()));
+   //   uncRow.push_back(myGetUncertainty(&analysisMask, selStep[i], uncertainty));
+   //   if (i == 0) eRow.push_back(analysisMask.nEvents[selStep[i]]/nTotalWeightedEvents);
+   //   else if( (i != 0) && (analysisMask.nEvents[selStep[i]-1] == 0) ) eRow.push_back(1.0000);
+   //   else eRow.push_back(analysisMask.nEvents[selStep[i]]/analysisMask.nEvents[selStep[i]-1]);
+   
+   // }
+
+   Int_t index_TotalEntryAndPreselection = analysisSelectionManager.getFirstStepIndex() - 1;
+
+   // entry point
    if (using_zlljets_MCsample_flag == 1 || using_ztautaujets_MCsample_flag == 1) {
-     yRow.push_back(zlljetsControlSample.nEvents[0]); // [0] refers to genLep, which is the first selection in these cases
+     yRow.push_back(analysisMask.nEvents[index_TotalEntryAndPreselection]); // step before the first step in the selectionManager (the one before metFiltersC for now)
      eRow.push_back(1.0000);
-     uncRow.push_back(myGetUncertainty(&zlljetsControlSample, zlljetsControlSample.whichStepHas(genLepC.get2ToId()), uncertainty));
+     uncRow.push_back(myGetUncertainty(&analysisMask, index_TotalEntryAndPreselection, uncertainty));
    } else {
      yRow.push_back(nTotalWeightedEvents); // [0] 
      eRow.push_back(1.0000);
      uncRow.push_back(sqrt(nTotalWeightedEvents)); //should use a kind of myGetUncertainty function, but I don't save sum of newwgt^2 so I can't use MC uncertainty
    }
 
-   vector<Int_t> selStep;   //array to store index of step to form selection flow (might want to consider two or more steps together and not separated)
-   //first step is the preselection before OS condition: doing like this because it might change (there can be or not MetNoLep cut, but I want the last step)
-
-   // in case a step wold be present for some sample but not for others (e.g. the RecoGen match done only in Zll MC), the step is referred to as -1 and the corresponding values are set to -1, so that, when printing the table, yields will be filled with " / / " which means " uneffected" (because that step was not done)
-
-   if (MET_FILTERS_FLAG != 0) selStep.push_back(zlljetsControlSample.whichStepHas(metFiltersC.get2ToId()));
-   selStep.push_back(zlljetsControlSample.whichStepHas(twoLepLooseC.get2ToId()));
-   selStep.push_back(zlljetsControlSample.whichStepHas(tightLepC.get2ToId()));
-   selStep.push_back(zlljetsControlSample.whichStepHas(oppChargeLeptonsC.get2ToId()));  
-   selStep.push_back(zlljetsControlSample.whichStepHas(invMassC.get2ToId()));
-   selStep.push_back(zlljetsControlSample.whichStepHas(lepLooseVetoC.get2ToId()));
-   if (TAU_VETO_FLAG) selStep.push_back(zlljetsControlSample.whichStepHas(tauLooseVetoC.get2ToId()));
-   selStep.push_back(zlljetsControlSample.whichStepHas(gammaLooseVetoC.get2ToId()));
-   selStep.push_back(zlljetsControlSample.whichStepHas(bjetVetoC.get2ToId()));
-   if (METNOLEP_START != 0) selStep.push_back(zlljetsControlSample.whichStepHas(metNoLepStartC.get2ToId()));
-   selStep.push_back(zlljetsControlSample.whichStepHas(jet1C.get2ToId()));
-   selStep.push_back(zlljetsControlSample.whichStepHas(jetNoiseCleaningC.get2ToId()));
-   selStep.push_back(zlljetsControlSample.whichStepHas(jetMetDphiMinC.get2ToId()));
-   if (!ISDATA_FLAG && using_zlljets_MCsample_flag)  selStep.push_back(zlljetsControlSample.whichStepHas(recoGenLepMatchC.get2ToId()));
-   else selStep.push_back(selStep.back());  // in this case copy the previous entry
-
-   for(Int_t i = 0; i < selStep.size(); i++) {
+   for(Int_t i = 0; i < analysisSelectionManager.getVectorSize(); i++) {
      
-     yRow.push_back(zlljetsControlSample.nEvents[selStep[i]]);
+     yRow.push_back(analysisMask.nEvents[analysisSelectionManager.getStepIndex(i)]);
      //uncRow.push_back(sqrt(yRow.back()));
-     uncRow.push_back(myGetUncertainty(&zlljetsControlSample, selStep[i], uncertainty));
-     if (i == 0) eRow.push_back(zlljetsControlSample.nEvents[selStep[i]]/nTotalWeightedEvents);
-     else if( (i != 0) && (zlljetsControlSample.nEvents[selStep[i]-1] == 0) ) eRow.push_back(1.0000);
-     else eRow.push_back(zlljetsControlSample.nEvents[selStep[i]]/zlljetsControlSample.nEvents[selStep[i]-1]);
+     uncRow.push_back(myGetUncertainty(&analysisMask, analysisSelectionManager.getStepIndex(i), uncertainty));
+     if (i == 0) {
+       if (using_zlljets_MCsample_flag == 1 || using_ztautaujets_MCsample_flag == 1) eRow.push_back(analysisMask.nEvents[analysisSelectionManager.getStepIndex(i)]/analysisMask.nEvents[index_TotalEntryAndPreselection]);
+       else eRow.push_back(analysisMask.nEvents[analysisSelectionManager.getStepIndex(i)]/nTotalWeightedEvents);
+     }
+     else if( (i != 0) && (analysisMask.nEvents[analysisSelectionManager.getStepIndex(i)-1] == 0) ) eRow.push_back(1.0000);
+     else eRow.push_back(analysisMask.nEvents[analysisSelectionManager.getStepIndex(i)]/analysisMask.nEvents[analysisSelectionManager.getStepIndex(i)-1]);
    
    }
 
    // fill last bin with overflow 
+   myAddOverflowInLastBin(HYieldsMetBin);
    myAddOverflowInLastBin(HmetNoLepDistribution);
    myAddOverflowInLastBin(HzptDistribution);
    myAddOverflowInLastBin(Hjet1ptDistribution);
@@ -924,21 +754,7 @@ void zlljetsControlSample::loop(vector< Double_t > &yRow, vector< Double_t > &eR
    delete rootFile;
 
    //creating a .tex file to build tables with data
-   FILE *fp;
-   fp = fopen((outputFolder + TEX_FNAME).c_str(),"w");
-
-   if ( fp == NULL)  cout<<"Error: '"<<TEX_FNAME<<"' not opened"<<endl;
-   else {
-
-     cout<<"creating file '"<<TEX_FNAME<<" in folder " << outputFolder << "' ..."<<endl;
-     myAddDefaultPackages(fp,TEX_FNAME);
-     fprintf(fp,"\\begin{document}\n");
-     fprintf(fp,"\n");
-     makeTableTex(fp, LUMI, nTotalWeightedEvents, &zlljetsControlSample);
-     fprintf(fp,"\\end{document}\n");      
-     fclose(fp);
-
-   }
+   myCreateTexTable(TEX_FNAME, outputFolder, LUMI,nTotalWeightedEvents, &analysisMask);
 
    // end of tex file
 

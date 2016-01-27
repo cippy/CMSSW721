@@ -46,6 +46,8 @@ using namespace std;
 AnalysisDarkMatter::AnalysisDarkMatter(TTree *tree) : edimarcoTree_v3(tree) {
   //cout <<"check in constructor "<<endl;
   Init(tree);
+  
+
 }
 
 //===============================================
@@ -68,8 +70,43 @@ void AnalysisDarkMatter::Init(TTree *tree) {
 
 //===============================================
 
-void AnalysisDarkMatter::SetVarFromConfigFile() {
+void AnalysisDarkMatter::setBasicConf(const char* inputSuffix, const string inputUncertainty, const char* inputConfigFileName, const Int_t inputIsDataFlag, const Int_t inputUnweightedEeventFlag) {
+
+  suffix = inputSuffix;  // it is the sample name (e.g. QCD, ZJetsToNuNu ecc...)
+  uncertainty = inputUncertainty; //sample uncertainty (poisson, MC, X%),
+  configFileName = (char*) inputConfigFileName;
+  ISDATA_FLAG = inputIsDataFlag;
+  unweighted_event_flag = inputUnweightedEeventFlag;
+
+}
+
+//===============================================
+
+void AnalysisDarkMatter::setNumberParameterValue(const string parameterName, const Double_t value) {
+
+  if (parameterName == "LUMI") LUMI = value;
+  //else if (parameterName == "NJETS") NJETS = value;
+  else if (parameterName == "J1PT") J1PT = value;
+  else if (parameterName == "J1ETA") J1ETA = value;
+  //else if (parameterName == "J2PT") J2PT = value;
+  //else if (parameterName == "J2ETA") J2ETA = value;
+  //else if (parameterName == "J1J2DPHI") J1J2DPHI = value;
+  else if (parameterName == "TAU_VETO_FLAG") TAU_VETO_FLAG = value;
+  else if (parameterName == "METNOLEP_START") METNOLEP_START = value;
+  else if (parameterName == "MET_FILTERS_FLAG") MET_FILTERS_FLAG = value;
+  else if (parameterName == "JMET_DPHI_MIN") JMET_DPHI_MIN = value;
+
+}
+
+//===============================================
+
+void AnalysisDarkMatter::setVarFromConfigFile() {
   
+  if (configFileName == NULL) {
+    cout << "Error: configFileName points to 'NULL'. End of programme" << endl;
+    exit(EXIT_FAILURE);
+  }
+
   ifstream inputFile(configFileName);
 
   if (inputFile.is_open()) {
@@ -92,17 +129,7 @@ void AnalysisDarkMatter::SetVarFromConfigFile() {
 	inputFile >> parameterName >> value;
 	cout << right << setw(20) << parameterName << "  " << left << value << endl;
 
-	if (parameterName == "LUMI") LUMI = value;
-	//else if (parameterName == "NJETS") NJETS = value;
-	else if (parameterName == "J1PT") J1PT = value;
-	else if (parameterName == "J1ETA") J1ETA = value;
-	//else if (parameterName == "J2PT") J2PT = value;
-	//else if (parameterName == "J2ETA") J2ETA = value;
-	//else if (parameterName == "J1J2DPHI") J1J2DPHI = value;
-	else if (parameterName == "TAU_VETO_FLAG") TAU_VETO_FLAG = value;
-	else if (parameterName == "METNOLEP_START") METNOLEP_START = value;
-	else if (parameterName == "MET_FILTERS_FLAG") MET_FILTERS_FLAG = value;
-	else if (parameterName == "JMET_DPHI_MIN") JMET_DPHI_MIN = value;
+	setNumberParameterValue(parameterName, value);
 
       } else if (parameterType == "STRING") {
 	 
@@ -182,23 +209,59 @@ void AnalysisDarkMatter::SetVarFromConfigFile() {
      else cout << metBinEdgesVector[i] << "]" << endl;
    }
 
+   if ( !ISDATA_FLAG && unweighted_event_flag) cout << "Warning: no weight applied to events (w = 1)" << endl;  // if MC with unit weight, make user know
+
+   if (ISDATA_FLAG) {
+     strcpy(ROOT_FNAME,(FILENAME_BASE + "_DATA.root").c_str());
+     strcpy(TXT_FNAME,(FILENAME_BASE + "_DATA.txt").c_str());
+     strcpy(TEX_FNAME,(FILENAME_BASE + "_DATA.tex").c_str());
+   } else {
+     strcpy(ROOT_FNAME,(FILENAME_BASE + "_" + suffix + ".root").c_str());
+     strcpy(TXT_FNAME,(FILENAME_BASE + "_" + suffix + ".txt").c_str());
+     strcpy(TEX_FNAME,(FILENAME_BASE + "_" + suffix + ".tex").c_str());
+   }
+
 }
 
 //===============================================
 
 void AnalysisDarkMatter::setSelections() {
 
-    metFiltersC.set("metFiltersC","met filters","cscfilter, ecalfilter, hbheFilterNew25ns, hbheFilterIso");
-    metNoMuC.set("metNoMuC",Form("metNoMu > %4.0lf",METNOLEP_START),"first cut on met");
-    jet1C.set("jet1C","jet1",Form("nJetClean >= 1 && JetClean1_pt > %4.0lf",(Double_t)J1PT));
-    jetMetDphiMinC.set("jetMetDphiMinC",Form("min[dphi(jets,MET)] > %1.1lf",JMET_DPHI_MIN),"minimum dphi between jets and MET (using only the first 4 jets)");
-    jetNoiseCleaningC.set("jetNoiseCleaningC","noise cleaning","energy fractions (only for jet1): CH > 0.1; NH < 0.8");
-    bjetVetoC.set("bjetVetoC","b-jets veto");
-    muonLooseVetoC.set("muonLooseVetoC","muons veto");
-    electronLooseVetoC.set("electronLooseVetoC","electrons veto");
-    if (TAU_VETO_FLAG) tauLooseVetoC.set("tauLooseVetoC","tau veto");
-    gammaLooseVetoC.set("gammaLooseVetoC","photons veto");
+  metFiltersC.set("metFiltersC","met filters","cscfilter, ecalfilter, hbheFilterNew25ns, hbheFilterIso");
+  //metNoMuC.set("metNoMuC",Form("metNoMu > %4.0lf",METNOLEP_START),"first cut on met");
+  jet1C.set("jet1C",Form("jet1pt > %4.0lf",J1PT),Form("nJetClean >= 1 && JetClean1_pt > %4.0lf",(Double_t)J1PT));
+  jetMetDphiMinC.set("jetMetDphiMinC",Form("min[dphi(j,MET)] > %1.1lf",JMET_DPHI_MIN),"minimum dphi between jets and MET (using only the first 4 jets)");
+  jetNoiseCleaningC.set("jetNoiseCleaningC","noise cleaning","energy fractions (only for jet1): CH > 0.1; NH < 0.8");
+  bjetVetoC.set("bjetVetoC","b-jets veto");
+  // muonLooseVetoC.set("muonLooseVetoC","muons veto");    
+  // electronLooseVetoC.set("electronLooseVetoC","electrons veto");
+  if (TAU_VETO_FLAG) tauLooseVetoC.set("tauLooseVetoC","tau veto");
+  gammaLooseVetoC.set("gammaLooseVetoC","photons veto");
 
+}
+
+//===============================================
+
+void AnalysisDarkMatter::setHistograms() {
+
+  HYieldsMetBin = new TH1D("HYieldsMetBin","yields in bins of met; #slash{E}_{T};# of events",nMetBins,metBinEdgesVector.data());
+   
+  HvtxDistribution = new TH1D("HvtxDistribution","",40,-0.5,39.5);   
+  HnjetsDistribution = new TH1D("HnjetsDistribution","njets using nJetClean30",10,-0.5,9.5);   
+  Hj1j2dphiDistribution = new TH1D("Hj1j2dphiDistribution","",30,0.0,3.0);
+  HjetMetDphiMinDistribution = new TH1D("HjetMetDphiMinDistribution","",30,0.0,3.2);
+  Hjet1etaDistribution = new TH1D("Hjet1etaDistribution","",60,-3.0,3.0);
+  Hjet2etaDistribution = new TH1D("Hjet2etaDistribution","",60,-3.0,3.0);
+  HmetNoLepDistribution = new TH1D("HmetNoLepDistribution","",100,0.0,1000.0);
+  Hjet1ptDistribution = new TH1D("Hjet1ptDistribution","",100,0.0,1000.0); 
+  Hjet2ptDistribution = new TH1D("Hjet2ptDistribution","",100,0.0,1000.0);
+
+  // saving histograms with bin edges of other histograms used (e.g. content of metBinEdges array ...)
+  HmetBinEdges = new TH1D("HmetBinEdges","bin edges for met distributions",nMetBins+1,0.0,nMetBins+1);
+  for (Int_t i = 0; i <= nMetBins; i++) {
+    HmetBinEdges->SetBinContent(i+1,metBinEdgesVector[i]);
   }
+
+}
 
 #endif
