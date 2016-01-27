@@ -12,6 +12,8 @@
 #include <vector>
 #include <cmath>
 
+class selection;
+
 class mask {
  
  public:
@@ -35,6 +37,7 @@ class mask {
   void countEvents(const UInt_t &);
   Int_t whichStepHas(const UInt_t &) const;
   Int_t whichStepHas(const UInt_t &, const std::string &) const;
+  Int_t whichStepHas(const selection*) const;
 
  private:
   std::string name_;
@@ -162,6 +165,32 @@ class selection {
    UInt_t twoToId_;     // 2^id_; this number has all 0 digits except for the bit corresponding to the selection, which is set to 1.
    static Int_t nSelections_; // total number of variables on which a selection is applied 
    // a selection can consist of more than 1 cut e.g. for invariant mass, where we have an interval
+
+};
+
+
+class selectionManager {
+
+ public:
+
+  selectionManager();
+  selectionManager(mask*);
+  ~selectionManager();
+
+  void append(const selection*);
+  void append(const mask*, const selection*); //given mask and selection, set the position index of selection in the mask and that selection's name
+  void append(const selection*, const Int_t); //accept index from user and use selection to get name (this is useful when some selections are applied only on some sample, so that we would have a row with the same events as the previous for those samlples for which selection is not applied, like reco-gen_LepMatch)
+  Int_t getLastStepIndex() const { return stepIndex.back(); }
+  Int_t getFirstStepIndex() const { return stepIndex.front(); }
+  std::string getStepDefinition(const Int_t i) const {return stepDefinition[i];}
+  Int_t getStepIndex(const Int_t i) const {return stepIndex[i];}
+  Int_t getVectorSize() const {return stepIndex.size();}
+  void SetMaskPointer(mask* m) { mPtr = m; }
+
+ private:
+  mask* mPtr;
+  std::vector<Int_t> stepIndex;
+  std::vector<std::string> stepDefinition;
 
 };
 

@@ -122,6 +122,26 @@ Int_t mask::whichStepHas(const UInt_t &a, const std::string &name) const {
 
 }
 
+Int_t mask::whichStepHas(const selection* sel) const {
+
+  Int_t size = this->getMaskSize();
+  Int_t index = size;
+  Int_t i = 0;
+  Int_t a = sel->get2ToId();
+
+  while( (index == size) && (i < size)) {
+    if( (this->singleMask[i] & a) == a ) index = i;
+    i++; 
+  }
+
+  if (index != size) return index;   
+  else {
+    cout << " Error: step \"" << sel->getName() << "\" not found in the mask " << endl;
+    exit(EXIT_FAILURE);
+  }
+
+}
+
  //----------------------------------------------------------------------------------
 
 // implementation of methods of class cut 
@@ -717,3 +737,45 @@ Bool_t selection::isPassed(Bool_t input) {
 
 }
 
+
+
+selectionManager::selectionManager() {
+
+  mPtr = NULL;
+
+ }
+
+selectionManager::selectionManager(mask* m) {
+
+  mPtr = m;
+
+}
+
+selectionManager::~selectionManager() {
+
+}
+
+void selectionManager::append(const selection* s) {
+
+  if (mPtr == NULL) {
+    cout << "Error in selectionManager::append(const selection* s): mPtr is NULL, try using selectionManager::append(const mask* m, const selection* s)" << endl;
+    exit(EXIT_FAILURE);
+  }
+  stepIndex.push_back(mPtr->whichStepHas(s));
+  stepDefinition.push_back(s->getDefinition());
+
+}
+
+void selectionManager::append(const mask* m, const selection* s) {
+
+  stepIndex.push_back(m->whichStepHas(s));
+  stepDefinition.push_back(s->getDefinition());
+
+}
+
+void selectionManager::append(const selection* s, const Int_t a) {
+
+  stepIndex.push_back(a);
+  stepDefinition.push_back(s->getDefinition());
+
+}
