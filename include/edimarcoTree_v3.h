@@ -26,6 +26,7 @@ public :
    Float_t         nMu20T;
    Float_t         nEle10V;
    Float_t         nEle20T;
+   Float_t         nEle40T;
    Float_t         nTau18V;
    Float_t         nGamma15V;
    Float_t         nGamma175T;
@@ -36,6 +37,7 @@ public :
    Float_t         events_ntot;
    Float_t         phmet_pt;
    Float_t         phmet_phi;
+   Float_t         SF_BTag;
    Int_t           nJetClean;
    Int_t           nTauClean;
    Int_t           nLepSel;
@@ -57,6 +59,18 @@ public :
    Float_t         vtxWeight;
    Int_t           cscfilter;
    Int_t           ecalfilter;
+   Int_t           nCalibEle;
+   Float_t         CalibEle_pt[3];   //[nCalibEle]
+   Float_t         CalibEle_energy[3];   //[nCalibEle]
+   Float_t         CalibEle_eta[3];   //[nCalibEle]
+   Float_t         CalibEle_phi[3];   //[nCalibEle]
+   Float_t         CalibEle_mass[3];   //[nCalibEle]
+   Float_t         SF_trig1lep;
+   Float_t         SF_trigmetnomu;
+   Float_t         SF_LepTightLoose;
+   Float_t         SF_LepTight;
+   Float_t         SF_NLO;
+   
 
    // Declaration of leaf types
    UInt_t          run;
@@ -555,6 +569,7 @@ public :
    TBranch        *b_nMu20T;   //!
    TBranch        *b_nEle10V;   //!
    TBranch        *b_nEle20T;   //!
+   TBranch        *b_nEle40T;   //!
    TBranch        *b_nTau18V;   //!
    TBranch        *b_nGamma15V;   //!
    TBranch        *b_nGamma175T;   //!
@@ -565,6 +580,7 @@ public :
    TBranch        *b_events_ntot;   //!
    TBranch        *b_phmet_pt;   //!
    TBranch        *b_phmet_phi;   //!
+   TBranch        *b_SF_BTag;   //!
    TBranch        *b_nJetClean;   //!
    TBranch        *b_nTauClean;   //!
    TBranch        *b_nLepSel;   //!
@@ -586,6 +602,17 @@ public :
    TBranch        *b_vtxWeight;   //!
    TBranch        *b_cscfilter;   //!
    TBranch        *b_ecalfilter;   //!
+   TBranch        *b_SF_trig1lep;   //!
+   TBranch        *b_SF_trigmetnomu;   //!
+   TBranch        *b_SF_LepTightLoose;   //!
+   TBranch        *b_SF_LepTight;   //!
+   TBranch        *b_SF_NLO;   //!
+   TBranch        *b_nCalibEle;   //!
+   TBranch        *b_CalibEle_pt;   //!
+   TBranch        *b_CalibEle_energy;   //!
+   TBranch        *b_CalibEle_eta;   //!
+   TBranch        *b_CalibEle_phi;   //!
+   TBranch        *b_CalibEle_mass;   //!
 
    // List of branches
    TBranch        *b_run;   //!
@@ -1154,6 +1181,7 @@ void edimarcoTree_v3::Init(TTree *tree)
    fChain->SetBranchAddress("nMu20T", &nMu20T, &b_nMu20T);
    fChain->SetBranchAddress("nEle10V", &nEle10V, &b_nEle10V);
    fChain->SetBranchAddress("nEle20T", &nEle20T, &b_nEle20T);
+   fChain->SetBranchAddress("nEle40T", &nEle40T, &b_nEle40T);
    fChain->SetBranchAddress("nTau18V", &nTau18V, &b_nTau18V);
    fChain->SetBranchAddress("nGamma15V", &nGamma15V, &b_nGamma15V);
    fChain->SetBranchAddress("nGamma175T", &nGamma175T, &b_nGamma175T);
@@ -1164,6 +1192,7 @@ void edimarcoTree_v3::Init(TTree *tree)
    fChain->SetBranchAddress("events_ntot", &events_ntot, &b_events_ntot);
    fChain->SetBranchAddress("phmet_pt", &phmet_pt, &b_phmet_pt);
    fChain->SetBranchAddress("phmet_phi", &phmet_phi, &b_phmet_phi);
+   fChain->SetBranchAddress("SF_BTag", &SF_BTag, &b_SF_BTag);
    fChain->SetBranchAddress("nJetClean", &nJetClean, &b_nJetClean);
    fChain->SetBranchAddress("nTauClean", &nTauClean, &b_nTauClean);
    fChain->SetBranchAddress("nLepSel", &nLepSel, &b_nLepSel);
@@ -1185,6 +1214,18 @@ void edimarcoTree_v3::Init(TTree *tree)
    fChain->SetBranchAddress("vtxWeight", &vtxWeight, &b_vtxWeight);
    fChain->SetBranchAddress("cscfilter", &cscfilter, &b_cscfilter);
    fChain->SetBranchAddress("ecalfilter", &ecalfilter, &b_ecalfilter);
+   fChain->SetBranchAddress("nCalibEle", &nCalibEle, &b_nCalibEle);
+   fChain->SetBranchAddress("CalibEle_pt", CalibEle_pt, &b_CalibEle_pt);
+   fChain->SetBranchAddress("CalibEle_energy", CalibEle_energy, &b_CalibEle_energy);
+   fChain->SetBranchAddress("CalibEle_eta", CalibEle_eta, &b_CalibEle_eta);
+   fChain->SetBranchAddress("CalibEle_phi", CalibEle_phi, &b_CalibEle_phi);
+   fChain->SetBranchAddress("CalibEle_mass", CalibEle_mass, &b_CalibEle_mass);
+
+   fChain->SetBranchAddress("SF_trig1lep", &SF_trig1lep, &b_SF_trig1lep);
+   fChain->SetBranchAddress("SF_trigmetnomu", &SF_trigmetnomu, &b_SF_trigmetnomu);
+   fChain->SetBranchAddress("SF_LepTightLoose", &SF_LepTightLoose, &b_SF_LepTightLoose);
+   fChain->SetBranchAddress("SF_LepTight", &SF_LepTight, &b_SF_LepTight);
+   fChain->SetBranchAddress("SF_NLO", &SF_NLO, &b_SF_NLO);
 
    fChain->SetBranchAddress("run", &run, &b_run);
    fChain->SetBranchAddress("lumi", &lumi, &b_lumi);
