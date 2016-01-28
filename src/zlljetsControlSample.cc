@@ -71,7 +71,6 @@ void zlljetsControlSample::setSelections() {
   invMassC.set("invMassC",Form("mass in [%3.0lf,%3.0lf]",DILEPMASS_LOW,DILEPMASS_UP));
   twoLepLooseC.set("twoLepLooseC",Form("2 loose %s",FLAVOUR));
   tightLepC.set("tightLepC",Form(">0 tight %s",FLAVOUR));
-  if (HLT_FLAG != 0) HLTlepC.set("HLTlepC",Form("HLT for %s",FLAVOUR));   
 
   if (!ISDATA_FLAG && using_zlljets_MCsample_flag) {
     genLepC.set("genLepC",Form("%s generated",FLAVOUR));     
@@ -117,8 +116,8 @@ void zlljetsControlSample::setMask() {
      }
      if (using_ztautaujets_MCsample_flag) analysisMask.append(genTauC.get2ToId());
    }
+   if ( HLT_FLAG != 0 ) analysisMask.append(HLTC.get2ToId());
    if (MET_FILTERS_FLAG != 0) analysisMask.append(metFiltersC.get2ToId());
-   if ( HLT_FLAG != 0 ) analysisMask.append(HLTlepC.get2ToId());
    analysisMask.append(twoLepLooseC.get2ToId());
    analysisMask.append(tightLepC.get2ToId());
    analysisMask.append(oppChargeLeptonsC.get2ToId());     
@@ -134,6 +133,7 @@ void zlljetsControlSample::setMask() {
 
    analysisSelectionManager.SetMaskPointer(&analysisMask);
 
+   if ( HLT_FLAG != 0 ) analysisSelectionManager.append(&HLTC);
    if (MET_FILTERS_FLAG != 0) analysisSelectionManager.append(&metFiltersC);
    analysisSelectionManager.append(&twoLepLooseC);
    analysisSelectionManager.append(&tightLepC);
@@ -175,7 +175,6 @@ void zlljetsControlSample::setNumberParameterValue(const std::string parameterNa
   else if (parameterName == "DILEPMASS_LOW") DILEPMASS_LOW = value;
   else if (parameterName == "DILEPMASS_UP") DILEPMASS_UP = value;
   else if (parameterName == "LEP_ISO_04") LEP_ISO_04 = value;
-  else if (parameterName == "HLT_FLAG") HLT_FLAG = value;
   else if (parameterName == "HLT_LEP1PT") HLT_LEP1PT = value;
   else if (parameterName == "HLT_LEP2PT") HLT_LEP2PT = value;
   else if (parameterName == "HLT_LEP1ETA") HLT_LEP1ETA = value;
@@ -285,6 +284,7 @@ void zlljetsControlSample::loop(vector< Double_t > &yRow, vector< Double_t > &eR
    fChain->SetBranchStatus("metNoMu_phi",1);
 
    fChain->SetBranchStatus("nVert",1);  // number of good vertices 
+   fChain->SetBranchStatus("HLT_MonoJetMetNoMuMHT90",1);
 
    // met filters to be used (the config file has a parameter saying whether they should be used or not)
    fChain->SetBranchStatus("cscfilter",1);
@@ -392,7 +392,7 @@ void zlljetsControlSample::loop(vector< Double_t > &yRow, vector< Double_t > &eR
 
      ptr_nLepLoose = &nEle10V;                      // ask 2 electrons
      ptr_nLep10V = &nMu10V;                         // veto on muons   
-     ptr_nLepTight = &nEle40T;
+     ptr_nLepTight = &nEle20T; //TO SUBSTITUTE WITH nEle40T
 
    }
 
@@ -448,7 +448,7 @@ void zlljetsControlSample::loop(vector< Double_t > &yRow, vector< Double_t > &eR
        //newwgt = LUMI * weight * vtxWeight/*/ events_ntot*/;  // starting from 17 November, "events_ntot" substitutes SUMWEIGHT and is already present in the trees. Same for weight, which is now defined as "1000 * xsec * genWeight" (1000*xsec is the cross section in fb, since xsec is in pb.)
        // I found out that division by events_ntot was already included in weight definition
 
-       if (fabs(LEP_PDG_ID) == 13) newwgt = LUMI * weight * vtxWeight * SF_trigmetnomu * SF_LepTightLoose * SF_BTag * SF_NLO;
+       if (fabs(LEP_PDG_ID) == 13) newwgt = LUMI * weight * vtxWeight /* SF_trigmetnomu * SF_LepTightLoose * SF_BTag * SF_NLO*/;
        else if (fabs(LEP_PDG_ID) == 11) newwgt = LUMI * weight * vtxWeight;
 
      }
@@ -513,8 +513,7 @@ void zlljetsControlSample::loop(vector< Double_t > &yRow, vector< Double_t > &eR
        if ( HLT_FLAG != 0) {
 
 	 // use the dimuon trigger, not the metNoLep trigger
-       	 if ( recoLepFound_flag && (fabs(LepGood_eta[firstIndex]) < HLT_LEP1ETA) && (fabs(LepGood_eta[secondIndex]) < HLT_LEP2ETA) && 
-       	      (LepGood_pt[firstIndex] > HLT_LEP1PT) && (LepGood_pt[secondIndex] > HLT_LEP2PT) ) HLT_passed_flag = 1; 	 
+       	 if ( HLT_MonoJetMetNoMuMHT90 == 1 ) HLT_passed_flag = 1; 	 
        	 else HLT_passed_flag = 0; //continue;
 
        }  // end of   if ( HLT_FLAG )
@@ -569,10 +568,11 @@ void zlljetsControlSample::loop(vector< Double_t > &yRow, vector< Double_t > &eR
      // also, 2 OS/SF leptons are present
 
      if (recoLepFound_flag == 1) {
-       eventMask += HLTlepC.addToMask(HLT_passed_flag);     
+       eventMask += HLTC.addToMask(HLT_passed_flag);     
        eventMask += oppChargeLeptonsC.addToMask(1); // included in recoLepFound_flag togehter with correct flavour 
        eventMask += twoLepLooseC.addToMask(((Int_t) nLepLoose) == 2);
-       eventMask += tightLepC.addToMask(nLepTight > 0);
+       if (fabs(LEP_PDG_ID) == 11) eventMask += tightLepC.addToMask(nLepTight > 0 && LepGood_pt[0]>40);
+       else eventMask += tightLepC.addToMask(nLepTight > 0 );
        // eventMask += lep1ptC.addToMask((LepGood_pt[firstIndex] > LEP1PT)); 
        // eventMask += lep1etaC.addToMask( (fabs(LepGood_eta[firstIndex]) < LEP1ETA) );
        // eventMask += lep2ptC.addToMask((LepGood_pt[secondIndex] > LEP2PT) );

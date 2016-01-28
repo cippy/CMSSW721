@@ -92,6 +92,7 @@ void AnalysisDarkMatter::setNumberParameterValue(const string parameterName, con
   //else if (parameterName == "J2ETA") J2ETA = value;
   //else if (parameterName == "J1J2DPHI") J1J2DPHI = value;
   else if (parameterName == "TAU_VETO_FLAG") TAU_VETO_FLAG = value;
+  else if (parameterName == "HLT_FLAG") HLT_FLAG = value;
   else if (parameterName == "METNOLEP_START") METNOLEP_START = value;
   else if (parameterName == "MET_FILTERS_FLAG") MET_FILTERS_FLAG = value;
   else if (parameterName == "JMET_DPHI_MIN") JMET_DPHI_MIN = value;
@@ -235,6 +236,7 @@ void AnalysisDarkMatter::setSelections() {
   bjetVetoC.set("bjetVetoC","b-jets veto");
   // muonLooseVetoC.set("muonLooseVetoC","muons veto");    
   // electronLooseVetoC.set("electronLooseVetoC","electrons veto");
+  if (HLT_FLAG != 0) HLTC.set("HLTC","trigger");
   if (TAU_VETO_FLAG) tauLooseVetoC.set("tauLooseVetoC","tau veto");
   gammaLooseVetoC.set("gammaLooseVetoC","photons veto");
 

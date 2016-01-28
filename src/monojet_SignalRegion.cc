@@ -76,6 +76,7 @@ void monojet_SignalRegion::setMask() {
 
   analysisMask.setName("monojet signal selection");
 
+  if (HLT_FLAG != 0) analysisMask.append(HLTC.get2ToId());
   if (MET_FILTERS_FLAG != 0) analysisMask.append(metFiltersC.get2ToId());
   analysisMask.append(muonLooseVetoC.get2ToId());
   analysisMask.append(electronLooseVetoC.get2ToId());
@@ -89,6 +90,7 @@ void monojet_SignalRegion::setMask() {
 
   analysisSelectionManager.SetMaskPointer(&analysisMask);
 
+  if (HLT_FLAG != 0) analysisSelectionManager.append(&HLTC);
   if (MET_FILTERS_FLAG != 0) analysisSelectionManager.append(&metFiltersC);
   analysisSelectionManager.append(&muonLooseVetoC);
   analysisSelectionManager.append(&electronLooseVetoC);
@@ -181,6 +183,7 @@ void monojet_SignalRegion::loop(vector< Double_t > &yRow, vector< Double_t > &eR
    fChain->SetBranchStatus("metNoMu_phi",1);
 
    fChain->SetBranchStatus("nVert",1);  // number of good vertices 
+   fChain->SetBranchStatus("HLT_MonoJetMetNoMuMHT90",1);
 
    // met filters to be used (the config file has a parameter saying whether they should be used or not)
    fChain->SetBranchStatus("cscfilter",1);
@@ -304,6 +307,7 @@ void monojet_SignalRegion::loop(vector< Double_t > &yRow, vector< Double_t > &eR
      eventMask += gammaLooseVetoC.addToMask(nGamma15V == 0);
      eventMask += metNoLepC.addToMask(metNoMu_pt > METNOLEP_START);
      eventMask += metFiltersC.addToMask(cscfilter == 1 && ecalfilter == 1 && hbheFilterNew25ns == 1 && hbheFilterIso == 1);
+     eventMask += HLTC.addToMask(HLT_MonoJetMetNoMuMHT90 == 1);
      
      // end of eventMask building
 
