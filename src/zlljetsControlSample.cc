@@ -448,7 +448,7 @@ void zlljetsControlSample::loop(vector< Double_t > &yRow, vector< Double_t > &eR
        //newwgt = LUMI * weight * vtxWeight/*/ events_ntot*/;  // starting from 17 November, "events_ntot" substitutes SUMWEIGHT and is already present in the trees. Same for weight, which is now defined as "1000 * xsec * genWeight" (1000*xsec is the cross section in fb, since xsec is in pb.)
        // I found out that division by events_ntot was already included in weight definition
 
-       if (fabs(LEP_PDG_ID) == 13) newwgt = LUMI * weight * vtxWeight /* SF_trigmetnomu * SF_LepTightLoose * SF_BTag * SF_NLO*/;
+       if (fabs(LEP_PDG_ID) == 13) newwgt = LUMI * weight * vtxWeight * SF_trigmetnomu * SF_LepTightLoose * SF_BTag * SF_NLO;
        else if (fabs(LEP_PDG_ID) == 11) newwgt = LUMI * weight * vtxWeight;
 
      }
