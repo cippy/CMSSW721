@@ -4,6 +4,7 @@
 #include <fstream>
 #include <iomanip>
 #include <string>
+#include <sstream>      // std::istringstream ; to read array of numbers from a line in a file
 #include <vector>
 #include <cstring>
 #include <cmath>
@@ -47,14 +48,18 @@ int main(int argc, char* argv[]) {
   Int_t tau_veto_flag;
   Double_t metnolep_start;
   Int_t met_filters_flag;
+  Int_t HLT_flag;
   string uncertainty; // say which uncertainty is to be used for yields in a sample. Can be "poisson", "MC", "X%"
   string treePath;
   string friendTreePath;
-  string sf_friendTreePath; // friend with scale factor
+  string sf_friendTreePath = ""; // friend with scale factor
   string option = "";
 
   Int_t unweighted_event_flag = 0;  // this flag tells the user if the MC uses unit weight (using w = 1 is basically for debugging purposes)
   Int_t adishTree_flag = 0;  // tells user I'm using Adish's tree
+
+  Int_t using_EmanTreesWithSubSamples_flag = 0; //used if reading trees from Emanuele's area
+  Int_t sf_friend_flag = 0; // set to 1 if using sf_friend when reading trees from Emanuele's area
 
   // following are for CS analysis
   Int_t signalRegion_flag = 0;
@@ -154,6 +159,15 @@ int main(int argc, char* argv[]) {
 
 	  if (met_filters_flag != 0) std::cout << "Applying met filters" << std::endl;
 	  else std::cout << "Not applying met filters" << std::endl;
+
+	}
+
+	if (parameterName == "HLT_FLAG") {
+
+	  HLT_flag = (Int_t) value;
+
+	  if (HLT_flag != 0) std::cout << "Applying HLT cut" << std::endl;
+	  else std::cout << "Not applying HLT cut" << std::endl;
 
 	}
 
@@ -362,15 +376,15 @@ int main(int argc, char* argv[]) {
     vector< Double_t > efficiencyRow;
     vector< Double_t > uncertaintyRow;
     Int_t nSample = 0;
-    std::vector<std::string> sampleName;
-    
+    std::vector<std::string> sampleName;   
+
     std::vector<std::string> selectionDefinition;
     selectionDefinition.push_back("entry point");
+    if(HLT_flag != 0) selectionDefinition.push_back("trigger");
+    if (met_filters_flag == 1) selectionDefinition.push_back("met filters");
 
     if (signalRegion_flag == 1) {
     
-        
-      if (met_filters_flag == 1) selectionDefinition.push_back("met filters");
       selectionDefinition.push_back("muon veto");
       selectionDefinition.push_back("electron veto");
       if (tau_veto_flag) selectionDefinition.push_back("tau veto");
@@ -385,7 +399,6 @@ int main(int argc, char* argv[]) {
 
       if (controlSample_boson == "Z") {
 
-	if (met_filters_flag == 1) selectionDefinition.push_back("met filters");
 	selectionDefinition.push_back("2lep loose");
 	selectionDefinition.push_back(">0 tight lep");
 	selectionDefinition.push_back("2lep SF/OS");
@@ -394,23 +407,22 @@ int main(int argc, char* argv[]) {
 	else if (fabs(lepton_PDGID) == 11) selectionDefinition.push_back("muon veto");
 	if (tau_veto_flag) selectionDefinition.push_back("tau veto");
 	selectionDefinition.push_back("photon veto");
-	if (metnolep_start != 0) selectionDefinition.push_back("recoil > 200");
 	selectionDefinition.push_back("bjet veto");
+	if (metnolep_start != 0) selectionDefinition.push_back("recoil > 200");
 	selectionDefinition.push_back("jet1pt");
 	selectionDefinition.push_back("jet1 cleaning");
 	selectionDefinition.push_back("dphiMin(j,Met)");
         
       } else if (controlSample_boson == "W") {
 
-	if (met_filters_flag == 1) selectionDefinition.push_back("met filters");
 	selectionDefinition.push_back("1lep loose");
 	selectionDefinition.push_back("1 tight lep");
 	if (fabs(lepton_PDGID) == 13) selectionDefinition.push_back("electron veto");
 	else if (fabs(lepton_PDGID) == 11) selectionDefinition.push_back("muon veto");
 	if (tau_veto_flag) selectionDefinition.push_back("tau veto");
 	selectionDefinition.push_back("photon veto");
-	if (metnolep_start != 0) selectionDefinition.push_back("recoil > 200");
 	selectionDefinition.push_back("bjet veto");
+	if (metnolep_start != 0) selectionDefinition.push_back("recoil > 200");
 	selectionDefinition.push_back("jet1pt");
 	selectionDefinition.push_back("jet1 cleaning");
 	selectionDefinition.push_back("dphiMin(j,Met)");
@@ -446,9 +458,13 @@ int main(int argc, char* argv[]) {
 
       while (fileEndReached_flag == 0) {
 
+	//std::cout << "CHECK IN READING SAMPLE FILE" << std::endl;
+	std::vector<std::string> subSampleNameVector; // if using Emanuele's tree, for each sample (e.g. ZJetsToNuNu) there is more than one subsample (e.g. different HT bins or different processes). This vector holds this subsamples's name to be chained (previously I used to merge and copy them from Emanuele's area to mine, so that I only had one tree or friend if any). For backward compatibility, I keep the possibility to use the merged trees when reading the file
+
 	//============================================/
-  
-	while ( (sampleFile >> parameterType) && (!(parameterType == "#")) ) {  // read only first object  here: if it is '#' it signals that another part is starting
+
+	while ( (sampleFile >> parameterType) && (!(parameterType == "#")) ) {  // read only first object  here: if it is '#' it signals that another part is starting, and this while loop ends, and analysis starts.
+	  //std::cout<<"CHECK 2 " <<std::endl;
 
 	  if (parameterType == "#STOP") fileEndReached_flag = 1;   //tells me that the file is ended and I don't need to go on reading it.
 
@@ -462,6 +478,14 @@ int main(int argc, char* argv[]) {
 
 	      if (isdata_flag == 0) std::cout << "Running on MonteCarlo" << std::endl;
 	      else std::cout << "Running on data" << std::endl;
+
+	    }
+
+	    if (parameterName == "SF_FRIEND_FLAG") {
+
+	      sf_friend_flag = (Int_t) value;
+	      if (sf_friend_flag == 0) std::cout << "Not using scale factor friend trees (sf_friend)" << std::endl;
+	      else std::cout << "Using scale factor friend trees (sf_friend)" << std::endl;
 
 	    }
 
@@ -486,23 +510,49 @@ int main(int argc, char* argv[]) {
 	    if (parameterName == "TREE_PATH") {
 
 	      treePath = name;
-	      std::cout << setw(20) << "tree : " << treePath <<std::endl;
+	      std::cout << setw(20) << "tree : " << name <<std::endl;
 
-	    }   
+	    }
 
 	    if (parameterName == "FRIEND_TREE_PATH") {
 
 	      friendTreePath = name;
-	      std::cout << setw(20) << "friend tree : " << friendTreePath <<std::endl;
+	      std::cout << setw(20) << "friend tree : " << name <<std::endl;
 
 	    } 
 
 	    if (parameterName == "SF_FRIEND_TREE_PATH") {
 
 	      sf_friendTreePath = name;
-	      std::cout << setw(20) << "friend tree : " << sf_friendTreePath <<std::endl;
+	      std::cout << setw(20) << "sf_friend tree : " << name <<std::endl;
 
 	    } 
+
+	  }  else if(parameterType == "ARRAY_STR") {
+
+	    //std::cout<<"CHECK 0 " <<std::endl;
+	    using_EmanTreesWithSubSamples_flag = 1;
+	    sampleFile >> parameterName;
+
+	    if (parameterName == "SUB_SAMPLE_NAMES") { 
+
+	      cout << right << setw(20) << parameterName << "  ";
+	      string stringvalues;
+	      getline(sampleFile, stringvalues);    // read whole line starting from current position (i.e. without reading ARRAY_STR and SAMPLE_NAME)
+	      istringstream iss(stringvalues);
+	      std::string subSample;
+
+	      while(iss >> subSample) {
+	    
+		subSampleNameVector.push_back(subSample);
+		cout << subSampleNameVector.back() << " ";
+
+	      }
+
+	      cout << endl;
+
+	    }
+
 
 	  }
 
@@ -510,20 +560,65 @@ int main(int argc, char* argv[]) {
 
 	if ( !fileEndReached_flag) {
 
-	  std::cout << "Creating chain ..." << std::endl;
 	  TChain* chain = new TChain("tree");
-	  chain->Add(TString(treePath.c_str()));
-
-	  std::cout << "Adding friend to chain ..." << std::endl;
 	  TChain* chFriend = new TChain("mjvars/t");
-	  chain->AddFriend("mjvars/t",TString(friendTreePath.c_str()));
-
 	  TChain* chSfFriend = new TChain("sf/t");
-	  if (sf_friendTreePath != "") {
-	    std::cout << "Adding friend with scale factors to chain ..." << std::endl;	  
-	    chain->AddFriend("sf/t",TString(sf_friendTreePath.c_str()));
+
+	  //std::cout<<"CHECK 3 " <<std::endl;
+
+	  std::cout << "using_EmanTreesWithSubSamples_flag : " << using_EmanTreesWithSubSamples_flag << std::endl;
+
+	  if(using_EmanTreesWithSubSamples_flag == 1) {
+
+	    std::cout<<"CHECK 1 " <<std::endl;
+
+	    std::cout << "Creating chain ..." << std::endl;
+
+	    for(Int_t i = 0; i < subSampleNameVector.size(); i++) {
+	   
+	      std::string treeRootFile = treePath + subSampleNameVector[i] + "/treeProducerDarkMatter/tree.root"; 
+	      std::string friend_treeRootFile = treePath + "friends/evVarFriend_" + subSampleNameVector[i]+ ".root"; 
+	      std::string sf_friend_treeRootFile = treePath + "friends/sfFriend_" + subSampleNameVector[i]+ ".root"; 
+
+	      chain->Add(TString(treeRootFile.c_str()));
+	      chFriend->Add(TString(friend_treeRootFile.c_str()));
+	      if (sf_friend_flag != 0) chSfFriend->Add(TString(sf_friend_treeRootFile.c_str()));
+
+	    }
+
+	    std::cout << "Adding friend to chain ..." << std::endl;	    
+	    chain->AddFriend(chFriend);  //adding whole friend chain as friend
+
+	    if (sf_friend_flag != 0) {
+			  
+	      std::cout << "Adding friend with scale factors to chain ..." << std::endl;
+	      chain->AddFriend(chSfFriend);  //adding whole friend chain as friend
+
+	    }
+
+	  } else {
+
+	    //std::cout<<"CHECK 4 " <<std::endl;
+
+	    std::cout << "Creating chain ..." << std::endl;
+	    chain->Add(TString(treePath.c_str()));
+
+	    std::cout << "Adding friend to chain ..." << std::endl;
+	    chain->AddFriend("mjvars/t",TString(friendTreePath.c_str()));
+
+	    if (sf_friendTreePath != "") {
+	      std::cout << "Adding friend with scale factors to chain ..." << std::endl;	  
+	      chain->AddFriend("sf/t",TString(sf_friendTreePath.c_str()));
+	    }
+
 	  }
-	
+	  
+	  // now that chains are set, reset some variables' value
+	  using_EmanTreesWithSubSamples_flag = 0;
+	  sf_friend_flag = 0; // set to zero so that for the next sample it will be left 0 or set to 1 depending on the samplePathFile
+	  //sf_friend_flag is used only when reading trees from emanuele's area: it signals that there are sf_friend to add as friend tree (friend with scale factors). We assume that normal friends are always present. In a future, we might always have sf_friend as well and this flag will not be needed any more
+	  sf_friendTreePath = ""; //set to void string, then in the previous loop it will be initialized if present in the samplePathFile (sometimes there are no sf_friend and in that case, the sf_friend is not added as friend: there is an if condition asking whether sf_friendTreePath == "" or not)
+
 	  if(!chain) {
 	    std::cout << "Error: chain not created. End of programme" << std::endl;
 	    exit(EXIT_FAILURE);
@@ -564,6 +659,7 @@ int main(int argc, char* argv[]) {
 	  nSample++;
 	  delete chain;
 	  delete chFriend;
+	  delete chSfFriend;
 
 	}
 
