@@ -49,6 +49,7 @@ monojet_SignalRegion::monojet_SignalRegion(TTree *tree) : AnalysisDarkMatter(tre
   configFileName = NULL;
   ISDATA_FLAG = 0;
   unweighted_event_flag = 0;
+  hasSFfriend_flag = 0;
   Init(tree);
 
 }
@@ -190,6 +191,7 @@ void monojet_SignalRegion::loop(vector< Double_t > &yRow, vector< Double_t > &eR
    fChain->SetBranchStatus("ecalfilter",1);
    fChain->SetBranchStatus("hbheFilterNew25ns",1);
    fChain->SetBranchStatus("hbheFilterIso",1);
+   fChain->SetBranchStatus("Flag_eeBadScFilter",1);
 
    //added on November 2015. These are new variables (except for weight, which has just changed in the definition)
    fChain->SetBranchStatus("nBTag15",1);  // for b-jet veto
@@ -306,7 +308,7 @@ void monojet_SignalRegion::loop(vector< Double_t > &yRow, vector< Double_t > &eR
      eventMask += tauLooseVetoC.addToMask(nTauClean18V == 0);
      eventMask += gammaLooseVetoC.addToMask(nGamma15V == 0);
      eventMask += metNoLepC.addToMask(metNoMu_pt > METNOLEP_START);
-     eventMask += metFiltersC.addToMask(cscfilter == 1 && ecalfilter == 1 && hbheFilterNew25ns == 1 && hbheFilterIso == 1);
+     eventMask += metFiltersC.addToMask(cscfilter == 1 && ecalfilter == 1 && hbheFilterNew25ns == 1 && hbheFilterIso == 1 && Flag_eeBadScFilter == 1);
      eventMask += HLTC.addToMask(HLT_MonoJetMetNoMuMHT90 == 1);
      
      // end of eventMask building

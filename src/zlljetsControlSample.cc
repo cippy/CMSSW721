@@ -51,6 +51,7 @@ zlljetsControlSample::zlljetsControlSample(TTree *tree) : AnalysisDarkMatter(tre
   configFileName = NULL;
   ISDATA_FLAG = 0;
   unweighted_event_flag = 0;
+  hasSFfriend_flag = 0;
   AnalysisDarkMatter::Init(tree);  // could also be just Init(tree)
 
 }
@@ -285,12 +286,14 @@ void zlljetsControlSample::loop(vector< Double_t > &yRow, vector< Double_t > &eR
 
    fChain->SetBranchStatus("nVert",1);  // number of good vertices 
    fChain->SetBranchStatus("HLT_MonoJetMetNoMuMHT90",1);
+   fChain->SetBranchStatus("HLT_SingleEl",1);
 
    // met filters to be used (the config file has a parameter saying whether they should be used or not)
    fChain->SetBranchStatus("cscfilter",1);
    fChain->SetBranchStatus("ecalfilter",1);
    fChain->SetBranchStatus("hbheFilterNew25ns",1);
    fChain->SetBranchStatus("hbheFilterIso",1);
+   fChain->SetBranchStatus("Flag_eeBadScFilter",1);
 
    //added on November 2015. These are new variables (except for weight, which has just changed in the definition)
    fChain->SetBranchStatus("nBTag15",1);  // for b-jet veto
@@ -345,8 +348,8 @@ void zlljetsControlSample::loop(vector< Double_t > &yRow, vector< Double_t > &eR
    // myGetPairIndexInArray (see functionsForAnalysis.cc for reference). 
    // When myGetPairIndexInArray() is called, the index of "correct" particles will be used. If they are not found (e.g. a pair of OS/SF is mismeasured as 2 mu+), 
    // indices are set as 0 and 1 (and following selection asking lep[0] and lep[1] to be OS or whatever will fail).
-   Int_t firstIndex = 0;
-   Int_t secondIndex = 1;
+   // Int_t firstIndex = 0;
+   // Int_t secondIndex = 1;
 
    Int_t firstIndexGen = 0;
    Int_t secondIndexGen = 1;
@@ -370,6 +373,11 @@ void zlljetsControlSample::loop(vector< Double_t > &yRow, vector< Double_t > &eR
    //Float_t *ptr_metNoLepEta = NULL; 
    Float_t *ptr_metNoLepPhi = NULL;  
 
+   Float_t *ptr_lepton_pt = NULL;
+   Float_t *ptr_lepton_eta = NULL;
+   Float_t *ptr_lepton_phi = NULL;
+   Float_t *ptr_lepton_mass = NULL;
+
    Float_t nLepLoose = 0.0;               // this variable and the following should be an integer, but in Emanuele's trees they are float, so I keep them as such
    Float_t nLep10V = 0.0;
 
@@ -387,12 +395,28 @@ void zlljetsControlSample::loop(vector< Double_t > &yRow, vector< Double_t > &eR
      ptr_metNoLepPt = &metNoMu_pt;               // for muons  get this variable from the tree 
      //ptr_metNoLepEta = &metNoMu_eta;               // for muons  get this variable from the tree 
      ptr_metNoLepPhi = &metNoMu_phi;         // for muons  get this variable from the tree
+     ptr_lepton_pt = LepGood_pt;
+     ptr_lepton_eta = LepGood_eta;
+     ptr_lepton_phi = LepGood_phi;
+     ptr_lepton_mass = LepGood_mass;
 
    } else if (fabs(LEP_PDG_ID) == 11) {   // if we have Z -> ee do different stuff...
 
      ptr_nLepLoose = &nEle10V;                      // ask 2 electrons
      ptr_nLep10V = &nMu10V;                         // veto on muons   
-     ptr_nLepTight = &nEle20T; //TO SUBSTITUTE WITH nEle40T
+     ptr_nLepTight = &nEle40T;
+
+     if (calibEle_flag == 0) {
+       ptr_lepton_pt = LepGood_pt;
+       ptr_lepton_eta = LepGood_eta;
+       ptr_lepton_phi = LepGood_phi;
+       ptr_lepton_mass = LepGood_mass;
+     } else {
+       ptr_lepton_pt = CalibEle_pt;
+       ptr_lepton_eta = CalibEle_eta;
+       ptr_lepton_phi = CalibEle_phi;
+       ptr_lepton_mass = CalibEle_mass;
+     }
 
    }
 
@@ -448,8 +472,12 @@ void zlljetsControlSample::loop(vector< Double_t > &yRow, vector< Double_t > &eR
        //newwgt = LUMI * weight * vtxWeight/*/ events_ntot*/;  // starting from 17 November, "events_ntot" substitutes SUMWEIGHT and is already present in the trees. Same for weight, which is now defined as "1000 * xsec * genWeight" (1000*xsec is the cross section in fb, since xsec is in pb.)
        // I found out that division by events_ntot was already included in weight definition
 
-       if (fabs(LEP_PDG_ID) == 13) newwgt = LUMI * weight * vtxWeight * SF_trigmetnomu * SF_LepTightLoose * SF_BTag * SF_NLO;
-       else if (fabs(LEP_PDG_ID) == 11) newwgt = LUMI * weight * vtxWeight;
+       if (hasSFfriend_flag != 0) {
+
+	 if (fabs(LEP_PDG_ID) == 13) newwgt = LUMI * weight * vtxWeight * SF_trigmetnomu * SF_LepTightLoose * SF_BTag * SF_NLO;
+	 else if (fabs(LEP_PDG_ID) == 11) newwgt = LUMI * weight * vtxWeight * SF_trig1lep * SF_LepTightLoose * SF_BTag * SF_NLO;
+
+       } else newwgt = LUMI * weight * vtxWeight * SF_BTag; //SF_BTag is in evVarFriend, not sfFriend
 
      }
 
@@ -498,12 +526,12 @@ void zlljetsControlSample::loop(vector< Double_t > &yRow, vector< Double_t > &eR
      // the check for 2 OS/SF leptons in LepGood list is just useful to speed up things, but would not be necessary if other variables or computations that require this condition are only used at the end of selection (which already includes 2 OS/SF condition).
      // thus, we evaluate this right now and use this pice of information for later use
 
-     if ( (fabs(LepGood_pdgId[firstIndex]) ==  LEP_PDG_ID) && (LepGood_pdgId[firstIndex] == (-1) * LepGood_pdgId[secondIndex]) ) recoLepFound_flag = 1;
+     if ( (fabs(LepGood_pdgId[0]) ==  LEP_PDG_ID) && (LepGood_pdgId[0] == (-1) * LepGood_pdgId[1]) ) recoLepFound_flag = 1;
      else recoLepFound_flag = 0;
 
      if (recoLepFound_flag) {
-       l1reco.SetPtEtaPhiM(LepGood_pt[firstIndex],LepGood_eta[firstIndex],LepGood_phi[firstIndex],LepGood_mass[firstIndex]);
-       l2reco.SetPtEtaPhiM(LepGood_pt[secondIndex],LepGood_eta[secondIndex],LepGood_phi[secondIndex],LepGood_mass[secondIndex]);
+       l1reco.SetPtEtaPhiM(ptr_lepton_pt[0],ptr_lepton_eta[0],ptr_lepton_phi[0],ptr_lepton_mass[0]);
+       l2reco.SetPtEtaPhiM(ptr_lepton_pt[1],ptr_lepton_eta[1],ptr_lepton_phi[1],ptr_lepton_mass[1]);
        Zreco = l1reco + l2reco;
        ZtoLLRecoPt = Zreco.Pt();
      }
@@ -522,15 +550,17 @@ void zlljetsControlSample::loop(vector< Double_t > &yRow, vector< Double_t > &eR
        //metNoLepEta = *ptr_metNoLepEta; 
        metNoLepPhi = *ptr_metNoLepPhi; 
        //metNoLepTV3.SetPtEtaPhi(metNoLepPt,metNoLepEta,metNoLepPhi);   // will use this 3D vector below
-       metNoLepTV.SetMagPhi(metNoLepPt,metNoLepPhi);
+       //metNoLepTV.SetMagPhi(metNoLepPt,metNoLepPhi);
 
      } else if (fabs(LEP_PDG_ID) == 11) { 
 
        if ( HLT_FLAG != 0 ) {
 
-       	 if ( recoLepFound_flag && (LepGood_tightId[firstIndex] > 0.5) && (LepGood_tightId[secondIndex]  > 0.5) && 
-       	      (fabs(LepGood_eta[firstIndex]) < HLT_LEP1ETA) && (fabs(LepGood_eta[secondIndex]) < HLT_LEP2ETA) && 
-       	      (LepGood_pt[firstIndex] > HLT_LEP1PT) && (LepGood_pt[secondIndex] > HLT_LEP2PT) ) HLT_passed_flag = 1; 	 
+       	 // if ( recoLepFound_flag && (LepGood_tightId[0] > 0.5) && (LepGood_tightId[1]  > 0.5) && 
+       	 //      (fabs(LepGood_eta[0]) < HLT_LEP1ETA) && (fabs(LepGood_eta[1]) < HLT_LEP2ETA) && 
+       	 //      (LepGood_pt[0] > HLT_LEP1PT) && (LepGood_pt[1] > HLT_LEP2PT) ) HLT_passed_flag = 1; 
+
+	 if (HLT_SingleEl == 1) HLT_passed_flag = 1; 
 	 else HLT_passed_flag = 0;  //continue;
 
        }  // end of   if ( HLT_FLAG )
@@ -538,9 +568,9 @@ void zlljetsControlSample::loop(vector< Double_t > &yRow, vector< Double_t > &eR
        metNoLepTV.SetMagPhi(met_pt,met_phi);
        // summing just electrons from Z if found
        if (recoLepFound_flag) {
-	 ele.SetMagPhi(LepGood_pt[firstIndex],LepGood_phi[firstIndex]);
+	 ele.SetMagPhi(ptr_lepton_pt[0],ptr_lepton_phi[0]);
 	 metNoLepTV += ele;
-	 ele.SetMagPhi(LepGood_pt[secondIndex],LepGood_phi[secondIndex]);
+	 ele.SetMagPhi(ptr_lepton_pt[1],ptr_lepton_phi[1]);
 	 metNoLepTV += ele;
        }
 
@@ -553,6 +583,7 @@ void zlljetsControlSample::loop(vector< Double_t > &yRow, vector< Double_t > &eR
      
      // genLepC added to mask above if ISDATA_FLAG == false (in order not to repeat here the check) 
      
+     eventMask += HLTC.addToMask(HLT_passed_flag);  
      eventMask += jet1C.addToMask(nJetClean30 >= 1 && JetClean_pt[0] > J1PT /*&& fabs(JetClean_eta[0]) < J1ETA*/);
      eventMask += jetMetDphiMinC.addToMask(fabs(dphijm > JMET_DPHI_MIN));
      eventMask += jetNoiseCleaningC.addToMask(JetClean_leadClean[0] > 0.5);
@@ -561,25 +592,27 @@ void zlljetsControlSample::loop(vector< Double_t > &yRow, vector< Double_t > &eR
      eventMask += tauLooseVetoC.addToMask(nTauClean18V == 0);
      eventMask += gammaLooseVetoC.addToMask(nGamma15V == 0);
      eventMask += metNoLepC.addToMask(metNoLepPt > METNOLEP_START);
-     eventMask += metFiltersC.addToMask(cscfilter == 1 && ecalfilter == 1 && hbheFilterNew25ns == 1 && hbheFilterIso == 1);  
+     eventMask += metFiltersC.addToMask(cscfilter == 1 && ecalfilter == 1 && hbheFilterNew25ns == 1 && hbheFilterIso == 1 && Flag_eeBadScFilter == 1);  
 
-     // the following make sense only if recoLepFound_flag == 1 (i.e. flag is true), which means that fabs(LepGood_pdgId[firstIndex/secondIndex]) == LEP_PDG_ID) is 
+     // the following make sense only if recoLepFound_flag == 1 (i.e. flag is true), which means that fabs(LepGood_pdgId[0/1]) == LEP_PDG_ID) is 
      // true
      // also, 2 OS/SF leptons are present
 
-     if (recoLepFound_flag == 1) {
-       eventMask += HLTC.addToMask(HLT_passed_flag);     
-       eventMask += oppChargeLeptonsC.addToMask(1); // included in recoLepFound_flag togehter with correct flavour 
+     eventMask += invMassC.addToMask((mZ1 > DILEPMASS_LOW) && (mZ1 < DILEPMASS_UP));  
+     eventMask += oppChargeLeptonsC.addToMask(LepGood_pdgId[0] == - LepGood_pdgId[1]); // included in recoLepFound_flag togehter with correct flavour 
+
+     if (recoLepFound_flag == 1) {        
+     
        eventMask += twoLepLooseC.addToMask(((Int_t) nLepLoose) == 2);
-       if (fabs(LEP_PDG_ID) == 11) eventMask += tightLepC.addToMask(nLepTight > 0 && LepGood_pt[0]>40);
+       if (fabs(LEP_PDG_ID) == 11) eventMask += tightLepC.addToMask(nLepTight > 0 && ptr_lepton_pt[0]>40 && fabs(LepGood_pdgId[0]) == 11);
        else eventMask += tightLepC.addToMask(nLepTight > 0 );
-       // eventMask += lep1ptC.addToMask((LepGood_pt[firstIndex] > LEP1PT)); 
-       // eventMask += lep1etaC.addToMask( (fabs(LepGood_eta[firstIndex]) < LEP1ETA) );
-       // eventMask += lep2ptC.addToMask((LepGood_pt[secondIndex] > LEP2PT) );
-       // eventMask += lep2etaC.addToMask((fabs(LepGood_eta[secondIndex]) < LEP2ETA) );
-       eventMask += invMassC.addToMask((mZ1 > DILEPMASS_LOW) && (mZ1 < DILEPMASS_UP));     
-       // eventMask += lep1tightIdIso04C.addToMask((LepGood_tightId[firstIndex] > 0.5 ) && (LepGood_relIso04[firstIndex] < LEP_ISO_04 ) );
-       // eventMask += lep2tightIdIso04C.addToMask((LepGood_tightId[secondIndex] > 0.5) && (LepGood_relIso04[secondIndex] < LEP_ISO_04 ) );
+       // eventMask += lep1ptC.addToMask((LepGood_pt[0] > LEP1PT)); 
+       // eventMask += lep1etaC.addToMask( (fabs(LepGood_eta[0]) < LEP1ETA) );
+       // eventMask += lep2ptC.addToMask((LepGood_pt[1] > LEP2PT) );
+       // eventMask += lep2etaC.addToMask((fabs(LepGood_eta[1]) < LEP2ETA) );
+        
+       // eventMask += lep1tightIdIso04C.addToMask((LepGood_tightId[0] > 0.5 ) && (LepGood_relIso04[0] < LEP_ISO_04 ) );
+       // eventMask += lep2tightIdIso04C.addToMask((LepGood_tightId[1] > 0.5) && (LepGood_relIso04[1] < LEP_ISO_04 ) );
        
      }
 
@@ -597,10 +630,10 @@ void zlljetsControlSample::loop(vector< Double_t > &yRow, vector< Double_t > &eR
 
        if (genLepFound_flag && recoLepFound_flag) {       
 
-	 Double_t DeltaR_lreco_lgen_pair1 = 0.0;
-	 Double_t DeltaR_lreco_lgen_pair2 = 0.0;
+	 Double_t DeltaR_lreco_lgen_pair1 = 100.0;
+	 Double_t DeltaR_lreco_lgen_pair2 = 100.0;
        
-	 if(LepGood_pdgId[firstIndex] == GenPart_pdgId[firstIndexGen] && LepGood_pdgId[secondIndex] == GenPart_pdgId[secondIndexGen]) {
+	 if(LepGood_pdgId[0] == GenPart_pdgId[firstIndexGen] && LepGood_pdgId[1] == GenPart_pdgId[secondIndexGen]) {
 	 
 	   DeltaR_lreco_lgen_pair1 = l1reco.DeltaR(l1gen);
 	   DeltaR_lreco_lgen_pair2 = l2reco.DeltaR(l2gen);

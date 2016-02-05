@@ -70,15 +70,25 @@ void AnalysisDarkMatter::Init(TTree *tree) {
 
 //===============================================
 
-void AnalysisDarkMatter::setBasicConf(const char* inputSuffix, const string inputUncertainty, const char* inputConfigFileName, const Int_t inputIsDataFlag, const Int_t inputUnweightedEeventFlag) {
+void AnalysisDarkMatter::setBasicConf(const char* inputSuffix, const string inputUncertainty, const char* inputConfigFileName, const Int_t inputIsDataFlag, const Int_t inputUnweightedEeventFlag, const Int_t inputHasSFfriendFlag) {
 
   suffix = inputSuffix;  // it is the sample name (e.g. QCD, ZJetsToNuNu ecc...)
   uncertainty = inputUncertainty; //sample uncertainty (poisson, MC, X%),
   configFileName = (char*) inputConfigFileName;
   ISDATA_FLAG = inputIsDataFlag;
   unweighted_event_flag = inputUnweightedEeventFlag;
+  hasSFfriend_flag = inputHasSFfriendFlag;
 
 }
+
+//===============================================
+
+void AnalysisDarkMatter::setCalibEleFlag() {
+
+  calibEle_flag = 1;
+
+}
+
 
 //===============================================
 
@@ -140,7 +150,6 @@ void AnalysisDarkMatter::setVarFromConfigFile() {
 	if (parameterName == "FILENAME_BASE") {
 
 	  FILENAME_BASE = name; 
-	  if ( !ISDATA_FLAG && unweighted_event_flag) FILENAME_BASE += "_weq1";  // if using unit weight, add _weq1 to filename (weq1 means weight = 1)
 
 	}
 
@@ -197,7 +206,9 @@ void AnalysisDarkMatter::setVarFromConfigFile() {
     
   }
   
-  outputFolder =  DIRECTORY_TO_SAVE_FILES + DIRECTORY_NAME + "/";
+  if (calibEle_flag == 1) outputFolder =  DIRECTORY_TO_SAVE_FILES + DIRECTORY_NAME + "_CalibEle/";
+  else if (unweighted_event_flag == 1) outputFolder =  DIRECTORY_TO_SAVE_FILES + DIRECTORY_NAME + "_weq1/";
+  else outputFolder =  DIRECTORY_TO_SAVE_FILES + DIRECTORY_NAME + "/";
 
    //Double_t metBinEdges[] = {200., 250., 300., 350., 400., 500., 650., 1000.};
    // Double_t metBinEdges[] = {200., 250., 300., 350., 400., 450., 500., 550., 600., 650., 750., 850., 1000.};
@@ -228,7 +239,7 @@ void AnalysisDarkMatter::setVarFromConfigFile() {
 
 void AnalysisDarkMatter::setSelections() {
 
-  metFiltersC.set("metFiltersC","met filters","cscfilter, ecalfilter, hbheFilterNew25ns, hbheFilterIso");
+  metFiltersC.set("metFiltersC","met filters","cscfilter, ecalfilter, hbheFilterNew25ns, hbheFilterIso, Flag_eeBadScFilter");
   //metNoMuC.set("metNoMuC",Form("metNoMu > %4.0lf",METNOLEP_START),"first cut on met");
   jet1C.set("jet1C",Form("jet1pt > %4.0lf",J1PT),Form("nJetClean >= 1 && JetClean1_pt > %4.0lf",(Double_t)J1PT));
   jetMetDphiMinC.set("jetMetDphiMinC",Form("min[dphi(j,MET)] > %1.1lf",JMET_DPHI_MIN),"minimum dphi between jets and MET (using only the first 4 jets)");
