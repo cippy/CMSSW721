@@ -53,19 +53,19 @@ int main(int argc, char* argv[]) {
   string treePath;
   string friendTreePath;
   string sf_friendTreePath = ""; // friend with scale factor
-  string option = "";
 
   Int_t unweighted_event_flag = 0;  // this flag tells the user if the MC uses unit weight (using w = 1 is basically for debugging purposes)
-  Int_t adishTree_flag = 0;  // tells user I'm using Adish's tree
 
   Int_t using_EmanTreesWithSubSamples_flag = 0; //used if reading trees from Emanuele's area
   Int_t sf_friend_flag = 0; // set to 1 if using sf_friend when reading trees from Emanuele's area
+  Int_t calibEle_flag = 0;
 
-  // following are for CS analysis
+  Int_t adishTree_flag = 0;
+
   Int_t signalRegion_flag = 0;
   Int_t controlSample_flag = 0;
-  string controlSample_boson = ""; // Z, W, GAMMA
   Int_t metResolutionAndResponse_flag = 0;
+  string controlSample_boson = ""; // Z, W, GAMMA
   string fileWithSamplesPath = "";
   string filename_base = "";
   string directory_to_save_files = "";
@@ -73,6 +73,8 @@ int main(int argc, char* argv[]) {
   string outputFolder = "./"; // current directory by default, but it could be set as 'directory_to_save_files + directory_name'
 
   if (argc > 2 ) {
+
+    cout << "========================================================="<< endl;
 
     for (Int_t i = 2; i < argc; i++) {   // look at all possible options passed
 
@@ -92,7 +94,16 @@ int main(int argc, char* argv[]) {
 
       }
 
+      if (thisArgument  == "-calibEle" ) {   // use electron calibrated properties (pT, energy ecc...) instead of traditional ones
+	     
+	calibEle_flag = 1;
+	cout << "Option " << thisArgument << " passed: using calibrated variables for electrons" << std::endl;
+
+      }
+
     }
+
+    cout << "========================================================="<< endl;
 
   }
 
@@ -104,6 +115,8 @@ int main(int argc, char* argv[]) {
     string name;
     string parameterName;
     string parameterType;
+
+    cout << "========================================================="<< endl;
 
     while (inputFile >> parameterType ) {  // read only first object  here
 
@@ -196,14 +209,6 @@ int main(int argc, char* argv[]) {
 
 	}  
 
-	if (parameterName == "OPTION") {
-
-	  option = name;
-	  std::cout << setw(20) << "option : " << option <<std::endl;
-  
-
-	} 
-
 	if (parameterName == "FILENAME_BASE") {  // base for file's name
 
 	  filename_base = name;
@@ -263,6 +268,8 @@ int main(int argc, char* argv[]) {
 
     }
 
+    cout << "========================================================="<< endl;
+
     inputFile.close();
                                                                                                                          
   } else {
@@ -278,7 +285,9 @@ int main(int argc, char* argv[]) {
 
     struct stat st = {0};
 
-    outputFolder = directory_to_save_files + directory_name + "/";
+    if (calibEle_flag == 1 && fabs(lepton_PDGID) == 11) outputFolder = directory_to_save_files + directory_name + "_CalibEle/";
+    else if (unweighted_event_flag == 1) outputFolder = directory_to_save_files + directory_name + "_weq1/";
+    else outputFolder = directory_to_save_files + directory_name + "/";
     std::cout << "Creating new directory " << outputFolder << " ... " << std::endl;
 
     if (stat(outputFolder.c_str(), &st) == -1) {
@@ -357,6 +366,8 @@ int main(int argc, char* argv[]) {
 
       }
 
+      cout << "========================================================="<< endl;
+
       reportFile.close();
 
     }
@@ -365,518 +376,470 @@ int main(int argc, char* argv[]) {
 
   // ==================================================
 
-  if (signalRegion_flag == 1 || controlSample_flag == 1 || metResolutionAndResponse_flag == 1 ) {
 
-    Double_t value;
-    string name;
-    string parameterName;
-    string parameterType;
+  Double_t value;
+  string name;
+  string parameterName;
+  string parameterType;
 
-    vector< Double_t > yieldsRow;
-    vector< Double_t > efficiencyRow;
-    vector< Double_t > uncertaintyRow;
-    Int_t nSample = 0;
-    std::vector<std::string> sampleName;   
+  vector< Double_t > yieldsRow;
+  vector< Double_t > efficiencyRow;
+  vector< Double_t > uncertaintyRow;
+  Int_t nSample = 0;
+  std::vector<std::string> sampleName;   
 
-    std::vector<std::string> selectionDefinition;
-    selectionDefinition.push_back("entry point");
-    if(HLT_flag != 0) selectionDefinition.push_back("trigger");
-    if (met_filters_flag == 1) selectionDefinition.push_back("met filters");
+  std::vector<std::string> selectionDefinition;
+  selectionDefinition.push_back("entry point");
+  if(HLT_flag != 0) selectionDefinition.push_back("trigger");
+  if (met_filters_flag == 1) selectionDefinition.push_back("met filters");
 
-    if (signalRegion_flag == 1) {
+  if (signalRegion_flag == 1) {
     
-      selectionDefinition.push_back("muon veto");
-      selectionDefinition.push_back("electron veto");
-      if (tau_veto_flag) selectionDefinition.push_back("tau veto");
-      selectionDefinition.push_back("photon veto");
-      selectionDefinition.push_back("bjet veto");
-      selectionDefinition.push_back("metNoMu > 200");
-      selectionDefinition.push_back("jet1pt");
-      selectionDefinition.push_back("jet1 cleaning");
-      selectionDefinition.push_back("dphiMin(j,Met)");    
+    selectionDefinition.push_back("muon veto");
+    selectionDefinition.push_back("electron veto");
+    if (tau_veto_flag) selectionDefinition.push_back("tau veto");
+    selectionDefinition.push_back("photon veto");
+    selectionDefinition.push_back("bjet veto");
+    selectionDefinition.push_back("metNoMu > 200");
+    selectionDefinition.push_back("jet1pt");
+    selectionDefinition.push_back("jet1 cleaning");
+    selectionDefinition.push_back("dphiMin(j,Met)");    
 
-    } else if (controlSample_flag == 1) {
+  } else if (controlSample_flag == 1) {
 
-      if (controlSample_boson == "Z") {
+    if (controlSample_boson == "Z") {
 
-	selectionDefinition.push_back("2lep loose");
-	selectionDefinition.push_back(">0 tight lep");
-	selectionDefinition.push_back("2lep SF/OS");
-	selectionDefinition.push_back("mll");
-	if (fabs(lepton_PDGID) == 13) selectionDefinition.push_back("electron veto");
-	else if (fabs(lepton_PDGID) == 11) selectionDefinition.push_back("muon veto");
-	if (tau_veto_flag) selectionDefinition.push_back("tau veto");
-	selectionDefinition.push_back("photon veto");
-	selectionDefinition.push_back("bjet veto");
-	if (metnolep_start != 0) selectionDefinition.push_back("recoil > 200");
-	selectionDefinition.push_back("jet1pt");
-	selectionDefinition.push_back("jet1 cleaning");
-	selectionDefinition.push_back("dphiMin(j,Met)");
-        
-      } else if (controlSample_boson == "W") {
-
-	selectionDefinition.push_back("1lep loose");
-	selectionDefinition.push_back("1 tight lep");
-	if (fabs(lepton_PDGID) == 13) selectionDefinition.push_back("electron veto");
-	else if (fabs(lepton_PDGID) == 11) selectionDefinition.push_back("muon veto");
-	if (tau_veto_flag) selectionDefinition.push_back("tau veto");
-	selectionDefinition.push_back("photon veto");
-	selectionDefinition.push_back("bjet veto");
-	if (metnolep_start != 0) selectionDefinition.push_back("recoil > 200");
-	selectionDefinition.push_back("jet1pt");
-	selectionDefinition.push_back("jet1 cleaning");
-	selectionDefinition.push_back("dphiMin(j,Met)");
-        
-      }
-
-
-    } else if (metResolutionAndResponse_flag == 1) {
-
-      selectionDefinition.push_back("preselection");   // include genLep, HLT, MetNoLep
-      selectionDefinition.push_back("2lep SF/OS");
       selectionDefinition.push_back("2lep loose");
-      if (fabs(lepton_PDGID) == 13) selectionDefinition.push_back("muons");
-      else if (fabs(lepton_PDGID) == 11) selectionDefinition.push_back("electrons");
-      selectionDefinition.push_back("tight Tag");
+      selectionDefinition.push_back(">0 tight lep");
+      selectionDefinition.push_back("2lep SF/OS");
       selectionDefinition.push_back("mll");
-      selectionDefinition.push_back("bjet veto");
-      selectionDefinition.push_back("jet1pt");
-      selectionDefinition.push_back("dphiMin(j,Met)");
-      selectionDefinition.push_back("jet1 cleaning");
       if (fabs(lepton_PDGID) == 13) selectionDefinition.push_back("electron veto");
       else if (fabs(lepton_PDGID) == 11) selectionDefinition.push_back("muon veto");
-      selectionDefinition.push_back("photon veto");
       if (tau_veto_flag) selectionDefinition.push_back("tau veto");
-      selectionDefinition.push_back("lep match");
+      selectionDefinition.push_back("photon veto");
+      selectionDefinition.push_back("bjet veto");
+      if (metnolep_start != 0) selectionDefinition.push_back("recoil > 200");
+      selectionDefinition.push_back("jet1pt");
+      selectionDefinition.push_back("jet1 cleaning");
+      selectionDefinition.push_back("dphiMin(j,Met)");
+        
+    } else if (controlSample_boson == "W") {
 
+      selectionDefinition.push_back("1lep loose");
+      selectionDefinition.push_back("1 tight lep");
+      if (fabs(lepton_PDGID) == 13) selectionDefinition.push_back("electron veto");
+      else if (fabs(lepton_PDGID) == 11) selectionDefinition.push_back("muon veto");
+      if (tau_veto_flag) selectionDefinition.push_back("tau veto");
+      selectionDefinition.push_back("photon veto");
+      selectionDefinition.push_back("bjet veto");
+      if (metnolep_start != 0) selectionDefinition.push_back("recoil > 200");
+      selectionDefinition.push_back("jet1pt");
+      selectionDefinition.push_back("jet1 cleaning");
+      selectionDefinition.push_back("dphiMin(j,Met)");
+        
     }
 
-    ifstream sampleFile(fileWithSamplesPath.c_str());
-    Int_t fileEndReached_flag = 0;
 
-    if (sampleFile.is_open()) {
+  } else if (metResolutionAndResponse_flag == 1) {
 
-      while (fileEndReached_flag == 0) {
+    selectionDefinition.push_back("preselection");   // include genLep, HLT, MetNoLep
+    selectionDefinition.push_back("2lep SF/OS");
+    selectionDefinition.push_back("2lep loose");
+    if (fabs(lepton_PDGID) == 13) selectionDefinition.push_back("muons");
+    else if (fabs(lepton_PDGID) == 11) selectionDefinition.push_back("electrons");
+    selectionDefinition.push_back("tight Tag");
+    selectionDefinition.push_back("mll");
+    selectionDefinition.push_back("bjet veto");
+    selectionDefinition.push_back("jet1pt");
+    selectionDefinition.push_back("dphiMin(j,Met)");
+    selectionDefinition.push_back("jet1 cleaning");
+    if (fabs(lepton_PDGID) == 13) selectionDefinition.push_back("electron veto");
+    else if (fabs(lepton_PDGID) == 11) selectionDefinition.push_back("muon veto");
+    selectionDefinition.push_back("photon veto");
+    if (tau_veto_flag) selectionDefinition.push_back("tau veto");
+    selectionDefinition.push_back("lep match");
 
-	//std::cout << "CHECK IN READING SAMPLE FILE" << std::endl;
-	std::vector<std::string> subSampleNameVector; // if using Emanuele's tree, for each sample (e.g. ZJetsToNuNu) there is more than one subsample (e.g. different HT bins or different processes). This vector holds this subsamples's name to be chained (previously I used to merge and copy them from Emanuele's area to mine, so that I only had one tree or friend if any). For backward compatibility, I keep the possibility to use the merged trees when reading the file
+  }
 
-	//============================================/
+  ifstream sampleFile(fileWithSamplesPath.c_str());
+  Int_t fileEndReached_flag = 0;
 
-	while ( (sampleFile >> parameterType) && (!(parameterType == "#")) ) {  // read only first object  here: if it is '#' it signals that another part is starting, and this while loop ends, and analysis starts.
-	  //std::cout<<"CHECK 2 " <<std::endl;
+  if (sampleFile.is_open()) {
 
-	  if (parameterType == "#STOP") fileEndReached_flag = 1;   //tells me that the file is ended and I don't need to go on reading it.
+    while (fileEndReached_flag == 0) {
 
-	  if (parameterType == "NUMBER") {
+      //std::cout << "CHECK IN READING SAMPLE FILE" << std::endl;
+      std::vector<std::string> subSampleNameVector; // if using Emanuele's tree, for each sample (e.g. ZJetsToNuNu) there is more than one subsample (e.g. different HT bins or different processes). This vector holds this subsamples's name to be chained (previously I used to merge and copy them from Emanuele's area to mine, so that I only had one tree or friend if any). For backward compatibility, I keep the possibility to use the merged trees when reading the file
 
-	    sampleFile >> parameterName >> value;  
+      //============================================/
 
-	    if (parameterName == "ISDATA_FLAG") {
+      cout << "========================================================="<< endl;
 
-	      isdata_flag = (Int_t) value;
+      while ( (sampleFile >> parameterType) && (!(parameterType == "#")) ) {  // read only first object  here: if it is '#' it signals that another part is starting, and this while loop ends, and analysis starts.
+	//std::cout<<"CHECK 2 " <<std::endl;
+	//std::cout << "ParameterType : " << parameterType << std::endl;
 
-	      if (isdata_flag == 0) std::cout << "Running on MonteCarlo" << std::endl;
-	      else std::cout << "Running on data" << std::endl;
+	if (parameterType == "#STOP") fileEndReached_flag = 1;   //tells me that the file is ended and I don't need to go on reading it.
 
-	    }
+	if (parameterType == "NUMBER") {
 
-	    if (parameterName == "SF_FRIEND_FLAG") {
+	  sampleFile >> parameterName >> value;  
 
-	      sf_friend_flag = (Int_t) value;
-	      if (sf_friend_flag == 0) std::cout << "Not using scale factor friend trees (sf_friend)" << std::endl;
-	      else std::cout << "Using scale factor friend trees (sf_friend)" << std::endl;
+	  if (parameterName == "ISDATA_FLAG") {
 
-	    }
+	    isdata_flag = (Int_t) value;
 
-	  } else if (parameterType == "STRING") {
+	    if (isdata_flag == 0) std::cout << "Running on MonteCarlo" << std::endl;
+	    else std::cout << "Running on data" << std::endl;
 
-	    sampleFile >> parameterName >> name;
+	  }
 
-	    if (parameterName == "SAMPLE_NAME") {
+	  if (parameterName == "SF_FRIEND_FLAG") {
 
-	      sampleName.push_back(name.c_str());
-	      std::cout << setw(20) << "sample name : " << name <<std::endl;
+	    sf_friend_flag = (Int_t) value;
+	    if (sf_friend_flag == 0) std::cout << "Not using scale factor friend trees (sf_friend)" << std::endl;
+	    else std::cout << "Using scale factor friend trees (sf_friend)" << std::endl;
 
-	    }  
+	  }
 
-	    if (parameterName == "UNCERTAINTY") {
+	} else if (parameterType == "STRING") {
 
-	      uncertainty = name;
-	      std::cout << setw(20) << "sample uncetainty : " << name <<std::endl;
+	  sampleFile >> parameterName >> name;
 
-	    }  
+	  //std::cout << "parameterName" << parameterName << std::endl;
 
-	    if (parameterName == "TREE_PATH") {
+	  if (parameterName == "SAMPLE_NAME") {
 
-	      treePath = name;
-	      std::cout << setw(20) << "tree : " << name <<std::endl;
+	    sampleName.push_back(name.c_str());
+	    std::cout << setw(20) << "sample name : " << name <<std::endl;
 
-	    }
+	  }  
 
-	    if (parameterName == "FRIEND_TREE_PATH") {
+	  if (parameterName == "UNCERTAINTY") {
 
-	      friendTreePath = name;
-	      std::cout << setw(20) << "friend tree : " << name <<std::endl;
+	    uncertainty = name;
+	    std::cout << setw(20) << "sample uncetainty : " << name <<std::endl;
 
-	    } 
+	  }  
 
-	    if (parameterName == "SF_FRIEND_TREE_PATH") {
+	  if (parameterName == "TREE_PATH") {
 
-	      sf_friendTreePath = name;
-	      std::cout << setw(20) << "sf_friend tree : " << name <<std::endl;
+	    treePath = name;
+	    std::cout << setw(20) << "tree : " << name <<std::endl;
 
-	    } 
+	  }
 
-	  }  else if(parameterType == "ARRAY_STR") {
+	  if (parameterName == "FRIEND_TREE_PATH") {
 
-	    //std::cout<<"CHECK 0 " <<std::endl;
-	    using_EmanTreesWithSubSamples_flag = 1;
-	    sampleFile >> parameterName;
+	    friendTreePath = name;
+	    std::cout << setw(20) << "friend tree : " << name <<std::endl;
 
-	    if (parameterName == "SUB_SAMPLE_NAMES") { 
+	  } 
 
-	      cout << right << setw(20) << parameterName << "  ";
-	      string stringvalues;
-	      getline(sampleFile, stringvalues);    // read whole line starting from current position (i.e. without reading ARRAY_STR and SAMPLE_NAME)
-	      istringstream iss(stringvalues);
-	      std::string subSample;
+	  if (parameterName == "SF_FRIEND_TREE_PATH") {
 
-	      while(iss >> subSample) {
+	    sf_friendTreePath = name;
+	    std::cout << setw(20) << "sf_friend tree : " << name <<std::endl;
+
+	  } 
+
+	} else if(parameterType == "ARRAY_STR") {
+
+	  //std::cout<<"CHECK 0 " <<std::endl;
+	  using_EmanTreesWithSubSamples_flag = 1;
+	  sampleFile >> parameterName;
+
+	  if (parameterName == "SUB_SAMPLE_NAMES") { 
+
+	    cout << right << setw(20) << parameterName << "  ";
+	    string stringvalues;
+	    getline(sampleFile, stringvalues);    // read whole line starting from current position (i.e. without reading ARRAY_STR and SAMPLE_NAME)
+	    istringstream iss(stringvalues);
+	    std::string subSample;
+
+	    while(iss >> subSample) {
 	    
-		subSampleNameVector.push_back(subSample);
-		cout << subSampleNameVector.back() << " ";
-
-	      }
-
-	      cout << endl;
+	      subSampleNameVector.push_back(subSample);
+	      cout << subSampleNameVector.back() << " ";
 
 	    }
 
+	    cout << endl;
 
 	  }
 
 	}
 
-	if ( !fileEndReached_flag) {
+      }
 
-	  TChain* chain = new TChain("tree");
-	  TChain* chFriend = new TChain("mjvars/t");
-	  TChain* chSfFriend = new TChain("sf/t");
+      if ( !fileEndReached_flag) {
 
-	  //std::cout<<"CHECK 3 " <<std::endl;
+	TChain* chain = new TChain("tree");
+	TChain* chFriend = new TChain("mjvars/t");
+	TChain* chSfFriend = new TChain("sf/t");
 
-	  std::cout << "using_EmanTreesWithSubSamples_flag : " << using_EmanTreesWithSubSamples_flag << std::endl;
+	//std::cout<<"CHECK 3 " <<std::endl;
 
-	  if(using_EmanTreesWithSubSamples_flag == 1) {
+	std::cout << "using_EmanTreesWithSubSamples_flag : " << using_EmanTreesWithSubSamples_flag << std::endl;
 
-	    std::cout<<"CHECK 1 " <<std::endl;
+	if(using_EmanTreesWithSubSamples_flag == 1) {
 
-	    std::cout << "Creating chain ..." << std::endl;
+	  //std::cout<<"CHECK 1 " <<std::endl;
 
-	    for(Int_t i = 0; i < subSampleNameVector.size(); i++) {
+	  std::cout << "Creating chain ..." << std::endl;
+
+	  for(Int_t i = 0; i < subSampleNameVector.size(); i++) {
 	   
-	      std::string treeRootFile = treePath + subSampleNameVector[i] + "/treeProducerDarkMatter/tree.root"; 
-	      std::string friend_treeRootFile = treePath + "friends/evVarFriend_" + subSampleNameVector[i]+ ".root"; 
-	      std::string sf_friend_treeRootFile = treePath + "friends/sfFriend_" + subSampleNameVector[i]+ ".root"; 
+	    std::string treeRootFile = treePath + subSampleNameVector[i] + "/treeProducerDarkMatterMonoJet/tree.root"; 
+	    std::string friend_treeRootFile = treePath + "friends/evVarFriend_" + subSampleNameVector[i]+ ".root"; 
+	    std::string sf_friend_treeRootFile = treePath + "friends/sfFriend_" + subSampleNameVector[i]+ ".root"; 
 
-	      chain->Add(TString(treeRootFile.c_str()));
-	      chFriend->Add(TString(friend_treeRootFile.c_str()));
-	      if (sf_friend_flag != 0) chSfFriend->Add(TString(sf_friend_treeRootFile.c_str()));
+	    chain->Add(TString(treeRootFile.c_str()));
+	    chFriend->Add(TString(friend_treeRootFile.c_str()));
+	    if (sf_friend_flag != 0) chSfFriend->Add(TString(sf_friend_treeRootFile.c_str()));
 
-	    }
+	  }
 
-	    std::cout << "Adding friend to chain ..." << std::endl;	    
-	    chain->AddFriend(chFriend);  //adding whole friend chain as friend
+	  std::cout << "Adding friend to chain ..." << std::endl;	    
+	  chain->AddFriend(chFriend);  //adding whole friend chain as friend
 
-	    if (sf_friend_flag != 0) {
+	  if (sf_friend_flag != 0) {
 			  
-	      std::cout << "Adding friend with scale factors to chain ..." << std::endl;
-	      chain->AddFriend(chSfFriend);  //adding whole friend chain as friend
-
-	    }
-
-	  } else {
-
-	    //std::cout<<"CHECK 4 " <<std::endl;
-
-	    std::cout << "Creating chain ..." << std::endl;
-	    chain->Add(TString(treePath.c_str()));
-
-	    std::cout << "Adding friend to chain ..." << std::endl;
-	    chain->AddFriend("mjvars/t",TString(friendTreePath.c_str()));
-
-	    if (sf_friendTreePath != "") {
-	      std::cout << "Adding friend with scale factors to chain ..." << std::endl;	  
-	      chain->AddFriend("sf/t",TString(sf_friendTreePath.c_str()));
-	    }
+	    std::cout << "Adding friend with scale factors to chain ..." << std::endl;
+	    chain->AddFriend(chSfFriend);  //adding whole friend chain as friend
 
 	  }
-	  
-	  // now that chains are set, reset some variables' value
-	  using_EmanTreesWithSubSamples_flag = 0;
-	  sf_friend_flag = 0; // set to zero so that for the next sample it will be left 0 or set to 1 depending on the samplePathFile
-	  //sf_friend_flag is used only when reading trees from emanuele's area: it signals that there are sf_friend to add as friend tree (friend with scale factors). We assume that normal friends are always present. In a future, we might always have sf_friend as well and this flag will not be needed any more
-	  sf_friendTreePath = ""; //set to void string, then in the previous loop it will be initialized if present in the samplePathFile (sometimes there are no sf_friend and in that case, the sf_friend is not added as friend: there is an if condition asking whether sf_friendTreePath == "" or not)
 
-	  if(!chain) {
-	    std::cout << "Error: chain not created. End of programme" << std::endl;
-	    exit(EXIT_FAILURE);
+	} else {  // here started from if(using_EmanTreesWithSubSamples_flag == 1)
+
+	  //std::cout<<"CHECK 4 " <<std::endl;
+
+	  std::cout << "Creating chain ..." << std::endl;
+	  chain->Add(TString(treePath.c_str()));
+
+	  std::cout << "Adding friend to chain ..." << std::endl;
+	  chain->AddFriend("mjvars/t",TString(friendTreePath.c_str()));
+
+	  if (sf_friendTreePath != "") {
+	    std::cout << "Adding friend with scale factors to chain ..." << std::endl;	  
+	    chain->AddFriend("sf/t",TString(sf_friendTreePath.c_str()));
 	  }
-	  std::cout << "analysing sample n " << (nSample+1) << " : " << sampleName[nSample]  << std::endl; 
-	  std::cout<<chain->GetEntries()<<std::endl;      
-	  //================ Run Analysis
-	  //zmumujetsAna tree( chain );
+
+	}	 
+
+	if(!chain) {
+	  std::cout << "Error: chain not created. End of programme" << std::endl;
+	  exit(EXIT_FAILURE);
+	}
+	std::cout << "analysing sample n " << (nSample+1) << " : " << sampleName[nSample]  << std::endl; 
+	std::cout<<chain->GetEntries()<<std::endl;      
+	//================ Run Analysis
+	//zmumujetsAna tree( chain );
  
-	  if (signalRegion_flag == 1) {
+	if (signalRegion_flag == 1) {
 
-	    monojet_SignalRegion tree( chain);
-	    //cout << " CHECK IN MAIN " << endl;
-	    tree.setBasicConf(sampleName[nSample].c_str(), uncertainty, configFileName, isdata_flag, unweighted_event_flag);
-	    tree.loop(yieldsRow, efficiencyRow, uncertaintyRow); 
+	  monojet_SignalRegion tree( chain);
+	  //cout << " CHECK IN MAIN " << endl;
+	  tree.setBasicConf(sampleName[nSample].c_str(), uncertainty, configFileName, isdata_flag, unweighted_event_flag, sf_friend_flag);
+	  tree.loop(yieldsRow, efficiencyRow, uncertaintyRow); 
 
-	  } else if (controlSample_flag == 1) {
+	} else if (controlSample_flag == 1) {
 
-	    if (controlSample_boson == "Z") {
-	      zlljetsControlSample tree( chain);
-	      tree.setBasicConf(sampleName[nSample].c_str(), uncertainty, configFileName, isdata_flag, unweighted_event_flag);
-	      tree.loop(yieldsRow, efficiencyRow, uncertaintyRow);
-	    } else if (controlSample_boson == "W") {
-	      wlnujetsControlSample tree( chain);
-	      tree.setBasicConf(sampleName[nSample].c_str(), uncertainty, configFileName, isdata_flag, unweighted_event_flag);
-	      tree.loop(yieldsRow, efficiencyRow, uncertaintyRow);
-	    } 
+	  if (controlSample_boson == "Z") {
+	    zlljetsControlSample tree( chain);
+	    tree.setBasicConf(sampleName[nSample].c_str(), uncertainty, configFileName, isdata_flag, unweighted_event_flag, sf_friend_flag);
+	    if (calibEle_flag == 1 && fabs(lepton_PDGID) == 11) tree.setCalibEleFlag();
+	    tree.loop(yieldsRow, efficiencyRow, uncertaintyRow);
+	  } else if (controlSample_boson == "W") {
+	    wlnujetsControlSample tree( chain);
+	    tree.setBasicConf(sampleName[nSample].c_str(), uncertainty, configFileName, isdata_flag, unweighted_event_flag, sf_friend_flag);
+	    if (calibEle_flag == 1 && fabs(lepton_PDGID) == 11) tree.setCalibEleFlag();
+	    tree.loop(yieldsRow, efficiencyRow, uncertaintyRow);
+	  } 
 
-	  } else if (metResolutionAndResponse_flag == 1) {
+	} else if (metResolutionAndResponse_flag == 1) {
 
-	    zlljets_metResoResp tree( chain);
-	    tree.setBasicConf(sampleName[nSample].c_str(), uncertainty, configFileName, isdata_flag, unweighted_event_flag);
-	    tree.loop(yieldsRow, efficiencyRow, uncertaintyRow); 
-
-	  }
-
-	  cout << endl;   cout << endl;
-	  nSample++;
-	  delete chain;
-	  delete chFriend;
-	  delete chSfFriend;
+	  zlljets_metResoResp tree( chain);
+	  tree.setBasicConf(sampleName[nSample].c_str(), uncertainty, configFileName, isdata_flag, unweighted_event_flag, sf_friend_flag);
+	  tree.loop(yieldsRow, efficiencyRow, uncertaintyRow); 
 
 	}
 
-	//============================================/
+	// now that chains are set, reset some variables' value
+	using_EmanTreesWithSubSamples_flag = 0;
+	sf_friendTreePath = ""; //set to void string, then in the previous loop it will be initialized if present in the samplePathFile (sometimes there are no sf_friend and in that case, the sf_friend is not added as friend: there is an if condition asking whether sf_friendTreePath == "" or not)
+	sf_friend_flag = 0; // set to zero so that for the next sample it will be left 0 or set to 1 depending on the samplePathFile
+	//sf_friend_flag is used only when reading trees from emanuele's area: it signals that there are sf_friend to add as friend tree (friend with scale factors). We assume that normal friends are always present. In a future, we might always have sf_friend as well and this flag will not be needed any more
+
+	cout << endl;   cout << endl;
+	nSample++;
+	delete chain;
+	delete chFriend;
+	delete chSfFriend;
+
+      } // end of  if ( !fileEndReached_flag)
+
+      cout << "========================================================="<< endl;
+
+      //============================================/
  
-      }  //end of while(fileEndReanched_flag == 0)
+    }  //end of while(fileEndReanched_flag == 0)
 
-      sampleFile.close();
+    sampleFile.close();
 
-    } else {   // end of if (sampleFile.is_open())
+  } else {   // end of if (sampleFile.is_open())
 
-      cout << "Error: could not open file " << fileWithSamplesPath<< endl;
-      exit(EXIT_FAILURE);
-
-    }
-
-    if ( yieldsRow.size() != efficiencyRow.size() ) {
-      std::cout << "Warning:  different number of steps for yields and efficiencies." << std::endl; 
-      std::cout << "Will use the bigger one." << std::endl; 
-    }
-
-    Int_t selectionSize = (yieldsRow.size() >= efficiencyRow.size()) ? (yieldsRow.size()/nSample) : (efficiencyRow.size()/nSample);
-
-    // ==================================
-
-    // before printing the table, I add another row with the sum of all "non data" column. 
-    // For the SR, it would be the sum of all backgrounds, regardless they are data-driven or MC estimate
-    // For the CR, it should be the sum of MC background for the Z(ll) sample (now for semplicity it is the sum of all MC).
-
-    // suppose I have tre samples A, B, C and a selection with three steps 1, 2, 3. Then, yieldsRow is filled as A123 B123 C123 (9 entries, the letter refers to the specific sample)
-    // to build the table, which is created row by row, we read the vector as A1, B1, C1, A2, B2 ... so that the table looks like
-    //
-    //   sample A     sample B     sample C
-    //        A1                 B1                C1
-    //        A2                 B2                C2
-    //        A3                 B3                C3
-    //
-    // next to yields there are the efficiency or the uncertainties (could add both but table would get too crowded)
-    //
-    // now we want to add an additional column with the sum of entries for the different samples
-    // so now we add S123 to yieldsRow (S stands for sum), where Si = Ai + Bi +Ci
-
-    for (Int_t i = 0; i < selectionSize; i++) {
-
-      Double_t lastValue = yieldsRow.back();   // keep track of last element to make the efficiency ratio 
-      // when i = 0, it is the last value before adding the "non-data" column (C3 in the previous example), but it is not used because the efficiency is automatically set to 1.0
-      // for the other values of i, it is the last value (call it a), now we compute the following value (call it b) and compute the efficiency as b/a
-
-      yieldsRow.push_back(0.0);   // adding new element for each selection step
-      efficiencyRow.push_back(0.0);
-      uncertaintyRow.push_back(0.0);
-
-      for(Int_t j = 0; j < nSample; j++) {  
-
-	// must skip sample with data, if present
-
-	if ( (std::strcmp("data",sampleName[j].c_str())) ) {  //std::strcmp returns 0 when the strings are equal. otherwise it returns a non zero value
-
-	  // adding all values in the same row (i.e. for the same selection step). If an entry is negative (because that step was not considered for that sample), the previous step is summed)
-	  Int_t vectorElement = i + j * selectionSize;
-
-	  if (yieldsRow.at(vectorElement) < 0) vectorElement = (i - 1) + j * selectionSize;  
-	  // can be negative when that step was not filled for a given sample (e.g. the recoGen match is only for DY sample in Z+jets CS)
-	  
-	  yieldsRow.back() += yieldsRow.at(vectorElement);  
-	  uncertaintyRow.back() += uncertaintyRow.at(vectorElement) * uncertaintyRow.at(vectorElement);   // sum in quadrature of samples' uncertainties  
-
-	}
-
-      }     // end of for(Int_t j = 0; j < nSample; j++)
-
-      uncertaintyRow.back() = sqrt(uncertaintyRow.back());
-      if (i == 0) efficiencyRow.back() = 1.0;
-      else if ( (i != 0) && ( lastValue == 0 )  ) efficiencyRow.back() = 1.0000;  
-      // in the line above, if previous yield is 0, the next is also 0 and the efficiency is set to 1.0  (otherwise it would be of the form 0/0)
-      else efficiencyRow.back() = yieldsRow.back()/lastValue;
-     
-    }
-
-    // ==================================
-
-    selectionSize = (yieldsRow.size() >= efficiencyRow.size()) ? (yieldsRow.size()/(nSample+1)) : (efficiencyRow.size()/(nSample+1));  
-    //(nSample+1) because now there is also the sum on MC entries
-
-    FILE* fp;
-    string finalFileName = filename_base;
-    finalFileName += "_yieldsTable";
-    if (unweighted_event_flag) finalFileName += "_weq1";   //means with weights equal to 1 (for debugging purposes)
-    finalFileName += ".dat";
-
-    if ( (fp=fopen((outputFolder + finalFileName).c_str(),"w")) == NULL) {
-
-      cout<<"Error: '"<<finalFileName<<"' not opened"<<endl;
-
-    } else {
-
-      cout<<"creating file '"<<finalFileName<<"' to save table with yields in folder " << outputFolder << " ..."<<endl;
-      fprintf(fp,"#    step         ");
-
-      for(Int_t i = 0; i <= nSample; i++) {
-
-	if (i == nSample) fprintf(fp,"%-16s ","all non-data");  // last column in file will hold the sum af all MC or backgrounds
-	else fprintf(fp,"%-16s ",sampleName[i].c_str());
-
-      }
-
-      fprintf(fp,"\n");
-
-      for (Int_t i = 0; i < selectionSize; i++) {
-
-	fprintf(fp,"%-16s",selectionDefinition[i].c_str());
-
-	for(Int_t j = 0; j <= nSample; j++) {
-	  
-	  if (j == nSample) {
-
-	    if (yieldsRow.at( i + j * selectionSize) < 0) {
-
-	      string space = "//";
-	      fprintf(fp,"%7s ",space.c_str());
-	      fprintf(fp,"%5s    ",space.c_str());
-
-	    } else { 
-
-	      if (yieldsRow.at( i + j * selectionSize) < 10) fprintf(fp,"%7.1lf ",yieldsRow.at( i + j * selectionSize));  //	j * selectionSize refers to number for a sample, i refers to the selection step   
-	      else fprintf(fp,"%7.0lf ",yieldsRow.at( i + j * selectionSize));
-
-	      if (uncertaintyRow.at( i + j * selectionSize) < 10) fprintf(fp,"%7.1lf   ",uncertaintyRow.at( i + j * selectionSize));
-	      else fprintf(fp,"%7.0lf   ",uncertaintyRow.at( i + j * selectionSize));
-
-	    }
-
-	  } else {
-
-	    if (yieldsRow.at( i + j * selectionSize) < 0) {
-
-	      string space = "//";
-	      fprintf(fp,"%7s ",space.c_str());
-	      fprintf(fp,"%5s    ",space.c_str());
-
-	    } else { 
-
-	      if (yieldsRow.at( i + j * selectionSize) < 10) fprintf(fp,"%7.1lf ",yieldsRow.at( i + j * selectionSize));  //	j * selectionSize refers to number for a sample, i refers to the selection step   
-	      else fprintf(fp,"%7.0lf ",yieldsRow.at( i + j * selectionSize));
-	      fprintf(fp,"%5.1lf%%   ",(100 * efficiencyRow.at( i + j * selectionSize)));
-
-	    }
-
-	  }
-
-	} 
-
-	fprintf(fp,"\n");
-
-      }
-
-      fclose(fp);
-
-    }
-
-    return 0;
-
-  }  //end of  "if (controlSample_flag == 1 || signalRegion_flag == 1 || ...)"
-
-
-  //if (!isdata_flag && unweighted_event_flag) std::cout << "Using unweighted events (w = 1) " << std::endl;
-  //std::cout<<"Using Emanuele's trees with no skim"<<std::endl;
-  std::cout<< std::endl;
-  if (adishTree_flag) std::cout<<"Using Adish's trees "<<std::endl;
-  else std::cout<<"Using Emanuele's trees "<<std::endl;
-  std::cout << "Creating chain ..." << std::endl;
-  TChain* chain;
-  if (adishTree_flag) chain = new TChain("tree/tree");
-  else chain = new TChain("tree");
-  //chain->Add("/cmshome/ciprianim/edimarcoTree/tree_noSkim/DYJetsToLL_M50/tree.root");
-  chain->Add(treePath.c_str());
-  TChain* chFriend = new TChain("mjvars/t");
-  //chain->AddFriend("mjvars/t","/cmshome/ciprianim/edimarcoTree/tree_noSkim/DYJetsToLL_M50/evVarFriend_DYJetsToLL_M50.root");
-  if (!adishTree_flag) chain->AddFriend("mjvars/t",friendTreePath.c_str());
-
-  if(!chain) {
-    std::cout << "Error: chain not created. End of programme" << std::endl;
+    cout << "Error: could not open file " << fileWithSamplesPath<< endl;
     exit(EXIT_FAILURE);
-  } 
 
-  std::cout<<chain->GetEntries()<<std::endl;      
-  //================ Run Analysis
+  }
 
-  if (adishTree_flag) {
+  if ( yieldsRow.size() != efficiencyRow.size() ) {
+    std::cout << "Warning:  different number of steps for yields and efficiencies." << std::endl; 
+    std::cout << "Will use the bigger one." << std::endl; 
+  }
 
-    zlljets_resoResp_forAdish tree( chain );
-    tree.loop(configFileName, isdata_flag, unweighted_event_flag);
+  Int_t selectionSize = (yieldsRow.size() >= efficiencyRow.size()) ? (yieldsRow.size()/nSample) : (efficiencyRow.size()/nSample);
+
+  // ==================================
+
+  // before printing the table, I add another row with the sum of all "non data" column. 
+  // For the SR, it would be the sum of all backgrounds, regardless they are data-driven or MC estimate
+  // For the CR, it should be the sum of MC background for the Z(ll) sample (now for semplicity it is the sum of all MC).
+
+  // suppose I have tre samples A, B, C and a selection with three steps 1, 2, 3. Then, yieldsRow is filled as A123 B123 C123 (9 entries, the letter refers to the specific sample)
+  // to build the table, which is created row by row, we read the vector as A1, B1, C1, A2, B2 ... so that the table looks like
+  //
+  //   sample A     sample B     sample C
+  //        A1                 B1                C1
+  //        A2                 B2                C2
+  //        A3                 B3                C3
+  //
+  // next to yields there are the efficiency or the uncertainties (could add both but table would get too crowded)
+  //
+  // now we want to add an additional column with the sum of entries for the different samples
+  // so now we add S123 to yieldsRow (S stands for sum), where Si = Ai + Bi +Ci
+
+  for (Int_t i = 0; i < selectionSize; i++) {
+
+    Double_t lastValue = yieldsRow.back();   // keep track of last element to make the efficiency ratio 
+    // when i = 0, it is the last value before adding the "non-data" column (C3 in the previous example), but it is not used because the efficiency is automatically set to 1.0
+    // for the other values of i, it is the last value (call it a), now we compute the following value (call it b) and compute the efficiency as b/a
+
+    yieldsRow.push_back(0.0);   // adding new element for each selection step
+    efficiencyRow.push_back(0.0);
+    uncertaintyRow.push_back(0.0);
+
+    for(Int_t j = 0; j < nSample; j++) {  
+
+      // must skip sample with data, if present
+
+      if ( (std::strcmp("data",sampleName[j].c_str())) ) {  //std::strcmp returns 0 when the strings are equal. otherwise it returns a non zero value
+
+	// adding all values in the same row (i.e. for the same selection step). If an entry is negative (because that step was not considered for that sample), the previous step is summed)
+	Int_t vectorElement = i + j * selectionSize;
+
+	if (yieldsRow.at(vectorElement) < 0) vectorElement = (i - 1) + j * selectionSize;  
+	// can be negative when that step was not filled for a given sample (e.g. the recoGen match is only for DY sample in Z+jets CS)
+	  
+	yieldsRow.back() += yieldsRow.at(vectorElement);  
+	uncertaintyRow.back() += uncertaintyRow.at(vectorElement) * uncertaintyRow.at(vectorElement);   // sum in quadrature of samples' uncertainties  
+
+      }
+
+    }     // end of for(Int_t j = 0; j < nSample; j++)
+
+    uncertaintyRow.back() = sqrt(uncertaintyRow.back());
+    if (i == 0) efficiencyRow.back() = 1.0;
+    else if ( (i != 0) && ( lastValue == 0 )  ) efficiencyRow.back() = 1.0000;  
+    // in the line above, if previous yield is 0, the next is also 0 and the efficiency is set to 1.0  (otherwise it would be of the form 0/0)
+    else efficiencyRow.back() = yieldsRow.back()/lastValue;
+     
+  }
+
+  // ==================================
+
+  selectionSize = (yieldsRow.size() >= efficiencyRow.size()) ? (yieldsRow.size()/(nSample+1)) : (efficiencyRow.size()/(nSample+1));  
+  //(nSample+1) because now there is also the sum on MC entries
+
+  FILE* fp;
+  string finalFileName = filename_base;
+  finalFileName += "_yieldsTable";
+  if (unweighted_event_flag) finalFileName += "_weq1";   //means with weights equal to 1 (for debugging purposes)
+  finalFileName += ".dat";
+
+  if ( (fp=fopen((outputFolder + finalFileName).c_str(),"w")) == NULL) {
+
+    cout<<"Error: '"<<finalFileName<<"' not opened"<<endl;
 
   } else {
 
-    if ( !(std::strcmp("axel",option.c_str()))) {
+    cout<<"creating file '"<<finalFileName<<"' to save table with yields in folder " << outputFolder << " ..."<<endl;
+    fprintf(fp,"#    step         ");
 
-      zlljets_Axe_noSkim_light tree( chain );
-      tree.loop(configFileName);
+    for(Int_t i = 0; i <= nSample; i++) {
 
-    } else if ( !(std::strcmp("rerel",option.c_str()))) {
-
-      zlljets_resoResp tree( chain );
-      tree.loop(configFileName, isdata_flag, unweighted_event_flag);
-
-    } else {
-
-      std::cout << "Option '" << option << "' not found. End of programme" << std::endl;
-      return 0;
+      if (i == nSample) fprintf(fp,"%-16s ","all non-data");  // last column in file will hold the sum af all MC or backgrounds
+      else fprintf(fp,"%-16s ",sampleName[i].c_str());
 
     }
 
+    fprintf(fp,"\n");
+
+    for (Int_t i = 0; i < selectionSize; i++) {
+
+      fprintf(fp,"%-16s",selectionDefinition[i].c_str());
+
+      for(Int_t j = 0; j <= nSample; j++) {
+	  
+	if (j == nSample) {
+
+	  if (yieldsRow.at( i + j * selectionSize) < 0) {
+
+	    string space = "//";
+	    fprintf(fp,"%7s ",space.c_str());
+	    fprintf(fp,"%5s    ",space.c_str());
+
+	  } else { 
+
+	    if (yieldsRow.at( i + j * selectionSize) < 10) fprintf(fp,"%7.1lf ",yieldsRow.at( i + j * selectionSize));  //	j * selectionSize refers to number for a sample, i refers to the selection step   
+	    else fprintf(fp,"%7.0lf ",yieldsRow.at( i + j * selectionSize));
+
+	    if (uncertaintyRow.at( i + j * selectionSize) < 10) fprintf(fp,"%7.1lf   ",uncertaintyRow.at( i + j * selectionSize));
+	    else fprintf(fp,"%7.0lf   ",uncertaintyRow.at( i + j * selectionSize));
+
+	  }
+
+	} else {
+
+	  if (yieldsRow.at( i + j * selectionSize) < 0) {
+
+	    string space = "//";
+	    fprintf(fp,"%7s ",space.c_str());
+	    fprintf(fp,"%5s    ",space.c_str());
+
+	  } else { 
+
+	    if (yieldsRow.at( i + j * selectionSize) < 10) fprintf(fp,"%7.1lf ",yieldsRow.at( i + j * selectionSize));  //	j * selectionSize refers to number for a sample, i refers to the selection step   
+	    else fprintf(fp,"%7.0lf ",yieldsRow.at( i + j * selectionSize));
+	    fprintf(fp,"%5.1lf%%   ",(100 * efficiencyRow.at( i + j * selectionSize)));
+
+	  }
+
+	}
+
+      } 
+
+      fprintf(fp,"\n");
+
+    }
+
+    fclose(fp);
+
   }
-  
-  delete chain;
-  delete chFriend;
+
 
   return 0;
+
 }
 
