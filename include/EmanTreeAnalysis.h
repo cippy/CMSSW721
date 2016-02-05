@@ -62,7 +62,6 @@ namespace myAnalyzerTEman {
    // selection lep1etaC;  
    //selection lep2etaC;
    selection genLepC;  
-   selection HLTlepC;
    selection recoGenLepMatchC;
    selection genTauC;
 
@@ -126,7 +125,6 @@ namespace myAnalyzerTEman {
    // selection lep1etaC;  
    //selection lep2etaC;
    selection genLepC;  
-   selection HLTlepC;
    selection recoGenLepMatchC;
    selection genTauC;
 

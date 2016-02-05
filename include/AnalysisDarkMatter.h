@@ -27,6 +27,7 @@ class AnalysisDarkMatter : public edimarcoTree_v3 {
   virtual void Init(TTree *tree);
 
   //common selections (between signal and control regions) are declared here
+  selection HLTC;
   selection metFiltersC;
   selection metNoLepC;
   selection jet1C;
@@ -41,7 +42,8 @@ class AnalysisDarkMatter : public edimarcoTree_v3 {
   mask analysisMask;
   selectionManager analysisSelectionManager;
 
-  virtual void setBasicConf(const char* inputSuffix, const std::string inputUncertainty, const char* inputConfigFileName, const Int_t inputIsDataFlag, const Int_t inputUnweightedEeventFlag);
+  virtual void setBasicConf(const char* inputSuffix, const std::string inputUncertainty, const char* inputConfigFileName, const Int_t inputIsDataFlag, const Int_t inputUnweightedEeventFlag, const Int_t inputHasSFfriendFlag);
+  virtual void setCalibEleFlag();
   virtual void setNumberParameterValue(const std::string, const Double_t);
   virtual void setVarFromConfigFile();
   virtual void setSelections();
@@ -83,6 +85,9 @@ class AnalysisDarkMatter : public edimarcoTree_v3 {
   char* configFileName;
   Int_t ISDATA_FLAG;
   Int_t unweighted_event_flag;
+  Int_t hasSFfriend_flag;  //tells if sfFriend are present
+
+  Int_t calibEle_flag; // tells if using calibrated electron properties or traditional ones
     
   //root histograms: these are common among all analysis (signal ad control region)
   TH1D *HYieldsMetBin = NULL;
