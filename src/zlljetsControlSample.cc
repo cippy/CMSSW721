@@ -68,14 +68,11 @@ void zlljetsControlSample::setSelections() {
   // muonLooseVetoC.set("muonLooseVetoC","muons veto");
   // electronLooseVetoC.set("electronLooseVetoC","electrons veto"); 
 
-  oppChargeLeptonsC.set("oppChargeLeptonsC","OS/SF leptons");
-  invMassC.set("invMassC",Form("mass in [%3.0lf,%3.0lf]",DILEPMASS_LOW,DILEPMASS_UP));
-  twoLepLooseC.set("twoLepLooseC",Form("2 loose %s",FLAVOUR));
-  tightLepC.set("tightLepC",Form(">0 tight %s",FLAVOUR));
+  oppChargeLeptonsC.set("OS/SF lep","OS/SF leptons");
 
   if (!ISDATA_FLAG && using_zlljets_MCsample_flag) {
-    genLepC.set("genLepC",Form("%s generated",FLAVOUR));     
-    recoGenLepMatchC.set("recoGenLepMatchC","reco-gen match (DR = 0.1)","only for zlljets: looks for matching of reco and gen particles");      
+    genLepC.set("genLep",Form("%s generated",FLAVOUR));     
+    recoGenLepMatchC.set("reco-gen match","reco-gen match (DR = 0.1)","only for zlljets: looks for matching of reco and gen particles");      
   }
   if (!ISDATA_FLAG && using_ztautaujets_MCsample_flag) genTauC.set("genTauC","taus generated"); 
 
@@ -90,13 +87,19 @@ void zlljetsControlSample::setSelections() {
     // lep2etaC.set("mu2etaC",Form("|mu2eta| < %1.1lf",LEP2ETA),"trailing muon eta");
     // lep2tightIdIso04C.set("mu2tightIdIso04C","trailing muon tight","tight ID + relIso04 (as Emanuele)");
 
-    lepLooseVetoC.set("lepLooseVetoC","electrons veto");
-    if (METNOLEP_START != 0) metNoLepC.set("metNoMuC",Form("metNoMu > %2.0lf",METNOLEP_START));
+    invMassC.set("M_mumu",Form("mass in [%3.0lf,%3.0lf]",DILEPMASS_LOW,DILEPMASS_UP));
+    twoLepLooseC.set("2 loose mu",Form("2 loose %s",FLAVOUR));
+    tightLepC.set(">0 tight mu",Form(">0 tight %s",FLAVOUR));
+    lepLooseVetoC.set("ele veto","electrons veto");
+    if (METNOLEP_START != 0) metNoLepC.set(Form("recoil > %2.0lf",METNOLEP_START),Form("metNoMu > %2.0lf",METNOLEP_START));
 
   } else if (fabs(LEP_PDG_ID) == 11) {   // if we have Z -> ee do different stuff...
 
-    if (METNOLEP_START != 0) metNoLepC.set("metNoEleC",Form("metNoEle > %2.0lf",METNOLEP_START));
-    lepLooseVetoC.set("lepLooseVetoC","muons veto");
+    if (METNOLEP_START != 0) metNoLepC.set(Form("recoil > %2.0lf",METNOLEP_START),Form("metNoEle > %2.0lf",METNOLEP_START));
+    invMassC.set("M_ee",Form("mass in [%3.0lf,%3.0lf]",DILEPMASS_LOW,DILEPMASS_UP));
+    twoLepLooseC.set("2 loose ele",Form("2 loose %s",FLAVOUR));
+    tightLepC.set(">0 tight ele",Form(">0 tight %s",FLAVOUR));
+    lepLooseVetoC.set("muon veto","muons veto");
   }
 
   selection::checkMaskLength();

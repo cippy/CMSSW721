@@ -186,6 +186,7 @@ class selectionManager {
   Int_t getStepIndex(const Int_t i) const {return stepIndex[i];}
   Int_t getVectorSize() const {return stepIndex.size();}
   void SetMaskPointer(mask* m) { mPtr = m; }
+  void exportDefinition(std::vector<std::string>*);
 
  private:
   mask* mPtr;

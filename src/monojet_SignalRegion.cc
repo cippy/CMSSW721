@@ -62,9 +62,9 @@ void monojet_SignalRegion::setSelections() {
 
   AnalysisDarkMatter::setSelections();
 
-  metNoLepC.set("metNoMuC",Form("metNoMu > %4.0lf",METNOLEP_START),"first cut on met");
-  muonLooseVetoC.set("muonLooseVetoC","muons veto");
-  electronLooseVetoC.set("electronLooseVetoC","electrons veto");
+  metNoLepC.set(Form("recoil > %2.0lf",METNOLEP_START),Form("metNoMu > %4.0lf",METNOLEP_START),"first cut on met");
+  muonLooseVetoC.set("muon veto","muons veto");
+  electronLooseVetoC.set("ele veto","electrons veto");
 
   selection::checkMaskLength();
   selection::printActiveSelections(cout); 

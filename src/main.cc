@@ -389,77 +389,78 @@ int main(int argc, char* argv[]) {
   std::vector<std::string> sampleName;   
 
   std::vector<std::string> selectionDefinition;
-  selectionDefinition.push_back("entry point");
-  if(HLT_flag != 0) selectionDefinition.push_back("trigger");
-  if (met_filters_flag == 1) selectionDefinition.push_back("met filters");
+  selectionDefinition.push_back("entry point"); //the following will be done using the selectionManager object in the analyzer
 
-  if (signalRegion_flag == 1) {
+  // if(HLT_flag != 0) selectionDefinition.push_back("trigger");
+  // if (met_filters_flag == 1) selectionDefinition.push_back("met filters");
+
+  // if (signalRegion_flag == 1) {
     
-    selectionDefinition.push_back("muon veto");
-    selectionDefinition.push_back("electron veto");
-    if (tau_veto_flag) selectionDefinition.push_back("tau veto");
-    selectionDefinition.push_back("photon veto");
-    selectionDefinition.push_back("bjet veto");
-    selectionDefinition.push_back("metNoMu > 200");
-    selectionDefinition.push_back("jet1pt");
-    selectionDefinition.push_back("jet1 cleaning");
-    selectionDefinition.push_back("dphiMin(j,Met)");    
+  //   selectionDefinition.push_back("muon veto");
+  //   selectionDefinition.push_back("electron veto");
+  //   if (tau_veto_flag) selectionDefinition.push_back("tau veto");
+  //   selectionDefinition.push_back("photon veto");
+  //   selectionDefinition.push_back("bjet veto");
+  //   selectionDefinition.push_back("metNoMu > 200");
+  //   selectionDefinition.push_back("jet1pt");
+  //   selectionDefinition.push_back("jet1 cleaning");
+  //   selectionDefinition.push_back("dphiMin(j,Met)");    
 
-  } else if (controlSample_flag == 1) {
+  // } else if (controlSample_flag == 1) {
 
-    if (controlSample_boson == "Z") {
+  //   if (controlSample_boson == "Z") {
 
-      selectionDefinition.push_back("2lep loose");
-      selectionDefinition.push_back(">0 tight lep");
-      selectionDefinition.push_back("2lep SF/OS");
-      selectionDefinition.push_back("mll");
-      if (fabs(lepton_PDGID) == 13) selectionDefinition.push_back("electron veto");
-      else if (fabs(lepton_PDGID) == 11) selectionDefinition.push_back("muon veto");
-      if (tau_veto_flag) selectionDefinition.push_back("tau veto");
-      selectionDefinition.push_back("photon veto");
-      selectionDefinition.push_back("bjet veto");
-      if (metnolep_start != 0) selectionDefinition.push_back("recoil > 200");
-      selectionDefinition.push_back("jet1pt");
-      selectionDefinition.push_back("jet1 cleaning");
-      selectionDefinition.push_back("dphiMin(j,Met)");
+  //     selectionDefinition.push_back("2lep loose");
+  //     selectionDefinition.push_back(">0 tight lep");
+  //     selectionDefinition.push_back("2lep SF/OS");
+  //     selectionDefinition.push_back("mll");
+  //     if (fabs(lepton_PDGID) == 13) selectionDefinition.push_back("electron veto");
+  //     else if (fabs(lepton_PDGID) == 11) selectionDefinition.push_back("muon veto");
+  //     if (tau_veto_flag) selectionDefinition.push_back("tau veto");
+  //     selectionDefinition.push_back("photon veto");
+  //     selectionDefinition.push_back("bjet veto");
+  //     if (metnolep_start != 0) selectionDefinition.push_back("recoil > 200");
+  //     selectionDefinition.push_back("jet1pt");
+  //     selectionDefinition.push_back("jet1 cleaning");
+  //     selectionDefinition.push_back("dphiMin(j,Met)");
         
-    } else if (controlSample_boson == "W") {
+  //   } else if (controlSample_boson == "W") {
 
-      selectionDefinition.push_back("1lep loose");
-      selectionDefinition.push_back("1 tight lep");
-      if (fabs(lepton_PDGID) == 13) selectionDefinition.push_back("electron veto");
-      else if (fabs(lepton_PDGID) == 11) selectionDefinition.push_back("muon veto");
-      if (tau_veto_flag) selectionDefinition.push_back("tau veto");
-      selectionDefinition.push_back("photon veto");
-      selectionDefinition.push_back("bjet veto");
-      if (metnolep_start != 0) selectionDefinition.push_back("recoil > 200");
-      selectionDefinition.push_back("jet1pt");
-      selectionDefinition.push_back("jet1 cleaning");
-      selectionDefinition.push_back("dphiMin(j,Met)");
+  //     selectionDefinition.push_back("1lep loose");
+  //     selectionDefinition.push_back("1 tight lep");
+  //     if (fabs(lepton_PDGID) == 13) selectionDefinition.push_back("electron veto");
+  //     else if (fabs(lepton_PDGID) == 11) selectionDefinition.push_back("muon veto");
+  //     if (tau_veto_flag) selectionDefinition.push_back("tau veto");
+  //     selectionDefinition.push_back("photon veto");
+  //     selectionDefinition.push_back("bjet veto");
+  //     if (metnolep_start != 0) selectionDefinition.push_back("recoil > 200");
+  //     selectionDefinition.push_back("jet1pt");
+  //     selectionDefinition.push_back("jet1 cleaning");
+  //     selectionDefinition.push_back("dphiMin(j,Met)");
         
-    }
+  //   }
 
 
-  } else if (metResolutionAndResponse_flag == 1) {
+  // } else if (metResolutionAndResponse_flag == 1) {
 
-    selectionDefinition.push_back("preselection");   // include genLep, HLT, MetNoLep
-    selectionDefinition.push_back("2lep SF/OS");
-    selectionDefinition.push_back("2lep loose");
-    if (fabs(lepton_PDGID) == 13) selectionDefinition.push_back("muons");
-    else if (fabs(lepton_PDGID) == 11) selectionDefinition.push_back("electrons");
-    selectionDefinition.push_back("tight Tag");
-    selectionDefinition.push_back("mll");
-    selectionDefinition.push_back("bjet veto");
-    selectionDefinition.push_back("jet1pt");
-    selectionDefinition.push_back("dphiMin(j,Met)");
-    selectionDefinition.push_back("jet1 cleaning");
-    if (fabs(lepton_PDGID) == 13) selectionDefinition.push_back("electron veto");
-    else if (fabs(lepton_PDGID) == 11) selectionDefinition.push_back("muon veto");
-    selectionDefinition.push_back("photon veto");
-    if (tau_veto_flag) selectionDefinition.push_back("tau veto");
-    selectionDefinition.push_back("lep match");
+  //   selectionDefinition.push_back("preselection");   // include genLep, HLT, MetNoLep
+  //   selectionDefinition.push_back("2lep SF/OS");
+  //   selectionDefinition.push_back("2lep loose");
+  //   if (fabs(lepton_PDGID) == 13) selectionDefinition.push_back("muons");
+  //   else if (fabs(lepton_PDGID) == 11) selectionDefinition.push_back("electrons");
+  //   selectionDefinition.push_back("tight Tag");
+  //   selectionDefinition.push_back("mll");
+  //   selectionDefinition.push_back("bjet veto");
+  //   selectionDefinition.push_back("jet1pt");
+  //   selectionDefinition.push_back("dphiMin(j,Met)");
+  //   selectionDefinition.push_back("jet1 cleaning");
+  //   if (fabs(lepton_PDGID) == 13) selectionDefinition.push_back("electron veto");
+  //   else if (fabs(lepton_PDGID) == 11) selectionDefinition.push_back("muon veto");
+  //   selectionDefinition.push_back("photon veto");
+  //   if (tau_veto_flag) selectionDefinition.push_back("tau veto");
+  //   selectionDefinition.push_back("lep match");
 
-  }
+  // }
 
   ifstream sampleFile(fileWithSamplesPath.c_str());
   Int_t fileEndReached_flag = 0;
@@ -642,6 +643,7 @@ int main(int argc, char* argv[]) {
 	  //cout << " CHECK IN MAIN " << endl;
 	  tree.setBasicConf(sampleName[nSample].c_str(), uncertainty, configFileName, isdata_flag, unweighted_event_flag, sf_friend_flag);
 	  tree.loop(yieldsRow, efficiencyRow, uncertaintyRow); 
+	  tree.analysisSelectionManager.exportDefinition(&selectionDefinition);
 
 	} else if (controlSample_flag == 1) {
 
@@ -650,18 +652,21 @@ int main(int argc, char* argv[]) {
 	    tree.setBasicConf(sampleName[nSample].c_str(), uncertainty, configFileName, isdata_flag, unweighted_event_flag, sf_friend_flag);
 	    if (calibEle_flag == 1 && fabs(lepton_PDGID) == 11) tree.setCalibEleFlag();
 	    tree.loop(yieldsRow, efficiencyRow, uncertaintyRow);
+	    tree.analysisSelectionManager.exportDefinition(&selectionDefinition);
 	  } else if (controlSample_boson == "W") {
 	    wlnujetsControlSample tree( chain);
 	    tree.setBasicConf(sampleName[nSample].c_str(), uncertainty, configFileName, isdata_flag, unweighted_event_flag, sf_friend_flag);
 	    if (calibEle_flag == 1 && fabs(lepton_PDGID) == 11) tree.setCalibEleFlag();
 	    tree.loop(yieldsRow, efficiencyRow, uncertaintyRow);
+	    tree.analysisSelectionManager.exportDefinition(&selectionDefinition);
 	  } 
 
 	} else if (metResolutionAndResponse_flag == 1) {
 
 	  zlljets_metResoResp tree( chain);
 	  tree.setBasicConf(sampleName[nSample].c_str(), uncertainty, configFileName, isdata_flag, unweighted_event_flag, sf_friend_flag);
-	  tree.loop(yieldsRow, efficiencyRow, uncertaintyRow); 
+	  tree.loop(yieldsRow, efficiencyRow, uncertaintyRow);
+	  tree.analysisSelectionManager.exportDefinition(&selectionDefinition);
 
 	}
 

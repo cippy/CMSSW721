@@ -779,3 +779,14 @@ void selectionManager::append(const selection* s, const Int_t a) {
   stepDefinition.push_back(s->getDefinition());
 
 }
+
+void selectionManager::exportDefinition(vector<string>* vs) {
+
+  //copy content of definition array of selectionManager to another array of strings
+
+  Int_t nSteps = this->getVectorSize();
+  for (Int_t i = 0; i < nSteps; i++) {
+    vs->push_back(this->getStepDefinition(i));
+  }
+
+}

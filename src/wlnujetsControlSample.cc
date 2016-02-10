@@ -68,14 +68,12 @@ void wlnujetsControlSample::setSelections() {
   // muonLooseVetoC.set("muonLooseVetoC","muons veto");
   // electronLooseVetoC.set("electronLooseVetoC","electrons veto"); 
 
-  oneLepLooseC.set("oneLepLooseC",Form("1 loose %s",FLAVOUR));
-  tightLepC.set("tightLepC",Form("1 tight %s",FLAVOUR));
-
   if (!ISDATA_FLAG && using_wlnujets_MCsample_flag) {
-    genLepC.set("genLepC",Form("%s generated",FLAVOUR));     
-    recoGenLepMatchC.set("recoGenLepMatchC","reco-gen match (DR = 0.1)","only for wlnujets: looks for matching of reco and gen particles");      
+    genLepC.set("genLep",Form("%s generated",FLAVOUR));     
+    recoGenLepMatchC.set("reco-gen match","reco-gen match (DR = 0.1)","only for wlnujets: looks for matching of reco and gen particles");      
   }
-  if (!ISDATA_FLAG && using_wtaunujets_MCsample_flag) genTauC.set("genTauC","tau generated"); 
+
+  if (!ISDATA_FLAG && using_wtaunujets_MCsample_flag) genTauC.set("genTau","tau generated"); 
 
   if (fabs(LEP_PDG_ID) == 13) {  // if we have Z -> mumu do stuff...
 
@@ -88,13 +86,18 @@ void wlnujetsControlSample::setSelections() {
     // lep2etaC.set("mu2etaC",Form("|mu2eta| < %1.1lf",LEP2ETA),"trailing muon eta");
     // lep2tightIdIso04C.set("mu2tightIdIso04C","trailing muon tight","tight ID + relIso04 (as Emanuele)");
 
-    lepLooseVetoC.set("lepLooseVetoC","electrons veto");
-    if (METNOLEP_START != 0) metNoLepC.set("metNoMuC",Form("metNoMu > %2.0lf",METNOLEP_START));
+    oneLepLooseC.set("1 loose mu",Form("1 loose %s",FLAVOUR));
+    tightLepC.set("1 tight mu",Form("1 tight %s",FLAVOUR));
+    lepLooseVetoC.set("ele veto","electrons veto");
+    if (METNOLEP_START != 0) metNoLepC.set(Form("metNoMu > %2.0lf",METNOLEP_START),Form("recoil > %2.0lf",METNOLEP_START));
 
   } else if (fabs(LEP_PDG_ID) == 11) {   // if we have Z -> ee do different stuff...
 
-    if (METNOLEP_START != 0) metNoLepC.set("metNoEleC",Form("metNoEle > %2.0lf",METNOLEP_START));
-    lepLooseVetoC.set("lepLooseVetoC","muons veto");
+    oneLepLooseC.set("1 loose ele",Form("1 loose %s",FLAVOUR));
+    tightLepC.set("1 tight ele",Form("1 tight %s",FLAVOUR));
+    metC.set("met","met > 50");
+    if (METNOLEP_START != 0) metNoLepC.set(Form("metNoEle > %2.0lf",METNOLEP_START),Form("recoil > %2.0lf",METNOLEP_START));
+    lepLooseVetoC.set("muon veto","muons veto");
   }
 
   selection::checkMaskLength();
@@ -123,6 +126,7 @@ void wlnujetsControlSample::setMask() {
    if (TAU_VETO_FLAG) analysisMask.append(tauLooseVetoC.get2ToId());
    analysisMask.append(gammaLooseVetoC.get2ToId());
    analysisMask.append(bjetVetoC.get2ToId());
+   if (fabs(LEP_PDG_ID) == 11) analysisMask.append(metC.get2ToId());
    if (METNOLEP_START != 0) analysisMask.append(metNoLepC.get2ToId());
    analysisMask.append(jet1C.get2ToId());
    analysisMask.append(jetNoiseCleaningC.get2ToId());
@@ -152,6 +156,7 @@ void wlnujetsControlSample::setMask() {
    if (TAU_VETO_FLAG) analysisSelectionManager.append(&tauLooseVetoC);
    analysisSelectionManager.append(&gammaLooseVetoC);
    analysisSelectionManager.append(&bjetVetoC);
+   if (fabs(LEP_PDG_ID) == 11) analysisSelectionManager.append(&metC);
    if (METNOLEP_START != 0) analysisSelectionManager.append(&metNoLepC);
    analysisSelectionManager.append(&jet1C);
    analysisSelectionManager.append(&jetNoiseCleaningC);
@@ -542,7 +547,7 @@ void wlnujetsControlSample::loop(vector< Double_t > &yRow, vector< Double_t > &e
        }  // end of   if ( HLT_FLAG )
 
        metNoLepTV.SetMagPhi(met_pt,met_phi);
-       // summing just electrons from Z if found
+       // summing just electrons from Z if found (but total selections ask for electron as the highest pt lepton
        if (recoLepFound_flag) {
 	 ele.SetMagPhi(ptr_lepton_pt[0],ptr_lepton_phi[0]);
 	 metNoLepTV += ele;
@@ -564,21 +569,16 @@ void wlnujetsControlSample::loop(vector< Double_t > &yRow, vector< Double_t > &e
      eventMask += bjetVetoC.addToMask(nBTag15 == 0);
      eventMask += lepLooseVetoC.addToMask(nLep10V == 0);
      eventMask += tauLooseVetoC.addToMask(nTauClean18V == 0);
-     eventMask += gammaLooseVetoC.addToMask(nGamma15V == 0);
-     if (fabs(LEP_PDG_ID) == 11) {
-       eventMask += metNoLepC.addToMask(metNoLepPt > METNOLEP_START && met_pt > 50);
-       //eventMask += tightLepC.addToMask(nLepTight == 1 && LepGood_pt[0] > 40 && fabs(LepGood_pdgId[0]) == 11);
-     } else {
-       eventMask += metNoLepC.addToMask(metNoLepPt > METNOLEP_START);
-       //eventMask += tightLepC.addToMask(nLepTight == 1);
-     }
+     eventMask += gammaLooseVetoC.addToMask(nGamma15V == 0);     
+     eventMask += metC.addToMask(met_pt > 50);    
+     eventMask += metNoLepC.addToMask(metNoLepPt > METNOLEP_START);
      eventMask += metFiltersC.addToMask(cscfilter == 1 && ecalfilter == 1 && hbheFilterNew25ns == 1 && hbheFilterIso == 1 && Flag_eeBadScFilter == 1);  
 
      // the following make sense only if recoLepFound_flag == 1 (i.e. flag is true)
 
      if (recoLepFound_flag == 1) {          
        eventMask += oneLepLooseC.addToMask(((Int_t) nLepLoose) == 1);
-       if (fabs(LEP_PDG_ID) == 11) eventMask += tightLepC.addToMask(nLepTight == 1 && ptr_lepton_pt[0] > 40 && fabs(LepGood_pdgId[0]) == 11);
+       if (fabs(LEP_PDG_ID) == 11) eventMask += tightLepC.addToMask(nLepTight == 1 && ptr_lepton_pt[0] > LEP1PT && fabs(LepGood_pdgId[0]) == 11);
        else eventMask += tightLepC.addToMask(nLepTight == 1);
      // eventMask += lep1ptC.addToMask((LepGood_pt[0] > LEP1PT)); 
        // eventMask += lep1etaC.addToMask( (fabs(LepGood_eta[0]) < LEP1ETA) );
