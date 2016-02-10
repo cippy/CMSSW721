@@ -239,17 +239,17 @@ void AnalysisDarkMatter::setVarFromConfigFile() {
 
 void AnalysisDarkMatter::setSelections() {
 
-  metFiltersC.set("metFiltersC","met filters","cscfilter, ecalfilter, hbheFilterNew25ns, hbheFilterIso, Flag_eeBadScFilter");
+  metFiltersC.set("met filters","met filters","cscfilter, ecalfilter, hbheFilterNew25ns, hbheFilterIso, Flag_eeBadScFilter");
   //metNoMuC.set("metNoMuC",Form("metNoMu > %4.0lf",METNOLEP_START),"first cut on met");
-  jet1C.set("jet1C",Form("jet1pt > %4.0lf",J1PT),Form("nJetClean >= 1 && JetClean1_pt > %4.0lf",(Double_t)J1PT));
-  jetMetDphiMinC.set("jetMetDphiMinC",Form("min[dphi(j,MET)] > %1.1lf",JMET_DPHI_MIN),"minimum dphi between jets and MET (using only the first 4 jets)");
-  jetNoiseCleaningC.set("jetNoiseCleaningC","noise cleaning","energy fractions (only for jet1): CH > 0.1; NH < 0.8");
-  bjetVetoC.set("bjetVetoC","b-jets veto");
+  jet1C.set("jet1",Form("jet1pt > %3.0lf",J1PT),Form("nJetClean >= 1 && JetClean1_pt > %4.0lf",(Double_t)J1PT));
+  jetMetDphiMinC.set("dphiMin(j,MET)",Form("min[dphi(j,MET)] > %1.1lf",JMET_DPHI_MIN),"minimum dphi between jets and MET (using only the first 4 jets)");
+  jetNoiseCleaningC.set("jet1 cleaning","noise cleaning","energy fractions (only for jet1): CH > 0.1; NH < 0.8");
+  bjetVetoC.set("bjet veto","b-jets veto");
   // muonLooseVetoC.set("muonLooseVetoC","muons veto");    
   // electronLooseVetoC.set("electronLooseVetoC","electrons veto");
-  if (HLT_FLAG != 0) HLTC.set("HLTC","trigger");
-  if (TAU_VETO_FLAG) tauLooseVetoC.set("tauLooseVetoC","tau veto");
-  gammaLooseVetoC.set("gammaLooseVetoC","photons veto");
+  if (HLT_FLAG != 0) HLTC.set("trigger","trigger");
+  if (TAU_VETO_FLAG) tauLooseVetoC.set("tau veto","tau veto");
+  gammaLooseVetoC.set("photon veto","photons veto");
 
 }
 
