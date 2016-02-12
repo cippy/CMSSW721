@@ -770,7 +770,7 @@ int main(int argc, char* argv[]) {
   FILE* fp;
   string finalFileName = filename_base;
   finalFileName += "_yieldsTable";
-  if (unweighted_event_flag) finalFileName += "_weq1";   //means with weights equal to 1 (for debugging purposes)
+  //if (unweighted_event_flag) finalFileName += "_weq1";   //means with weights equal to 1 (for debugging purposes)  // not needed anymore since files are saved in a directory whose name would already have the _weq1 string in the name
   finalFileName += ".dat";
 
   if ( (fp=fopen((outputFolder + finalFileName).c_str(),"w")) == NULL) {
