@@ -737,7 +737,7 @@ Bool_t selection::isPassed(Bool_t input) {
 
 }
 
-
+//========================================
 
 selectionManager::selectionManager() {
 
@@ -762,21 +762,22 @@ void selectionManager::append(const selection* s) {
     exit(EXIT_FAILURE);
   }
   stepIndex.push_back(mPtr->whichStepHas(s));
-  stepDefinition.push_back(s->getDefinition());
+  //stepDefinition.push_back(s->getDefinition());
+  stepDefinition.push_back(s->getName()); //name is a short definition (it was previously the same name of the selection object ending in C)
 
 }
 
 void selectionManager::append(const mask* m, const selection* s) {
 
   stepIndex.push_back(m->whichStepHas(s));
-  stepDefinition.push_back(s->getDefinition());
+  stepDefinition.push_back(s->getName());
 
 }
 
 void selectionManager::append(const selection* s, const Int_t a) {
 
   stepIndex.push_back(a);
-  stepDefinition.push_back(s->getDefinition());
+  stepDefinition.push_back(s->getName());
 
 }
 
