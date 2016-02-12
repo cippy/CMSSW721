@@ -64,10 +64,6 @@ void wlnujetsControlSample::setSelections() {
 
   AnalysisDarkMatter::setSelections();
 
-  // ADD SELECTIONS SPECIFIC TO Z->LL
-  // muonLooseVetoC.set("muonLooseVetoC","muons veto");
-  // electronLooseVetoC.set("electronLooseVetoC","electrons veto"); 
-
   if (!ISDATA_FLAG && using_wlnujets_MCsample_flag) {
     genLepC.set("genLep",Form("%s generated",FLAVOUR));     
     recoGenLepMatchC.set("reco-gen match","reco-gen match (DR = 0.1)","only for wlnujets: looks for matching of reco and gen particles");      
@@ -76,15 +72,6 @@ void wlnujetsControlSample::setSelections() {
   if (!ISDATA_FLAG && using_wtaunujets_MCsample_flag) genTauC.set("genTau","tau generated"); 
 
   if (fabs(LEP_PDG_ID) == 13) {  // if we have Z -> mumu do stuff...
-
-    //twoLeptonsC.set("twomuonsC","muons"); 
-    // lep1tightIdIso04C.set("mu1tightIdIso04C","leading muon tight","tight ID + relIso04 (as Emanuele)");
-    // twoLepTightC.set("twomuTightC","2 tight muons");
-    // lep1ptC.set("mu1ptC",Form("mu1pt > %3.0lf",LEP1PT),"leading muon pt");
-    // lep2ptC.set("mu2ptC",Form("mu2pt > %3.0lf",LEP2PT),"trailing muon pt");
-    // lep1etaC.set("mu1etaC",Form("|mu1eta| < %1.1lf",LEP1ETA),"leading muon eta");  
-    // lep2etaC.set("mu2etaC",Form("|mu2eta| < %1.1lf",LEP2ETA),"trailing muon eta");
-    // lep2tightIdIso04C.set("mu2tightIdIso04C","trailing muon tight","tight ID + relIso04 (as Emanuele)");
 
     oneLepLooseC.set("1 loose mu",Form("1 loose %s",FLAVOUR));
     tightLepC.set("1 tight mu",Form("1 tight %s",FLAVOUR));
@@ -132,20 +119,6 @@ void wlnujetsControlSample::setMask() {
    analysisMask.append(jetNoiseCleaningC.get2ToId());
    analysisMask.append(jetMetDphiMinC.get2ToId());
 
-   // if (MET_FILTERS_FLAG != 0) selStep.push_back(analysisMask.whichStepHas(metFiltersC.get2ToId()));
-   // selStep.push_back(analysisMask.whichStepHas(oneLepLooseC.get2ToId()));
-   // selStep.push_back(analysisMask.whichStepHas(tightLepC.get2ToId()));
-   // selStep.push_back(analysisMask.whichStepHas(lepLooseVetoC.get2ToId()));
-   // if (TAU_VETO_FLAG) selStep.push_back(analysisMask.whichStepHas(tauLooseVetoC.get2ToId()));
-   // selStep.push_back(analysisMask.whichStepHas(gammaLooseVetoC.get2ToId()));
-   // selStep.push_back(analysisMask.whichStepHas(bjetVetoC.get2ToId()));
-   // if (METNOLEP_START != 0) selStep.push_back(analysisMask.whichStepHas(metNoLepC.get2ToId()));
-   // selStep.push_back(analysisMask.whichStepHas(jet1C.get2ToId()));
-   // selStep.push_back(analysisMask.whichStepHas(jetNoiseCleaningC.get2ToId()));
-   // selStep.push_back(analysisMask.whichStepHas(jetMetDphiMinC.get2ToId()));
-   // if (!ISDATA_FLAG && using_wlnujets_MCsample_flag)  selStep.push_back(analysisMask.whichStepHas(recoGenLepMatchC.get2ToId()));
-   // else selStep.push_back(selStep.back());  // in this case copy the previous entry
-
    analysisSelectionManager.SetMaskPointer(&analysisMask);
 
    if ( HLT_FLAG != 0 ) analysisSelectionManager.append(&HLTC);
@@ -161,8 +134,6 @@ void wlnujetsControlSample::setMask() {
    analysisSelectionManager.append(&jet1C);
    analysisSelectionManager.append(&jetNoiseCleaningC);
    analysisSelectionManager.append(&jetMetDphiMinC);
-   // if (!ISDATA_FLAG && using_wlnujets_MCsample_flag)  analysisSelectionManager.append(&recoGenLepMatchC);
-   // else analysisSelectionManager.append(&recoGenLepMatchC,analysisSelectionManager.getLastStepIndex());  // in this case copy the previous entry
 
 }
 
@@ -475,7 +446,7 @@ void wlnujetsControlSample::loop(vector< Double_t > &yRow, vector< Double_t > &e
        if (hasSFfriend_flag != 0) {
 
 	 if (fabs(LEP_PDG_ID) == 13) newwgt = LUMI * weight * vtxWeight * SF_trigmetnomu * SF_LepTight * SF_BTag * SF_NLO;
-	 else if (fabs(LEP_PDG_ID) == 11) newwgt = LUMI * weight * vtxWeight * SF_trig1lep * SF_LepTight * SF_BTag * SF_NLO;;
+	 else if (fabs(LEP_PDG_ID) == 11) newwgt = LUMI * weight * vtxWeight * SF_trig1lep * SF_LepTight * SF_BTag * SF_NLO;
 
        } else newwgt = LUMI * weight * vtxWeight * SF_BTag; //SF_BTag is in evVarFriend, not sfFriend
 
@@ -521,9 +492,8 @@ void wlnujetsControlSample::loop(vector< Double_t > &yRow, vector< Double_t > &e
 
        if ( HLT_FLAG != 0) {
 
-	 // use the dimuon trigger, not the metNoLep trigger
        	 if ( HLT_MonoJetMetNoMuMHT90 == 1 ) HLT_passed_flag = 1; 	 
-       	 else HLT_passed_flag = 0; //continue;
+       	 else HLT_passed_flag = 0;
 
        }  // end of   if ( HLT_FLAG )
 
@@ -537,17 +507,13 @@ void wlnujetsControlSample::loop(vector< Double_t > &yRow, vector< Double_t > &e
 
        if ( HLT_FLAG != 0 ) {
 
-       	 // if ( recoLepFound_flag && (LepGood_tightId[firstIndex] > 0.5) && 
-       	 //      (fabs(LepGood_eta[firstIndex]) < HLT_LEP1ETA) && 
-       	 //      (LepGood_pt[firstIndex] > HLT_LEP1PT) ) HLT_passed_flag = 1;
-	 
 	 if (HLT_SingleEl == 1) HLT_passed_flag = 1; 	 
 	 else HLT_passed_flag = 0;  //continue;
 
        }  // end of   if ( HLT_FLAG )
 
        metNoLepTV.SetMagPhi(met_pt,met_phi);
-       // summing just electrons from Z if found (but total selections ask for electron as the highest pt lepton
+   
        if (recoLepFound_flag) {
 	 ele.SetMagPhi(ptr_lepton_pt[0],ptr_lepton_phi[0]);
 	 metNoLepTV += ele;
@@ -578,11 +544,8 @@ void wlnujetsControlSample::loop(vector< Double_t > &yRow, vector< Double_t > &e
 
      if (recoLepFound_flag == 1) {          
        eventMask += oneLepLooseC.addToMask(((Int_t) nLepLoose) == 1);
-       if (fabs(LEP_PDG_ID) == 11) eventMask += tightLepC.addToMask(nLepTight == 1 && ptr_lepton_pt[0] > LEP1PT && fabs(LepGood_pdgId[0]) == 11);
-       else eventMask += tightLepC.addToMask(nLepTight == 1);
-     // eventMask += lep1ptC.addToMask((LepGood_pt[0] > LEP1PT)); 
-       // eventMask += lep1etaC.addToMask( (fabs(LepGood_eta[0]) < LEP1ETA) );
-       // eventMask += lep1tightIdIso04C.addToMask((LepGood_tightId[0] > 0.5 ) && (LepGood_relIso04[0] < LEP_ISO_04 ) );
+       if (fabs(LEP_PDG_ID) == 11) eventMask += tightLepC.addToMask(((Int_t) nLepTight) == 1 && ptr_lepton_pt[0] > LEP1PT && fabs(LepGood_pdgId[0]) == 11);
+       else eventMask += tightLepC.addToMask(((Int_t) nLepTight) == 1);
        
      }
 

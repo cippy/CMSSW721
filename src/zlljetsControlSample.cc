@@ -64,10 +64,6 @@ void zlljetsControlSample::setSelections() {
 
   AnalysisDarkMatter::setSelections();
 
-  // ADD SELECTIONS SPECIFIC TO Z->LL
-  // muonLooseVetoC.set("muonLooseVetoC","muons veto");
-  // electronLooseVetoC.set("electronLooseVetoC","electrons veto"); 
-
   oppChargeLeptonsC.set("OS/SF lep","OS/SF leptons");
 
   if (!ISDATA_FLAG && using_zlljets_MCsample_flag) {
@@ -77,15 +73,6 @@ void zlljetsControlSample::setSelections() {
   if (!ISDATA_FLAG && using_ztautaujets_MCsample_flag) genTauC.set("genTauC","taus generated"); 
 
   if (fabs(LEP_PDG_ID) == 13) {  // if we have Z -> mumu do stuff...
-
-    //twoLeptonsC.set("twomuonsC","muons"); 
-    // lep1tightIdIso04C.set("mu1tightIdIso04C","leading muon tight","tight ID + relIso04 (as Emanuele)");
-    // twoLepTightC.set("twomuTightC","2 tight muons");
-    // lep1ptC.set("mu1ptC",Form("mu1pt > %3.0lf",LEP1PT),"leading muon pt");
-    // lep2ptC.set("mu2ptC",Form("mu2pt > %3.0lf",LEP2PT),"trailing muon pt");
-    // lep1etaC.set("mu1etaC",Form("|mu1eta| < %1.1lf",LEP1ETA),"leading muon eta");  
-    // lep2etaC.set("mu2etaC",Form("|mu2eta| < %1.1lf",LEP2ETA),"trailing muon eta");
-    // lep2tightIdIso04C.set("mu2tightIdIso04C","trailing muon tight","tight ID + relIso04 (as Emanuele)");
 
     invMassC.set("M_mumu",Form("mass in [%3.0lf,%3.0lf]",DILEPMASS_LOW,DILEPMASS_UP));
     twoLepLooseC.set("2 loose mu",Form("2 loose %s",FLAVOUR));
@@ -439,11 +426,11 @@ void zlljetsControlSample::loop(vector< Double_t > &yRow, vector< Double_t > &eR
 
    setHistograms();
 
-   TH1D *HzlljetsInvMassMetBinGenLep[nMetBins];
+   TH1D *HzlljetsInvMassMetBin[nMetBins];
 
    for (Int_t i = 0; i < nMetBins; i++) {
 
-     HzlljetsInvMassMetBinGenLep[i] = new TH1D(Form("HzlljetsInvMassMetBinGenLep_met%2.0lfTo%2.0lf",metBinEdgesVector[i],metBinEdgesVector[i+1]),"",NinvMassBins,DILEPMASS_LOW,DILEPMASS_UP);
+     HzlljetsInvMassMetBin[i] = new TH1D(Form("HzlljetsInvMassMetBin_met%2.0lfTo%2.0lf",metBinEdgesVector[i],metBinEdgesVector[i+1]),"",NinvMassBins,DILEPMASS_LOW,DILEPMASS_UP);
 
    } 
 
@@ -502,7 +489,7 @@ void zlljetsControlSample::loop(vector< Double_t > &yRow, vector< Double_t > &eR
 
 	 //genLepFound_flag = 1;
 	 genLepFound_flag = myPartGenAlgo(nGenPart, GenPart_pdgId, GenPart_motherId, LEP_PDG_ID, 23, firstIndexGen, secondIndexGen, Z_index, GenPart_motherIndex); 
-	 //if (!genLepFound_flag) continue;  // if not found gen ee or mumu for MC DYJetsToLL ( l = mu or e) skip the event. This makes things faster
+     
 	 if (genLepFound_flag != 0) {
 	   eventMask += genLepC.addToMask(1);
 	   l1gen.SetPtEtaPhiM(GenPart_pt[firstIndexGen],GenPart_eta[firstIndexGen],GenPart_phi[firstIndexGen],GenPart_mass[firstIndexGen]);
@@ -514,20 +501,15 @@ void zlljetsControlSample::loop(vector< Double_t > &yRow, vector< Double_t > &eR
        } else if (using_ztautaujets_MCsample_flag) {
 
 	 genTauFound_flag = myPartGenAlgo(nGenPart, GenPart_pdgId, GenPart_motherId, 15, 23);
-	 //if (!genTauFound_flag) continue;  // if not found gen tautau for MC DYJetsToLL ( l = tau) skip the event. This makes things faster
 	 eventMask += genTauC.addToMask( genTauFound_flag );
 
        }
 
      }
 
-     //cout << "LepGood_pdgId[0]; LepGood_pdgId[1] --> " << LepGood_pdgId[0] << "   " << LepGood_pdgId[1] << endl;
-
-     // recoLepFound_flag = myGetPairIndexInArray(LEP_PDG_ID, nLepGood, LepGood_pdgId, firstIndex, secondIndex);  
-
      // look if the first two good leptons are OS/SF (flavour depending on config file)
      // the check for 2 OS/SF leptons in LepGood list is just useful to speed up things, but would not be necessary if other variables or computations that require this condition are only used at the end of selection (which already includes 2 OS/SF condition).
-     // thus, we evaluate this right now and use this pice of information for later use
+     // thus, we evaluate this right now and use this piece of information for later use
 
      if ( (fabs(LepGood_pdgId[0]) ==  LEP_PDG_ID) && (LepGood_pdgId[0] == (-1) * LepGood_pdgId[1]) ) recoLepFound_flag = 1;
      else recoLepFound_flag = 0;
@@ -543,7 +525,6 @@ void zlljetsControlSample::loop(vector< Double_t > &yRow, vector< Double_t > &eR
 
        if ( HLT_FLAG != 0) {
 
-	 // use the dimuon trigger, not the metNoLep trigger
        	 if ( HLT_MonoJetMetNoMuMHT90 == 1 ) HLT_passed_flag = 1; 	 
        	 else HLT_passed_flag = 0; //continue;
 
@@ -558,10 +539,6 @@ void zlljetsControlSample::loop(vector< Double_t > &yRow, vector< Double_t > &eR
      } else if (fabs(LEP_PDG_ID) == 11) { 
 
        if ( HLT_FLAG != 0 ) {
-
-       	 // if ( recoLepFound_flag && (LepGood_tightId[0] > 0.5) && (LepGood_tightId[1]  > 0.5) && 
-       	 //      (fabs(LepGood_eta[0]) < HLT_LEP1ETA) && (fabs(LepGood_eta[1]) < HLT_LEP2ETA) && 
-       	 //      (LepGood_pt[0] > HLT_LEP1PT) && (LepGood_pt[1] > HLT_LEP2PT) ) HLT_passed_flag = 1; 
 
 	 if (HLT_SingleEl == 1) HLT_passed_flag = 1; 
 	 else HLT_passed_flag = 0;  //continue;
@@ -607,15 +584,8 @@ void zlljetsControlSample::loop(vector< Double_t > &yRow, vector< Double_t > &eR
      if (recoLepFound_flag == 1) {        
      
        eventMask += twoLepLooseC.addToMask(((Int_t) nLepLoose) == 2);
-       if (fabs(LEP_PDG_ID) == 11) eventMask += tightLepC.addToMask(nLepTight > 0 && ptr_lepton_pt[0]>40 && fabs(LepGood_pdgId[0]) == 11);
-       else eventMask += tightLepC.addToMask(nLepTight > 0 );
-       // eventMask += lep1ptC.addToMask((LepGood_pt[0] > LEP1PT)); 
-       // eventMask += lep1etaC.addToMask( (fabs(LepGood_eta[0]) < LEP1ETA) );
-       // eventMask += lep2ptC.addToMask((LepGood_pt[1] > LEP2PT) );
-       // eventMask += lep2etaC.addToMask((fabs(LepGood_eta[1]) < LEP2ETA) );
-        
-       // eventMask += lep1tightIdIso04C.addToMask((LepGood_tightId[0] > 0.5 ) && (LepGood_relIso04[0] < LEP_ISO_04 ) );
-       // eventMask += lep2tightIdIso04C.addToMask((LepGood_tightId[1] > 0.5) && (LepGood_relIso04[1] < LEP_ISO_04 ) );
+       if (fabs(LEP_PDG_ID) == 11) eventMask += tightLepC.addToMask(nLepTight > 0.5 && ptr_lepton_pt[0]>40 && fabs(LepGood_pdgId[0]) == 11);
+       else eventMask += tightLepC.addToMask(nLepTight > 0.5 );
        
      }
 
@@ -692,7 +662,7 @@ void zlljetsControlSample::loop(vector< Double_t > &yRow, vector< Double_t > &eR
 
        if ( ((eventMask & analysisMask.globalMask.back()) == analysisMask.globalMask.back()) ) { 
  
-	 HzlljetsInvMassMetBinGenLep[bin]->Fill(mZ1,newwgt); 
+	 HzlljetsInvMassMetBin[bin]->Fill(mZ1,newwgt); 
 
        }
 	 
