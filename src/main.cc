@@ -258,14 +258,19 @@ int main(int argc, char* argv[]) {
 	} 
 
 	if (parameterName == "DIRECTORY_NAME") {  // name of directory where files are saved
-
+	  
 	  directory_name = name;
-	  std::cout << "Files will be saved in directory named '" << name << "' ." <<std::endl;
 
 	} 
 
       }
 
+    }
+
+    if (directory_name != "") {
+      if (calibEle_flag == 1 && fabs(lepton_PDGID) == 11) directory_name += "_CalibEle";
+      if (unweighted_event_flag == 1) directory_name += "_weq1";	  
+      std::cout << "Files will be saved in directory named '" << directory_name  << "' ." <<std::endl;
     }
 
     cout << "========================================================="<< endl;
@@ -285,10 +290,7 @@ int main(int argc, char* argv[]) {
 
     struct stat st = {0};
 
-    outputFolder = directory_to_save_files + directory_name;
-    if (calibEle_flag == 1 && fabs(lepton_PDGID) == 11) outputFolder += "_CalibEle";
-    if (unweighted_event_flag == 1) outputFolder += "_weq1";
-    outputFolder += "/";
+    outputFolder = directory_to_save_files + directory_name + "/";
     std::cout << "Creating new directory " << outputFolder << " ... " << std::endl;
 
     if (stat(outputFolder.c_str(), &st) == -1) {
