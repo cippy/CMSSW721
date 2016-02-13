@@ -265,6 +265,7 @@ void wlnujetsControlSample::loop(vector< Double_t > &yRow, vector< Double_t > &e
 
    fChain->SetBranchStatus("nVert",1);  // number of good vertices 
    fChain->SetBranchStatus("HLT_MonoJetMetNoMuMHT90",1);
+   fChain->SetBranchStatus("HLT_MonoJetMetNoMuMHT120",1);
    fChain->SetBranchStatus("HLT_SingleEl",1);
  
    // met filters to be used (the config file has a parameter saying whether they should be used or not)
@@ -492,7 +493,7 @@ void wlnujetsControlSample::loop(vector< Double_t > &yRow, vector< Double_t > &e
 
        if ( HLT_FLAG != 0) {
 
-       	 if ( HLT_MonoJetMetNoMuMHT90 == 1 ) HLT_passed_flag = 1; 	 
+       	 if ( HLT_MonoJetMetNoMuMHT90 > 0.5 || HLT_MonoJetMetNoMuMHT120 > 0.5 ) HLT_passed_flag = 1; 	 
        	 else HLT_passed_flag = 0;
 
        }  // end of   if ( HLT_FLAG )
@@ -532,20 +533,20 @@ void wlnujetsControlSample::loop(vector< Double_t > &yRow, vector< Double_t > &e
      eventMask += jet1C.addToMask(nJetClean30 >= 1 && JetClean_pt[0] > J1PT /*&& fabs(JetClean_eta[0]) < J1ETA*/);
      eventMask += jetMetDphiMinC.addToMask(fabs(dphijm > JMET_DPHI_MIN));
      eventMask += jetNoiseCleaningC.addToMask(JetClean_leadClean[0] > 0.5);
-     eventMask += bjetVetoC.addToMask(nBTag15 == 0);
-     eventMask += lepLooseVetoC.addToMask(nLep10V == 0);
-     eventMask += tauLooseVetoC.addToMask(nTauClean18V == 0);
-     eventMask += gammaLooseVetoC.addToMask(nGamma15V == 0);     
+     eventMask += bjetVetoC.addToMask(nBTag15 < 0.5);
+     eventMask += lepLooseVetoC.addToMask(nLep10V < 0.5);
+     eventMask += tauLooseVetoC.addToMask(nTauClean18V < 0.5);
+     eventMask += gammaLooseVetoC.addToMask(nGamma15V < 0.5);     
      eventMask += metC.addToMask(met_pt > 50);    
      eventMask += metNoLepC.addToMask(metNoLepPt > METNOLEP_START);
-     eventMask += metFiltersC.addToMask(cscfilter == 1 && ecalfilter == 1 && hbheFilterNew25ns == 1 && hbheFilterIso == 1 && Flag_eeBadScFilter == 1);  
+     eventMask += metFiltersC.addToMask(cscfilter == 1 && ecalfilter == 1 && hbheFilterNew25ns == 1 && hbheFilterIso == 1 && Flag_eeBadScFilter > 0.5);  
 
      // the following make sense only if recoLepFound_flag == 1 (i.e. flag is true)
 
      if (recoLepFound_flag == 1) {          
-       eventMask += oneLepLooseC.addToMask(((Int_t) nLepLoose) == 1);
-       if (fabs(LEP_PDG_ID) == 11) eventMask += tightLepC.addToMask(((Int_t) nLepTight) == 1 && ptr_lepton_pt[0] > LEP1PT && fabs(LepGood_pdgId[0]) == 11);
-       else eventMask += tightLepC.addToMask(((Int_t) nLepTight) == 1);
+       eventMask += oneLepLooseC.addToMask(nLepLoose > 0.5 && nLepLoose < 1.5);
+       if (fabs(LEP_PDG_ID) == 11) eventMask += tightLepC.addToMask(nLepTight > 0.5 && nLepTight < 1.5 && ptr_lepton_pt[0] > LEP1PT && fabs(LepGood_pdgId[0]) == 11);
+       else eventMask += tightLepC.addToMask(nLepTight > 0.5 && nLepTight < 1.5);
        
      }
 

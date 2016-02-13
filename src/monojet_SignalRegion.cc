@@ -185,6 +185,7 @@ void monojet_SignalRegion::loop(vector< Double_t > &yRow, vector< Double_t > &eR
 
    fChain->SetBranchStatus("nVert",1);  // number of good vertices 
    fChain->SetBranchStatus("HLT_MonoJetMetNoMuMHT90",1);
+   fChain->SetBranchStatus("HLT_MonoJetMetNoMuMHT120",1);
 
    // met filters to be used (the config file has a parameter saying whether they should be used or not)
    fChain->SetBranchStatus("cscfilter",1);
@@ -302,14 +303,14 @@ void monojet_SignalRegion::loop(vector< Double_t > &yRow, vector< Double_t > &eR
      eventMask += jet1C.addToMask(nJetClean30 >= 1 && JetClean_pt[0] > J1PT /* && fabs(JetClean_eta[0]) < J1ETA*/);
      eventMask += jetMetDphiMinC.addToMask(fabs(dphijm > JMET_DPHI_MIN));
      eventMask += jetNoiseCleaningC.addToMask(JetClean_leadClean[0] > 0.5);
-     eventMask += bjetVetoC.addToMask(nBTag15 == 0);
-     eventMask += muonLooseVetoC.addToMask(nMu10V == 0);
-     eventMask += electronLooseVetoC.addToMask(nEle10V == 0);
-     eventMask += tauLooseVetoC.addToMask(nTauClean18V == 0);
-     eventMask += gammaLooseVetoC.addToMask(nGamma15V == 0);
+     eventMask += bjetVetoC.addToMask(nBTag15 < 0.5);
+     eventMask += muonLooseVetoC.addToMask(nMu10V < 0.5);
+     eventMask += electronLooseVetoC.addToMask(nEle10V < 0.5);
+     eventMask += tauLooseVetoC.addToMask(nTauClean18V < 0.5);
+     eventMask += gammaLooseVetoC.addToMask(nGamma15V < 0.5);
      eventMask += metNoLepC.addToMask(metNoMu_pt > METNOLEP_START);
-     eventMask += metFiltersC.addToMask(cscfilter == 1 && ecalfilter == 1 && hbheFilterNew25ns == 1 && hbheFilterIso == 1 && Flag_eeBadScFilter == 1);
-     eventMask += HLTC.addToMask(HLT_MonoJetMetNoMuMHT90 == 1);
+     eventMask += metFiltersC.addToMask(cscfilter == 1 && ecalfilter == 1 && hbheFilterNew25ns == 1 && hbheFilterIso == 1 && Flag_eeBadScFilter > 0.5);
+     eventMask += HLTC.addToMask(HLT_MonoJetMetNoMuMHT90 > 0.5 || HLT_MonoJetMetNoMuMHT120 > 0.5); //HLT_* variables are stored as float, so using "== 1" might yield unexpected results
      
      // end of eventMask building
 

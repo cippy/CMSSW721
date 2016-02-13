@@ -276,6 +276,7 @@ void zlljetsControlSample::loop(vector< Double_t > &yRow, vector< Double_t > &eR
 
    fChain->SetBranchStatus("nVert",1);  // number of good vertices 
    fChain->SetBranchStatus("HLT_MonoJetMetNoMuMHT90",1);
+   fChain->SetBranchStatus("HLT_MonoJetMetNoMuMHT120",1); 
    fChain->SetBranchStatus("HLT_SingleEl",1);
 
    // met filters to be used (the config file has a parameter saying whether they should be used or not)
@@ -525,7 +526,7 @@ void zlljetsControlSample::loop(vector< Double_t > &yRow, vector< Double_t > &eR
 
        if ( HLT_FLAG != 0) {
 
-       	 if ( HLT_MonoJetMetNoMuMHT90 == 1 ) HLT_passed_flag = 1; 	 
+       	 if ( HLT_MonoJetMetNoMuMHT90 > 0.5 || HLT_MonoJetMetNoMuMHT120 > 0.5 ) HLT_passed_flag = 1; 	 
        	 else HLT_passed_flag = 0; //continue;
 
        }  // end of   if ( HLT_FLAG )
@@ -567,12 +568,12 @@ void zlljetsControlSample::loop(vector< Double_t > &yRow, vector< Double_t > &eR
      eventMask += jet1C.addToMask(nJetClean30 >= 1 && JetClean_pt[0] > J1PT /*&& fabs(JetClean_eta[0]) < J1ETA*/);
      eventMask += jetMetDphiMinC.addToMask(fabs(dphijm > JMET_DPHI_MIN));
      eventMask += jetNoiseCleaningC.addToMask(JetClean_leadClean[0] > 0.5);
-     eventMask += bjetVetoC.addToMask(nBTag15 == 0);
-     eventMask += lepLooseVetoC.addToMask(nLep10V == 0);
-     eventMask += tauLooseVetoC.addToMask(nTauClean18V == 0);
-     eventMask += gammaLooseVetoC.addToMask(nGamma15V == 0);
+     eventMask += bjetVetoC.addToMask(nBTag15 < 0.5);
+     eventMask += lepLooseVetoC.addToMask(nLep10V < 0.5);
+     eventMask += tauLooseVetoC.addToMask(nTauClean18V < 0.5);
+     eventMask += gammaLooseVetoC.addToMask(nGamma15V < 0.5);
      eventMask += metNoLepC.addToMask(metNoLepPt > METNOLEP_START);
-     eventMask += metFiltersC.addToMask(cscfilter == 1 && ecalfilter == 1 && hbheFilterNew25ns == 1 && hbheFilterIso == 1 && Flag_eeBadScFilter == 1);  
+     eventMask += metFiltersC.addToMask(cscfilter == 1 && ecalfilter == 1 && hbheFilterNew25ns == 1 && hbheFilterIso == 1 && Flag_eeBadScFilter > 0.5);  
 
      // the following make sense only if recoLepFound_flag == 1 (i.e. flag is true), which means that fabs(LepGood_pdgId[0/1]) == LEP_PDG_ID) is 
      // true
@@ -583,7 +584,7 @@ void zlljetsControlSample::loop(vector< Double_t > &yRow, vector< Double_t > &eR
 
      if (recoLepFound_flag == 1) {        
      
-       eventMask += twoLepLooseC.addToMask(((Int_t) nLepLoose) == 2);
+       eventMask += twoLepLooseC.addToMask(nLepLoose > 1.5 && nLepLoose < 2.5);
        if (fabs(LEP_PDG_ID) == 11) eventMask += tightLepC.addToMask(nLepTight > 0.5 && ptr_lepton_pt[0]>40 && fabs(LepGood_pdgId[0]) == 11);
        else eventMask += tightLepC.addToMask(nLepTight > 0.5 );
        
