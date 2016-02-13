@@ -241,7 +241,7 @@ void zlljetsControlSample::loop(vector< Double_t > &yRow, vector< Double_t > &eR
    fChain->SetBranchStatus("nEle10V",1);  // # of electrons passing loose selection for electron veto
    fChain->SetBranchStatus("nGamma15V",1);  // # of photons passing loose selection for photon veto
    fChain->SetBranchStatus("nMu20T",1);  // # of muons passing tight selection (isolation included)
-   fChain->SetBranchStatus("nEle20T",1);  // # of electrons passing tight selection (isolation included)
+   //fChain->SetBranchStatus("nEle20T",1);  // # of electrons passing tight selection (isolation included)
    //fChain->SetBranchStatus("nTau18V",1);
    fChain->SetBranchStatus("nTauClean18V",1);
 
