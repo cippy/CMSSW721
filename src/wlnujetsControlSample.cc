@@ -230,7 +230,7 @@ void wlnujetsControlSample::loop(vector< Double_t > &yRow, vector< Double_t > &e
    fChain->SetBranchStatus("nEle10V",1);  // # of electrons passing loose selection for electron veto
    fChain->SetBranchStatus("nGamma15V",1);  // # of photons passing loose selection for photon veto
    fChain->SetBranchStatus("nMu20T",1);  // # of muons passing tight selection (isolation included)
-   //fChain->SetBranchStatus("nEle20T",1);  // # of electrons passing tight selection (isolation included)
+   fChain->SetBranchStatus("nEle20T",1);  // # of electrons passing tight selection (isolation included)
    //fChain->SetBranchStatus("nTau18V",1);
    fChain->SetBranchStatus("nTauClean18V",1);
 
@@ -384,7 +384,8 @@ void wlnujetsControlSample::loop(vector< Double_t > &yRow, vector< Double_t > &e
 
      ptr_nLepLoose = &nEle10V;                      // ask 2 electrons
      ptr_nLep10V = &nMu10V;                         // veto on muons   
-     ptr_nLepTight = &nEle40T; 
+     if (fChain->GetBranch("nEle40T")) ptr_nLepTight = &nEle40T;
+     else if (fChain->GetBranch("nEle20T")) ptr_nLepTight = &nEle20T;  // the most recent version for this variable si nEle40T, but older versions use nEle20T
 
      if (calibEle_flag == 0) {
        ptr_lepton_pt = LepGood_pt;
