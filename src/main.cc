@@ -71,6 +71,7 @@ int main(int argc, char* argv[]) {
   string directory_to_save_files = "";
   string directory_name = "";
   string outputFolder = "./"; // current directory by default, but it could be set as 'directory_to_save_files + directory_name'
+  string dirName_suffix = ""; // user can add a suffix without modifying the name of directory in config file
 
   if (argc > 2 ) {
 
@@ -98,6 +99,14 @@ int main(int argc, char* argv[]) {
 	     
 	calibEle_flag = 1;
 	cout << "Option " << thisArgument << " passed: using calibrated variables for electrons" << std::endl;
+
+      }
+
+      if (thisArgument  == "-fns" ) {   // fns stands for directory name suffix: user can add a suffix to directory name without changing the config file
+	// this option requires a string just after it
+	 
+	dirName_suffix = argv[i+1];
+	cout << "Option " << thisArgument << " passed: attaching suffix \""<<argv[i+1] <<"\" at the end of directory name" << std::endl;
 
       }
 
@@ -269,7 +278,8 @@ int main(int argc, char* argv[]) {
 
     if (directory_name != "") {
       if (calibEle_flag == 1 && fabs(lepton_PDGID) == 11) directory_name += "_CalibEle";
-      if (unweighted_event_flag == 1) directory_name += "_weq1";	  
+      if (unweighted_event_flag == 1) directory_name += "_weq1";
+      if (dirName_suffix != "") directory_name += ("_" + dirName_suffix); // this addition should be left as the last one when forming directory name
       std::cout << "Files will be saved in directory named '" << directory_name  << "' ." <<std::endl;
     }
 
@@ -574,6 +584,7 @@ int main(int argc, char* argv[]) {
 	  monojet_SignalRegion tree( chain);
 	  //cout << " CHECK IN MAIN " << endl;
 	  tree.setBasicConf(sampleName[nSample].c_str(), uncertainty, configFileName, isdata_flag, unweighted_event_flag, sf_friend_flag);
+	  tree.setDirNameSuffix(dirName_suffix);
 	  tree.loop(yieldsRow, efficiencyRow, uncertaintyRow); 
 	  tree.analysisSelectionManager.exportDefinition(&selectionDefinition);
 
@@ -582,12 +593,14 @@ int main(int argc, char* argv[]) {
 	  if (controlSample_boson == "Z") {
 	    zlljetsControlSample tree( chain);
 	    tree.setBasicConf(sampleName[nSample].c_str(), uncertainty, configFileName, isdata_flag, unweighted_event_flag, sf_friend_flag);
+	    tree.setDirNameSuffix(dirName_suffix);
 	    if (calibEle_flag == 1 && fabs(lepton_PDGID) == 11) tree.setCalibEleFlag();
 	    tree.loop(yieldsRow, efficiencyRow, uncertaintyRow);
 	    tree.analysisSelectionManager.exportDefinition(&selectionDefinition);
 	  } else if (controlSample_boson == "W") {
 	    wlnujetsControlSample tree( chain);
 	    tree.setBasicConf(sampleName[nSample].c_str(), uncertainty, configFileName, isdata_flag, unweighted_event_flag, sf_friend_flag);
+	    tree.setDirNameSuffix(dirName_suffix);
 	    if (calibEle_flag == 1 && fabs(lepton_PDGID) == 11) tree.setCalibEleFlag();
 	    tree.loop(yieldsRow, efficiencyRow, uncertaintyRow);
 	    tree.analysisSelectionManager.exportDefinition(&selectionDefinition);
