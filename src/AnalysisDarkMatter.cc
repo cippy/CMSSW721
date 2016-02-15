@@ -45,6 +45,16 @@ using namespace std;
 
 AnalysisDarkMatter::AnalysisDarkMatter(TTree *tree) : edimarcoTree_v3(tree) {
   //cout <<"check in constructor "<<endl;
+  suffix = "";
+  uncertainty = "";
+  configFileName = NULL;
+  ISDATA_FLAG = 0;
+  unweighted_event_flag = 0;
+  hasSFfriend_flag = 0;
+
+  calibEle_flag = 0;
+  dirName_suffix = ""; //user can add a suffix to directory name from main instead of changing string in config file
+
   Init(tree);
   
 
@@ -89,6 +99,13 @@ void AnalysisDarkMatter::setCalibEleFlag() {
 
 }
 
+//===============================================
+
+void AnalysisDarkMatter::setDirNameSuffix(const std::string s) {
+
+  dirName_suffix = s;
+
+}
 
 //===============================================
 
@@ -206,13 +223,12 @@ void AnalysisDarkMatter::setVarFromConfigFile() {
     
   }
   
-  if (calibEle_flag == 1) outputFolder =  DIRECTORY_TO_SAVE_FILES + DIRECTORY_NAME + "_CalibEle/";
-  else if (unweighted_event_flag == 1) outputFolder =  DIRECTORY_TO_SAVE_FILES + DIRECTORY_NAME + "_weq1/";
-  else outputFolder =  DIRECTORY_TO_SAVE_FILES + DIRECTORY_NAME + "/";
+  outputFolder =  DIRECTORY_TO_SAVE_FILES + DIRECTORY_NAME;
+  if (calibEle_flag == 1) outputFolder += "_CalibEle";
+  if (unweighted_event_flag == 1) outputFolder += "_weq1";
+  outputFolder += dirName_suffix;  // set to "" if not specified
+  outputFolder += "/";
 
-   //Double_t metBinEdges[] = {200., 250., 300., 350., 400., 500., 650., 1000.};
-   // Double_t metBinEdges[] = {200., 250., 300., 350., 400., 450., 500., 550., 600., 650., 750., 850., 1000.};
-   // Int_t nMetBins = (sizeof(metBinEdges)/sizeof(Double_t)) - 1;
    nMetBins = (metBinEdgesVector.size()) - 1;
 
    cout << "MetBinEdges: [ ";
@@ -240,16 +256,15 @@ void AnalysisDarkMatter::setVarFromConfigFile() {
 void AnalysisDarkMatter::setSelections() {
 
   metFiltersC.set("met filters","met filters","cscfilter, ecalfilter, hbheFilterNew25ns, hbheFilterIso, Flag_eeBadScFilter");
-  //metNoMuC.set("metNoMuC",Form("metNoMu > %4.0lf",METNOLEP_START),"first cut on met");
   jet1C.set("jet1",Form("jet1pt > %3.0lf",J1PT),Form("nJetClean >= 1 && JetClean1_pt > %4.0lf",(Double_t)J1PT));
   jetMetDphiMinC.set("dphiMin(j,MET)",Form("min[dphi(j,MET)] > %1.1lf",JMET_DPHI_MIN),"minimum dphi between jets and MET (using only the first 4 jets)");
   jetNoiseCleaningC.set("jet1 cleaning","noise cleaning","energy fractions (only for jet1): CH > 0.1; NH < 0.8");
   bjetVetoC.set("bjet veto","b-jets veto");
-  // muonLooseVetoC.set("muonLooseVetoC","muons veto");    
-  // electronLooseVetoC.set("electronLooseVetoC","electrons veto");
   if (HLT_FLAG != 0) HLTC.set("trigger","trigger");
   if (TAU_VETO_FLAG) tauLooseVetoC.set("tau veto","tau veto");
   gammaLooseVetoC.set("photon veto","photons veto");
+
+  selection::checkMaskLength();
 
 }
 
