@@ -44,13 +44,13 @@ using namespace myAnalyzerTEman;
 
 monojet_SignalRegion::monojet_SignalRegion(TTree *tree) : AnalysisDarkMatter(tree) {
   //cout <<"check in constructor "<<endl;
-  suffix = "";
-  uncertainty = "";
-  configFileName = NULL;
-  ISDATA_FLAG = 0;
-  unweighted_event_flag = 0;
-  hasSFfriend_flag = 0;
-  Init(tree);
+  // suffix = "";
+  // uncertainty = "";
+  // configFileName = NULL;
+  // ISDATA_FLAG = 0;
+  // unweighted_event_flag = 0;
+  // hasSFfriend_flag = 0;
+  // Init(tree);
 
 }
 
@@ -209,12 +209,6 @@ void monojet_SignalRegion::loop(vector< Double_t > &yRow, vector< Double_t > &eR
    fChain->SetBranchStatus("CalibEle_eta",1);
    fChain->SetBranchStatus("CalibEle_phi",1);
    fChain->SetBranchStatus("CalibEle_mass",1);
-   //variables in sfFriend tree
-   fChain->SetBranchStatus("SF_trig1lep",1);
-   fChain->SetBranchStatus("SF_trigmetnomu",1);
-   fChain->SetBranchStatus("SF_LepTightLoose",1);
-   fChain->SetBranchStatus("SF_LepTight",1);
-   fChain->SetBranchStatus("SF_NLO",1);  
 
    if (!ISDATA_FLAG) {
      // fChain->SetBranchStatus("nGenPart",1);
