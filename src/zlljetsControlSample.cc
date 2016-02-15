@@ -43,16 +43,10 @@ using namespace myAnalyzerTEman;
 
 #ifdef zlljetsControlSample_cxx
 
-zlljetsControlSample::zlljetsControlSample(TTree *tree) : AnalysisDarkMatter(tree) {
+zlljetsControlSample::zlljetsControlSample(TTree *tree) : monojet_ControlRegion(tree) {
   //cout <<"check in constructor "<<endl;
   //edimarcoTree_v3::Init(tree);
-  suffix = "";
-  uncertainty = "";
-  configFileName = NULL;
-  ISDATA_FLAG = 0;
-  unweighted_event_flag = 0;
-  hasSFfriend_flag = 0;
-  AnalysisDarkMatter::Init(tree);  // could also be just Init(tree)
+  //monojet_ControlRegion::Init(tree);  // could also be just Init(tree)
 
 }
 
@@ -62,7 +56,7 @@ zlljetsControlSample::zlljetsControlSample(TTree *tree) : AnalysisDarkMatter(tre
 
 void zlljetsControlSample::setSelections() {
 
-  AnalysisDarkMatter::setSelections();
+  monojet_ControlRegion::setSelections();
 
   oppChargeLeptonsC.set("OS/SF lep","OS/SF leptons");
 
@@ -77,16 +71,13 @@ void zlljetsControlSample::setSelections() {
     invMassC.set("M_mumu",Form("mass in [%3.0lf,%3.0lf]",DILEPMASS_LOW,DILEPMASS_UP));
     twoLepLooseC.set("2 loose mu",Form("2 loose %s",FLAVOUR));
     tightLepC.set(">0 tight mu",Form(">0 tight %s",FLAVOUR));
-    lepLooseVetoC.set("ele veto","electrons veto");
-    if (METNOLEP_START != 0) metNoLepC.set(Form("recoil > %2.0lf",METNOLEP_START),Form("metNoMu > %2.0lf",METNOLEP_START));
 
   } else if (fabs(LEP_PDG_ID) == 11) {   // if we have Z -> ee do different stuff...
 
-    if (METNOLEP_START != 0) metNoLepC.set(Form("recoil > %2.0lf",METNOLEP_START),Form("metNoEle > %2.0lf",METNOLEP_START));
     invMassC.set("M_ee",Form("mass in [%3.0lf,%3.0lf]",DILEPMASS_LOW,DILEPMASS_UP));
     twoLepLooseC.set("2 loose ele",Form("2 loose %s",FLAVOUR));
     tightLepC.set(">0 tight ele",Form(">0 tight %s",FLAVOUR));
-    lepLooseVetoC.set("muon veto","muons veto");
+
   }
 
   selection::checkMaskLength();
@@ -145,10 +136,12 @@ void zlljetsControlSample::setMask() {
 
 void zlljetsControlSample::setHistograms() {
 
-  AnalysisDarkMatter::setHistograms();
+  monojet_ControlRegion::setHistograms();
   
   HinvMass = new TH1D("HinvMass","",NinvMassBins,DILEPMASS_LOW,DILEPMASS_UP);    // for MC it's done on Z->mumu or Z->ee at gen level
-  HzptDistribution = new TH1D("HzptDistribution","",200,0.0,1000.0);    
+  HzptDistribution = new TH1D("HzptDistribution","",200,0.0,1000.0); 
+  Hlep2ptDistribution = new TH1D("Hlep2ptDistribution","",200,0.0,1000.0);
+  Hlep2etaDistribution = new TH1D("Hlep2etaDistribution","",100,-5.0,5.0);
 
 }
 
@@ -156,26 +149,18 @@ void zlljetsControlSample::setHistograms() {
 
 void zlljetsControlSample::setNumberParameterValue(const std::string parameterName, const Double_t value) {
 
-  AnalysisDarkMatter::setNumberParameterValue(parameterName, value);
+  monojet_ControlRegion::setNumberParameterValue(parameterName, value);
 
-  if (parameterName == "LEP_PDG_ID") LEP_PDG_ID = value;
-  else if (parameterName == "LEP1PT") LEP1PT = value;
-  else if (parameterName == "LEP2PT") LEP2PT = value;
-  else if (parameterName == "LEP1ETA") LEP1ETA = value;
+  if (parameterName == "LEP2PT") LEP2PT = value;
   else if (parameterName == "LEP2ETA") LEP2ETA = value;
   else if (parameterName == "DILEPMASS_LOW") DILEPMASS_LOW = value;
   else if (parameterName == "DILEPMASS_UP") DILEPMASS_UP = value;
-  else if (parameterName == "LEP_ISO_04") LEP_ISO_04 = value;
-  else if (parameterName == "HLT_LEP1PT") HLT_LEP1PT = value;
   else if (parameterName == "HLT_LEP2PT") HLT_LEP2PT = value;
-  else if (parameterName == "HLT_LEP1ETA") HLT_LEP1ETA = value;
   else if (parameterName == "HLT_LEP2ETA") HLT_LEP2ETA = value;
 
   if (!ISDATA_FLAG) {
 
-    if (parameterName == "GENLEP1PT") GENLEP1PT = value;
-    else if (parameterName == "GENLEP2PT") GENLEP2PT = value;
-    else if (parameterName == "GENLEP1ETA") GENLEP1ETA = value;
+    if (parameterName == "GENLEP2PT") GENLEP2PT = value;
     else if (parameterName == "GENLEP2ETA") GENLEP2ETA = value;
     else if (parameterName == "GEN_ZMASS_LOW") GEN_ZMASS_LOW = value;
     else if (parameterName == "GEN_ZMASS_UP") GEN_ZMASS_UP = value;
@@ -187,6 +172,8 @@ void zlljetsControlSample::setNumberParameterValue(const std::string parameterNa
 //===============================================
 
 void zlljetsControlSample::setControlSampleSpecificParameter() {
+
+  monojet_ControlRegion::setControlSampleSpecificParameter(); //check if defined before uncommenting
 
   invMassBinWidth = 1.0;  // invariant mass histogram's bin width in GeV
   NinvMassBins = (DILEPMASS_UP - DILEPMASS_LOW) / invMassBinWidth;
@@ -218,7 +205,7 @@ void zlljetsControlSample::setControlSampleSpecificParameter() {
 
 void zlljetsControlSample::setVarFromConfigFile() {
 
-  AnalysisDarkMatter::setVarFromConfigFile();
+  monojet_ControlRegion::setVarFromConfigFile();
   setControlSampleSpecificParameter();
 
 }
@@ -588,8 +575,9 @@ void zlljetsControlSample::loop(vector< Double_t > &yRow, vector< Double_t > &eR
      if (recoLepFound_flag == 1) {        
      
        eventMask += twoLepLooseC.addToMask(nLepLoose > 1.5 && nLepLoose < 2.5);
-       if (fabs(LEP_PDG_ID) == 11) eventMask += tightLepC.addToMask(nLepTight > 0.5 && ptr_lepton_pt[0]>40 && fabs(LepGood_pdgId[0]) == 11);
+       if (fabs(LEP_PDG_ID) == 11) eventMask += tightLepC.addToMask(nLepTight > 0.5 && ptr_lepton_pt[0] > LEP1PT && fabs(LepGood_pdgId[0]) == 11);
        else eventMask += tightLepC.addToMask(nLepTight > 0.5 );
+       //eventMask += tightLepC.addToMask(nLepTight > 0.5 );
        
      }
 

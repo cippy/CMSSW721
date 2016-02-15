@@ -43,16 +43,16 @@ using namespace myAnalyzerTEman;
 
 #ifdef wlnujetsControlSample_cxx
 
-wlnujetsControlSample::wlnujetsControlSample(TTree *tree) : AnalysisDarkMatter(tree) {
+wlnujetsControlSample::wlnujetsControlSample(TTree *tree) : monojet_ControlRegion(tree) {
   //cout <<"check in constructor "<<endl;
   //edimarcoTree_v3::Init(tree);
-  suffix = "";
-  uncertainty = "";
-  configFileName = NULL;
-  ISDATA_FLAG = 0;
-  unweighted_event_flag = 0;
-  hasSFfriend_flag = 0;
-  AnalysisDarkMatter::Init(tree);  // could also be just Init(tree)
+  // suffix = "";
+  // uncertainty = "";
+  // configFileName = NULL;
+  // ISDATA_FLAG = 0;
+  // unweighted_event_flag = 0;
+  // hasSFfriend_flag = 0;
+  //AnalysisDarkMatter::Init(tree);  // could also be just Init(tree)
 
 }
 
@@ -62,7 +62,7 @@ wlnujetsControlSample::wlnujetsControlSample(TTree *tree) : AnalysisDarkMatter(t
 
 void wlnujetsControlSample::setSelections() {
 
-  AnalysisDarkMatter::setSelections();
+  monojet_ControlRegion::setSelections();
 
   if (!ISDATA_FLAG && using_wlnujets_MCsample_flag) {
     genLepC.set("genLep",Form("%s generated",FLAVOUR));     
@@ -75,16 +75,13 @@ void wlnujetsControlSample::setSelections() {
 
     oneLepLooseC.set("1 loose mu",Form("1 loose %s",FLAVOUR));
     tightLepC.set("1 tight mu",Form("1 tight %s",FLAVOUR));
-    lepLooseVetoC.set("ele veto","electrons veto");
-    if (METNOLEP_START != 0) metNoLepC.set(Form("metNoMu > %2.0lf",METNOLEP_START),Form("recoil > %2.0lf",METNOLEP_START));
 
   } else if (fabs(LEP_PDG_ID) == 11) {   // if we have Z -> ee do different stuff...
 
     oneLepLooseC.set("1 loose ele",Form("1 loose %s",FLAVOUR));
     tightLepC.set("1 tight ele",Form("1 tight %s",FLAVOUR));
     metC.set("met","met > 50");
-    if (METNOLEP_START != 0) metNoLepC.set(Form("metNoEle > %2.0lf",METNOLEP_START),Form("recoil > %2.0lf",METNOLEP_START));
-    lepLooseVetoC.set("muon veto","muons veto");
+  
   }
 
   selection::checkMaskLength();
@@ -141,7 +138,7 @@ void wlnujetsControlSample::setMask() {
 
 void wlnujetsControlSample::setHistograms() {
 
-  AnalysisDarkMatter::setHistograms();
+  monojet_ControlRegion::setHistograms();
     
   HtransverseMass = new TH1D("HtransverseMass","",40,0.0,200.0);
 
@@ -151,33 +148,25 @@ void wlnujetsControlSample::setHistograms() {
 
 void wlnujetsControlSample::setNumberParameterValue(const std::string parameterName, const Double_t value) {
 
-  AnalysisDarkMatter::setNumberParameterValue(parameterName, value);
+  monojet_ControlRegion::setNumberParameterValue(parameterName, value);
 
-  if (parameterName == "LEP_PDG_ID") LEP_PDG_ID = value;
-  else if (parameterName == "LEP1PT") LEP1PT = value;
-  //else if (parameterName == "LEP2PT") LEP2PT = value;
-  else if (parameterName == "LEP1ETA") LEP1ETA = value;
-  //else if (parameterName == "LEP2ETA") LEP2ETA = value;
-  else if (parameterName == "LEP_ISO_04") LEP_ISO_04 = value;
-  else if (parameterName == "HLT_LEP1PT") HLT_LEP1PT = value;
-  //else if (parameterName == "HLT_LEP2PT") HLT_LEP2PT = value;
-  else if (parameterName == "HLT_LEP1ETA") HLT_LEP1ETA = value;
-  //else if (parameterName == "HLT_LEP2ETA") HLT_LEP2ETA = value;
+  // N.B.: if there are more checks, the first must be an "if", the successive can be "else if" or "if" (but "else if" is better because when parameter is ound the query ends
 
-  if (!ISDATA_FLAG) {
+  //if (parameterName == "<PAR_NAME>") PAR_NAME = value;
 
-    if (parameterName == "GENLEP1PT") GENLEP1PT = value;
-    //else if (parameterName == "GENLEP2PT") GENLEP2PT = value;
-    else if (parameterName == "GENLEP1ETA") GENLEP1ETA = value;
-    //else if (parameterName == "GENLEP2ETA") GENLEP2ETA = value;
+  // if (!ISDATA_FLAG) {
 
-  }
+  //   if (parameterName == "<PAR_NAME>") PAR_NAME = value;
+
+  // }
 
 }
 
 //===============================================
 
 void wlnujetsControlSample::setControlSampleSpecificParameter() {
+
+  monojet_ControlRegion::setControlSampleSpecificParameter(); //check if defined before uncommenting
 
   // the following flag is needed to enable search for W->lnu at generator level. For MC samples different from WJetsToLNu I must not require 2 gen leptons from Z
   // unless it is Z->tautau, in which case I start from generated taus and apply selection (tau can produce muon or electron)
@@ -186,7 +175,7 @@ void wlnujetsControlSample::setControlSampleSpecificParameter() {
  
   if ( !ISDATA_FLAG && ( suffix == "WJetsToTauNu" )) using_wtaunujets_MCsample_flag = 1; 
   else using_wtaunujets_MCsample_flag = 0;  
-  
+
   if (fabs(LEP_PDG_ID) == 13) {  // if we have Z -> mumu do stuff...
 
     strcpy(FLAVOUR,"muon");
@@ -201,13 +190,14 @@ void wlnujetsControlSample::setControlSampleSpecificParameter() {
 
   }
 
+
 }
 
 //===============================================
 
 void wlnujetsControlSample::setVarFromConfigFile() {
 
-  AnalysisDarkMatter::setVarFromConfigFile();
+  monojet_ControlRegion::setVarFromConfigFile();
   setControlSampleSpecificParameter();
 
 }
@@ -546,8 +536,9 @@ void wlnujetsControlSample::loop(vector< Double_t > &yRow, vector< Double_t > &e
 
      if (recoLepFound_flag == 1) {          
        eventMask += oneLepLooseC.addToMask(nLepLoose > 0.5 && nLepLoose < 1.5);
-       if (fabs(LEP_PDG_ID) == 11) eventMask += tightLepC.addToMask(nLepTight > 0.5 && nLepTight < 1.5 && ptr_lepton_pt[0] > LEP1PT && fabs(LepGood_pdgId[0]) == 11);
+       if (fabs(LEP_PDG_ID) == 11) eventMask += tightLepC.addToMask(nLepTight < 1.5 && nLepTight > 0.5 && ptr_lepton_pt[0] > LEP1PT && fabs(LepGood_pdgId[0]) == 11);
        else eventMask += tightLepC.addToMask(nLepTight > 0.5 && nLepTight < 1.5);
+       //eventMask += tightLepC.addToMask(nLepTight > 0.5 && nLepTight < 1.5);
        
      }
 
