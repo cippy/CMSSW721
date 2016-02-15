@@ -44,6 +44,7 @@ class AnalysisDarkMatter : public edimarcoTree_v3 {
 
   virtual void setBasicConf(const char* inputSuffix, const std::string inputUncertainty, const char* inputConfigFileName, const Int_t inputIsDataFlag, const Int_t inputUnweightedEeventFlag, const Int_t inputHasSFfriendFlag);
   virtual void setCalibEleFlag();
+  virtual void setDirNameSuffix(const std::string);
   virtual void setNumberParameterValue(const std::string, const Double_t);
   virtual void setVarFromConfigFile();
   virtual void setSelections();
@@ -69,6 +70,7 @@ class AnalysisDarkMatter : public edimarcoTree_v3 {
   std::string DIRECTORY_NAME;
 
   std::string outputFolder;
+  std::string dirName_suffix; //used from main to append suffix to directory name without having to change config file
 
   std::vector<Double_t> metBinEdgesVector;  // filled with values in file named configFileName
 
@@ -84,10 +86,10 @@ class AnalysisDarkMatter : public edimarcoTree_v3 {
   std::string uncertainty; //uncertainty on yields (from MC, Poisson, X%)
   char* configFileName;
   Int_t ISDATA_FLAG;
-  Int_t unweighted_event_flag;
+  Int_t unweighted_event_flag; //If not 0, a _weq1 suffix is added to directory name
   Int_t hasSFfriend_flag;  //tells if sfFriend are present
 
-  Int_t calibEle_flag; // tells if using calibrated electron properties or traditional ones
+  Int_t calibEle_flag; // tells if using calibrated electron properties or traditional ones. If not 0, a _CalibEle suffix is added to directory name
     
   //root histograms: these are common among all analysis (signal ad control region)
   TH1D *HYieldsMetBin = NULL;
