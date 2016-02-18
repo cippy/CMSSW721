@@ -69,6 +69,7 @@ public :
    Float_t         SF_trigmetnomu;
    Float_t         SF_LepTightLoose;
    Float_t         SF_LepTight;
+   Float_t         SF_NLO;
    Float_t         SF_NLO_QCD;
    Float_t         SF_NLO_QCD_renScaleUp;
    Float_t         SF_NLO_QCD_renScaleDown;
@@ -615,6 +616,7 @@ public :
    TBranch        *b_SF_trigmetnomu;   //!
    TBranch        *b_SF_LepTightLoose;   //!
    TBranch        *b_SF_LepTight;   //!
+   TBranch        *b_SF_NLO;   //!
    TBranch        *b_SF_NLO_QCD;   //!
    TBranch        *b_SF_NLO_QCD_renScaleUp;   //!
    TBranch        *b_SF_NLO_QCD_renScaleDown;   //!
@@ -1243,6 +1245,7 @@ void edimarcoTree_v4::Init(TTree *tree)
    fChain->SetBranchAddress("SF_trigmetnomu", &SF_trigmetnomu, &b_SF_trigmetnomu);
    fChain->SetBranchAddress("SF_LepTightLoose", &SF_LepTightLoose, &b_SF_LepTightLoose);
    fChain->SetBranchAddress("SF_LepTight", &SF_LepTight, &b_SF_LepTight);
+   fChain->SetBranchAddress("SF_NLO", &SF_NLO, &b_SF_NLO);
    fChain->SetBranchAddress("SF_NLO_QCD", &SF_NLO_QCD, &b_SF_NLO_QCD);
    fChain->SetBranchAddress("SF_NLO_QCD_renScaleUp", &SF_NLO_QCD_renScaleUp, &b_SF_NLO_QCD_renScaleUp);
    fChain->SetBranchAddress("SF_NLO_QCD_renScaleDown", &SF_NLO_QCD_renScaleDown, &b_SF_NLO_QCD_renScaleDown);
