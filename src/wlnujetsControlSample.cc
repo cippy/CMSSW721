@@ -343,6 +343,7 @@ void wlnujetsControlSample::loop(vector< Double_t > &yRow, vector< Double_t > &e
    //Float_t *ptr_metNoLepEta = NULL; 
    Float_t *ptr_metNoLepPhi = NULL;  
 
+   Int_t *ptr_nRecoLepton = NULL;
    Float_t *ptr_lepton_pt = NULL;
    Float_t *ptr_lepton_eta = NULL;
    Float_t *ptr_lepton_phi = NULL;
@@ -357,6 +358,8 @@ void wlnujetsControlSample::loop(vector< Double_t > &yRow, vector< Double_t > &e
    //Double_t metNoLepEta = 0.0;
    Double_t metNoLepPhi = 0.0;   // same story as above
 
+   Int_t nRecoLepton = 0;
+
    if (fabs(LEP_PDG_ID) == 13) {  // if we have Z -> mumu do stuff...
   
      ptr_nLepLoose = &nMu10V;                      // ask 2 muons
@@ -365,6 +368,7 @@ void wlnujetsControlSample::loop(vector< Double_t > &yRow, vector< Double_t > &e
      ptr_metNoLepPt = &metNoMu_pt;               // for muons  get this variable from the tree 
      //ptr_metNoLepEta = &metNoMu_eta;               // for muons  get this variable from the tree 
      ptr_metNoLepPhi = &metNoMu_phi;         // for muons  get this variable from the tree
+     ptr_nRecoLepton = &nLepGood;
      ptr_lepton_pt = LepGood_pt;
      ptr_lepton_eta = LepGood_eta;
      ptr_lepton_phi = LepGood_phi;
@@ -378,11 +382,13 @@ void wlnujetsControlSample::loop(vector< Double_t > &yRow, vector< Double_t > &e
      else if (fChain->GetBranch("nEle20T")) ptr_nLepTight = &nEle20T;  // the most recent version for this variable si nEle40T, but older versions use nEle20T
 
      if (calibEle_flag == 0) {
+       ptr_nRecoLepton = &nLepGood;
        ptr_lepton_pt = LepGood_pt;
        ptr_lepton_eta = LepGood_eta;
        ptr_lepton_phi = LepGood_phi;
        ptr_lepton_mass = LepGood_mass;
      } else {
+       ptr_nRecoLepton = &nCalibEle;
        ptr_lepton_pt = CalibEle_pt;
        ptr_lepton_eta = CalibEle_eta;
        ptr_lepton_phi = CalibEle_phi;
@@ -449,7 +455,7 @@ void wlnujetsControlSample::loop(vector< Double_t > &yRow, vector< Double_t > &e
      nLepLoose = *ptr_nLepLoose;          
      nLep10V = *ptr_nLep10V;
      nLepTight = *ptr_nLepTight;
-
+     nRecoLepton = *ptr_nRecoLepton;
 
      // genLepFound_flag is used when analysing WJetsToLNu in MC fo W->munu or W->enu. For other MC samples it's not used.
 
@@ -475,7 +481,7 @@ void wlnujetsControlSample::loop(vector< Double_t > &yRow, vector< Double_t > &e
      }
 
 
-     if ( fabs(LepGood_pdgId[0]) ==  LEP_PDG_ID) recoLepFound_flag = 1;
+     if ( (nRecoLepton >= 1) && fabs(LepGood_pdgId[0]) ==  LEP_PDG_ID) recoLepFound_flag = 1;
      else recoLepFound_flag = 0;
 
      if (recoLepFound_flag) l1reco.SetPtEtaPhiM(ptr_lepton_pt[0],ptr_lepton_eta[0],ptr_lepton_phi[0],ptr_lepton_mass[0]);

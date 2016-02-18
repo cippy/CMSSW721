@@ -289,7 +289,7 @@ void zlljetsControlSample::loop(vector< Double_t > &yRow, vector< Double_t > &eR
    fChain->SetBranchStatus("CalibEle_phi",1);
    fChain->SetBranchStatus("CalibEle_mass",1);
 
-    if (!ISDATA_FLAG) {
+   if (!ISDATA_FLAG) {
      fChain->SetBranchStatus("nGenPart",1);
      fChain->SetBranchStatus("GenPart_pdgId",1);
      fChain->SetBranchStatus("GenPart_motherId",1);
@@ -351,6 +351,7 @@ void zlljetsControlSample::loop(vector< Double_t > &yRow, vector< Double_t > &eR
    //Float_t *ptr_metNoLepEta = NULL; 
    Float_t *ptr_metNoLepPhi = NULL;  
 
+   Int_t *ptr_nRecoLepton = NULL;
    Float_t *ptr_lepton_pt = NULL;
    Float_t *ptr_lepton_eta = NULL;
    Float_t *ptr_lepton_phi = NULL;
@@ -365,6 +366,8 @@ void zlljetsControlSample::loop(vector< Double_t > &yRow, vector< Double_t > &eR
    //Double_t metNoLepEta = 0.0;
    Double_t metNoLepPhi = 0.0;   // same story as above
 
+   Int_t nRecoLepton = 0;
+
    if (fabs(LEP_PDG_ID) == 13) {  // if we have Z -> mumu do stuff...
   
      ptr_nLepLoose = &nMu10V;                      // ask 2 muons
@@ -373,6 +376,7 @@ void zlljetsControlSample::loop(vector< Double_t > &yRow, vector< Double_t > &eR
      ptr_metNoLepPt = &metNoMu_pt;               // for muons  get this variable from the tree 
      //ptr_metNoLepEta = &metNoMu_eta;               // for muons  get this variable from the tree 
      ptr_metNoLepPhi = &metNoMu_phi;         // for muons  get this variable from the tree
+     ptr_nRecoLepton = &nLepGood;
      ptr_lepton_pt = LepGood_pt;
      ptr_lepton_eta = LepGood_eta;
      ptr_lepton_phi = LepGood_phi;
@@ -388,11 +392,13 @@ void zlljetsControlSample::loop(vector< Double_t > &yRow, vector< Double_t > &eR
      //if (fChain->GetListOfBranches()->FindObject("nEle40T"))
 
      if (calibEle_flag == 0) {
+       ptr_nRecoLepton = &nLepGood;
        ptr_lepton_pt = LepGood_pt;
        ptr_lepton_eta = LepGood_eta;
        ptr_lepton_phi = LepGood_phi;
        ptr_lepton_mass = LepGood_mass;
      } else {
+       ptr_nRecoLepton = &nCalibEle;
        ptr_lepton_pt = CalibEle_pt;
        ptr_lepton_eta = CalibEle_eta;
        ptr_lepton_phi = CalibEle_phi;
@@ -467,6 +473,7 @@ void zlljetsControlSample::loop(vector< Double_t > &yRow, vector< Double_t > &eR
      nLepLoose = *ptr_nLepLoose;          
      nLep10V = *ptr_nLep10V;
      nLepTight = *ptr_nLepTight;
+     nRecoLepton = *ptr_nRecoLepton;
 
      //Double_t ZgenMass;        // not used for now
      Double_t ZtoLLGenPt = 0;    // filled below (only if running on MC DYJetsToLL)
@@ -502,7 +509,7 @@ void zlljetsControlSample::loop(vector< Double_t > &yRow, vector< Double_t > &eR
      // the check for 2 OS/SF leptons in LepGood list is just useful to speed up things, but would not be necessary if other variables or computations that require this condition are only used at the end of selection (which already includes 2 OS/SF condition).
      // thus, we evaluate this right now and use this piece of information for later use
 
-     if ( (fabs(LepGood_pdgId[0]) ==  LEP_PDG_ID) && (LepGood_pdgId[0] == (-1) * LepGood_pdgId[1]) ) recoLepFound_flag = 1;
+     if ( (nRecoLepton >= 2) && (fabs(LepGood_pdgId[0]) ==  LEP_PDG_ID) && (LepGood_pdgId[0] == (-1) * LepGood_pdgId[1]) ) recoLepFound_flag = 1;
      else recoLepFound_flag = 0;
 
      if (recoLepFound_flag) {
