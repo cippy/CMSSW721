@@ -25,6 +25,7 @@ TH1D * myOverflowInLastBin(const TH1D *);
 void myOverflowInLastBin2(TH1D *, const TH1D *); 
 void myAddOverflowInLastBin(TH1D *);
 void myAddUnderflowInFirstBin(TH1D *);
+void myBuildSystematicsHistogram(TH1D *, const TH1D*, const TH1D*, const TH1D*);
 
 Double_t myRejectionFactor(Int_t, Int_t);
 

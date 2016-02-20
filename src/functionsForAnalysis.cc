@@ -324,6 +324,27 @@ void myAddUnderflowInFirstBin(TH1D *h) {
 
 }
 
+
+void myBuildSystematicsHistogram(TH1D *hsyst, const TH1D* hnorm, const TH1D* hup, const TH1D* hdown){
+
+  // to compute systematic uncertainties on yields (tipically for met spectrum). Use a nominal histograms and other two obtained by varying some kind of scale up and down. Systematic is taken as the maximum difference between nominal histogram and one of the othe two (check for maximum bin by bin)
+
+  Double_t maxdiff = 0.0;
+  Double_t updiff = 0.0;
+  Double_t downdiff = 0.0;
+
+  for (Int_t i = 1; i <= hnorm->GetNbinsX(); i++) {
+
+    updiff = fabs(hnorm->GetBinContent(i) - hup->GetBinContent(i));
+    downdiff = fabs(hnorm->GetBinContent(i) - hdown->GetBinContent(i)); 
+    maxdiff = (updiff > downdiff) ? updiff : downdiff; 
+    hsyst->SetBinContent(i,maxdiff);
+       
+  }
+
+}
+
+
 //calculation of rejection factors
 Double_t myRejectionFactor(Int_t selected, Int_t total) {
  
