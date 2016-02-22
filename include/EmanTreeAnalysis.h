@@ -49,6 +49,7 @@ namespace myAnalyzerTEman {
     void setHistograms();
     void setNumberParameterValue(const std::string, const Double_t);
     void setVarFromConfigFile();
+    Double_t computeEventWeight();
     void loop(std::vector< Double_t > &, std::vector< Double_t > &, std::vector< Double_t > &);
 
   };
@@ -83,6 +84,7 @@ namespace myAnalyzerTEman {
    Double_t LEP1PT;
    Double_t LEP1ETA;
    Double_t LEP_ISO_04;
+   Int_t GENLEP_TAG; // decide whether to use genLep and recoGenMatch selection
    Double_t GENLEP1PT;
    Double_t GENLEP1ETA;
    Double_t HLT_LEP1PT;
@@ -115,6 +117,7 @@ namespace myAnalyzerTEman {
     void setNumberParameterValue(const std::string, const Double_t);  // set some numeric variables if they are in config file
     void setControlSampleSpecificParameter();
     void setVarFromConfigFile();
+    Double_t computeEventWeight();
     void loop(std::vector< Double_t > &, std::vector< Double_t > &, std::vector< Double_t > &);
 
     selection oppChargeLeptonsC;
@@ -162,9 +165,9 @@ namespace myAnalyzerTEman {
     void setNumberParameterValue(const std::string, const Double_t);  // set some numeric variables if they are in config file
     void setControlSampleSpecificParameter();
     void setVarFromConfigFile();
+    Double_t computeEventWeight();
     void loop(std::vector< Double_t > &, std::vector< Double_t > &, std::vector< Double_t > &);
 
-    
     selection oneLepLooseC;   //if W->munu, select loose muon (if W->enu select electron)
     selection tightLepC;
     selection metC; //real met 
