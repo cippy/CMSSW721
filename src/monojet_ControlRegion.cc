@@ -114,7 +114,8 @@ void monojet_ControlRegion::setNumberParameterValue(const std::string parameterN
 
   if (!ISDATA_FLAG) {
 
-    if (parameterName == "GENLEP1PT") GENLEP1PT = value;
+    if (parameterName == "GENLEP_TAG") GENLEP_TAG = value;
+    else if (parameterName == "GENLEP1PT") GENLEP1PT = value;
     else if (parameterName == "GENLEP1ETA") GENLEP1ETA = value;
 
   }
@@ -134,7 +135,7 @@ void monojet_ControlRegion::setControlSampleSpecificParameter() {
 void monojet_ControlRegion::setVarFromConfigFile() {
 
   AnalysisDarkMatter::setVarFromConfigFile();
-  setControlSampleSpecificParameter();
+  //monojet_ControlRegion::setControlSampleSpecificParameter();
 
 }
 

@@ -64,12 +64,14 @@ void wlnujetsControlSample::setSelections() {
 
   monojet_ControlRegion::setSelections();
 
-  if (!ISDATA_FLAG && using_wlnujets_MCsample_flag) {
-    genLepC.set("genLep",Form("%s generated",FLAVOUR));     
-    recoGenLepMatchC.set("reco-gen match","reco-gen match (DR = 0.1)","only for wlnujets: looks for matching of reco and gen particles");      
-  }
+  if (!ISDATA_FLAG && (GENLEP_TAG != 0)) {
+    if (using_wlnujets_MCsample_flag) {
+      genLepC.set("genLep",Form("%s generated",FLAVOUR));     
+      recoGenLepMatchC.set("reco-gen match","reco-gen match (DR = 0.1)","only for wlnujets: looks for matching of reco and gen particles");      
+    }
 
-  if (!ISDATA_FLAG && using_wtaunujets_MCsample_flag) genTauC.set("genTau","tau generated"); 
+    if (using_wtaunujets_MCsample_flag) genTauC.set("genTau","tau generated"); 
+  }
 
   if (fabs(LEP_PDG_ID) == 13) {  // if we have Z -> mumu do stuff...
 
@@ -95,7 +97,7 @@ void wlnujetsControlSample::setMask() {
 
   analysisMask.setName(Form("%s control sample (%s gen if WJetsToLNu MC) with selection flow as Emanuele's",CONTROL_SAMPLE,FLAVOUR));
 
-   if (!ISDATA_FLAG) {
+   if (!ISDATA_FLAG && (GENLEP_TAG != 0)) {
      if (using_wlnujets_MCsample_flag) {
        analysisMask.append(genLepC.get2ToId());
        analysisMask.append(recoGenLepMatchC.get2ToId());
@@ -141,6 +143,25 @@ void wlnujetsControlSample::setHistograms() {
   monojet_ControlRegion::setHistograms();
     
   HtransverseMass = new TH1D("HtransverseMass","",40,0.0,200.0);
+
+  if (suffix == "WJetsToLNu") {
+
+    HYieldsMetBin_qcdRenScaleUp = new TH1D("HYieldsMetBin_qcdRenScaleUp","yields in bins of met; #slash{E}_{T};# of events",nMetBins,metBinEdgesVector.data());
+    HYieldsMetBin_qcdRenScaleDown = new TH1D("HYieldsMetBin_qcdRenScaleDown","yields in bins of met; #slash{E}_{T};# of events",nMetBins,metBinEdgesVector.data());
+    HYieldsMetBin_qcdFacScaleUp = new TH1D("HYieldsMetBin_qcdFacScaleUp","yields in bins of met; #slash{E}_{T};# of events",nMetBins,metBinEdgesVector.data());
+    HYieldsMetBin_qcdFacScaleDown = new TH1D("HYieldsMetBin_qcdFacScaleDown","yields in bins of met; #slash{E}_{T};# of events",nMetBins,metBinEdgesVector.data());
+    HYieldsMetBin_qcdPdfUp = new TH1D("HYieldsMetBin_qcdPdfUp","yields in bins of met; #slash{E}_{T};# of events",nMetBins,metBinEdgesVector.data());
+    HYieldsMetBin_qcdPdfDown = new TH1D("HYieldsMetBin_qcdPdfDown","yields in bins of met; #slash{E}_{T};# of events",nMetBins,metBinEdgesVector.data());
+    HYieldsMetBin_ewkUp = new TH1D("HYieldsMetBin_ewkUp","yields in bins of met; #slash{E}_{T};# of events",nMetBins,metBinEdgesVector.data());
+    HYieldsMetBin_ewkDown = new TH1D("HYieldsMetBin_ewkDown","yields in bins of met; #slash{E}_{T};# of events",nMetBins,metBinEdgesVector.data());
+    
+    HSyst_qcdRenScale = new TH1D("HSyst_qcdRenScale","systematic uncertainty for QCD renormalization scale",nMetBins,metBinEdgesVector.data());
+    HSyst_qcdFacScale = new TH1D("HSyst_qcdFacScale","systematic uncertainty for QCD factorization scale",nMetBins,metBinEdgesVector.data());
+    HSyst_qcdPdf = new TH1D("HSyst_qcdPdf","systematic uncertainty for QCD due to PDF uncertainty",nMetBins,metBinEdgesVector.data());
+    HSyst_ewk = new TH1D("HSyst_ewk","systematic uncertainty for EWK",nMetBins,metBinEdgesVector.data());
+    HSyst_total = new TH1D("HSyst_total","total systematic uncertainty (sum in quadrature of all single systematics)",nMetBins,metBinEdgesVector.data());
+
+  }
 
 }
 
@@ -199,6 +220,32 @@ void wlnujetsControlSample::setVarFromConfigFile() {
 
   monojet_ControlRegion::setVarFromConfigFile();
   setControlSampleSpecificParameter();
+
+}
+
+//===============================================
+
+Double_t wlnujetsControlSample::computeEventWeight() {
+
+  if (ISDATA_FLAG || unweighted_event_flag) return 1.0;
+  else {
+
+    Double_t tmp = LUMI * weight * vtxWeight * SF_BTag; //SF_BTag is in evVarFriend, not sfFriend
+
+    if (hasSFfriend_flag != 0) { 
+
+      // sf_nlo_weight = (*ptr_sf_nlo_QCD) * (*ptr_sf_nlo_EWK);
+      // if (fabs(LEP_PDG_ID) == 13) tmp *= SF_trigmetnomu;
+      // else if (fabs(LEP_PDG_ID) == 11) tmp *=  SF_trig1lep;
+      // return tmp * sf_nlo_weight * SF_LepTight;
+      if (fabs(LEP_PDG_ID) == 13) tmp *= SF_trigmetnomu;
+      else if (fabs(LEP_PDG_ID) == 11) tmp *=  SF_trig1lep;
+      return tmp * SF_NLO_QCD * SF_NLO_EWK * SF_LepTight;
+
+
+    } else return tmp; 
+
+  }
 
 }
 
@@ -301,13 +348,24 @@ void wlnujetsControlSample::loop(vector< Double_t > &yRow, vector< Double_t > &e
      fChain->SetBranchStatus("SF_trigmetnomu",1);
      fChain->SetBranchStatus("SF_LepTightLoose",1);
      fChain->SetBranchStatus("SF_LepTight",1);
-     fChain->SetBranchStatus("SF_NLO",1); 
+     fChain->SetBranchStatus("SF_NLO",1);
+     fChain->SetBranchStatus("SF_NLO_QCD",1);
+     fChain->SetBranchStatus("SF_NLO_QCD_renScaleUp",1);
+     fChain->SetBranchStatus("SF_NLO_QCD_renScaleDown",1);
+     fChain->SetBranchStatus("SF_NLO_QCD_facScaleUp",1);
+     fChain->SetBranchStatus("SF_NLO_QCD_facScaleDown",1);
+     fChain->SetBranchStatus("SF_NLO_QCD_pdfUp",1);
+     fChain->SetBranchStatus("SF_NLO_QCD_pdfDown",1);
+     fChain->SetBranchStatus("SF_NLO_EWK",1);
+     fChain->SetBranchStatus("SF_NLO_EWK_up",1);
+     fChain->SetBranchStatus("SF_NLO_EWK_down",1);
 
    }
 
    setVarFromConfigFile();
    setSelections();
    setMask();
+   //set_SF_NLO_pointers(sf_nlo, ptr_sf_nlo_QCD, ptr_sf_nlo_EWK);
 
    TVector2 metNoLepTV, ele, lep, met; //lepton and met are used to compute transverse mass
 
@@ -413,11 +471,9 @@ void wlnujetsControlSample::loop(vector< Double_t > &yRow, vector< Double_t > &e
 
    setHistograms();
 
-   Double_t nTotalWeightedEvents = 0.0;     
-   // deciding  what is the event weight
-   Double_t newwgt; 
-
-   if (ISDATA_FLAG || unweighted_event_flag) newwgt = 1.0;
+   // Double_t nTotalWeightedEvents = 0.0;     
+   // // deciding  what is the event weight
+   // Double_t newwgt; 
 
    Long64_t nentries = fChain->GetEntriesFast();
    cout<<"wlnujetsControlSample::loop()"<<endl;
@@ -436,20 +492,22 @@ void wlnujetsControlSample::loop(vector< Double_t > &yRow, vector< Double_t > &e
 
      UInt_t eventMask = 0; 
 
-     if(!ISDATA_FLAG && !unweighted_event_flag) {
+     // if (ISDATA_FLAG || unweighted_event_flag) newwgt = 1.0;
+     // else {
 
-       //newwgt = LUMI * weight * vtxWeight/*/ events_ntot*/;  // starting from 17 November, "events_ntot" substitutes SUMWEIGHT and is already present in the trees. Same for weight, which is now defined as "1000 * xsec * genWeight" (1000*xsec is the cross section in fb, since xsec is in pb.)
-       // I found out that division by events_ntot was already included in weight definition
+     //   //newwgt = LUMI * weight * vtxWeight/*/ events_ntot*/;  // starting from 17 November, "events_ntot" substitutes SUMWEIGHT and is already present in the trees. Same for weight, which is now defined as "1000 * xsec * genWeight" (1000*xsec is the cross section in fb, since xsec is in pb.)
+     //   // I found out that division by events_ntot was already included in weight definition
 
-       if (hasSFfriend_flag != 0) {
+     //   if (hasSFfriend_flag != 0) {
 
-	 if (fabs(LEP_PDG_ID) == 13) newwgt = LUMI * weight * vtxWeight * SF_trigmetnomu * SF_LepTight * SF_BTag * SF_NLO;
-	 else if (fabs(LEP_PDG_ID) == 11) newwgt = LUMI * weight * vtxWeight * SF_trig1lep * SF_LepTight * SF_BTag * SF_NLO;
+     // 	 if (fabs(LEP_PDG_ID) == 13) newwgt = LUMI * weight * vtxWeight * SF_trigmetnomu * SF_LepTight * SF_BTag * SF_NLO;
+     // 	 else if (fabs(LEP_PDG_ID) == 11) newwgt = LUMI * weight * vtxWeight * SF_trig1lep * SF_LepTight * SF_BTag * SF_NLO;
 
-       } else newwgt = LUMI * weight * vtxWeight * SF_BTag; //SF_BTag is in evVarFriend, not sfFriend
+     //   } else newwgt = LUMI * weight * vtxWeight * SF_BTag; //SF_BTag is in evVarFriend, not sfFriend
 
-     }
+     // }
 
+     newwgt = computeEventWeight();
      nTotalWeightedEvents += newwgt;  // counting events with weights
 
      nLepLoose = *ptr_nLepLoose;          
@@ -459,7 +517,7 @@ void wlnujetsControlSample::loop(vector< Double_t > &yRow, vector< Double_t > &e
 
      // genLepFound_flag is used when analysing WJetsToLNu in MC fo W->munu or W->enu. For other MC samples it's not used.
 
-     if (!ISDATA_FLAG) {
+     if (!ISDATA_FLAG && (GENLEP_TAG != 0)) {
 
        if (using_wlnujets_MCsample_flag) {
 
@@ -540,18 +598,18 @@ void wlnujetsControlSample::loop(vector< Double_t > &yRow, vector< Double_t > &e
 
      // the following make sense only if recoLepFound_flag == 1 (i.e. flag is true)
 
-     if (recoLepFound_flag == 1) {          
-       eventMask += oneLepLooseC.addToMask(nLepLoose > 0.5 && nLepLoose < 1.5);
-       if (fabs(LEP_PDG_ID) == 11) eventMask += tightLepC.addToMask(nLepTight < 1.5 && nLepTight > 0.5 && ptr_lepton_pt[0] > LEP1PT && fabs(LepGood_pdgId[0]) == 11);
-       else eventMask += tightLepC.addToMask(nLepTight > 0.5 && nLepTight < 1.5);
-       //eventMask += tightLepC.addToMask(nLepTight > 0.5 && nLepTight < 1.5);
+     //if (recoLepFound_flag == 1) {          
+
+     eventMask += oneLepLooseC.addToMask(nLepLoose > 0.5 && nLepLoose < 1.5);
+     if (fabs(LEP_PDG_ID) == 11) eventMask += tightLepC.addToMask(nLepTight < 1.5 && nLepTight > 0.5 && ptr_lepton_pt[0] > LEP1PT && fabs(LepGood_pdgId[0]) == 11);
+     else eventMask += tightLepC.addToMask(nLepTight > 0.5 && nLepTight < 1.5);
        
-     }
+     //}
 
      // end of eventMask building
 
      // test matching of reco and gen lep for DY MC 
-     if (!ISDATA_FLAG && using_wlnujets_MCsample_flag) {
+     if (using_wlnujets_MCsample_flag && (GENLEP_TAG != 0)) {
     
        // now we require a DeltaR cut between gen-level and reco-level leptons (mu or e) from W events to assess that lreco comes from lgen
 
@@ -590,10 +648,25 @@ void wlnujetsControlSample::loop(vector< Double_t > &yRow, vector< Double_t > &e
 	 Hjet1etaDistribution->Fill(JetClean_eta[0],newwgt);
 	 Hjet1ptDistribution->Fill(JetClean_pt[0],newwgt);
 	 HjetMetDphiMinDistribution->Fill(dphijm,newwgt);
+	 Hlep1ptDistribution->Fill(ptr_lepton_pt[0],newwgt);
+	 Hlep1etaDistribution->Fill(ptr_lepton_eta[0],newwgt);
 	 if (nJetClean30 >= 2) {
 	   Hj1j2dphiDistribution->Fill(dphijj,newwgt);
 	   Hjet2etaDistribution->Fill(JetClean_eta[1],newwgt);
 	   Hjet2ptDistribution->Fill(JetClean_pt[1],newwgt);
+	 }
+
+	 if (using_wlnujets_MCsample_flag) {
+
+	   HYieldsMetBin_qcdRenScaleUp->Fill(metNoLepPt,(newwgt * SF_NLO_QCD_renScaleUp/ SF_NLO_QCD));
+	   HYieldsMetBin_qcdRenScaleDown->Fill(metNoLepPt,(newwgt * SF_NLO_QCD_renScaleDown/ SF_NLO_QCD));
+	   HYieldsMetBin_qcdFacScaleUp->Fill(metNoLepPt,(newwgt * SF_NLO_QCD_facScaleUp/ SF_NLO_QCD));
+	   HYieldsMetBin_qcdFacScaleDown->Fill(metNoLepPt,(newwgt * SF_NLO_QCD_facScaleDown/ SF_NLO_QCD));
+	   HYieldsMetBin_qcdPdfUp->Fill(metNoLepPt,(newwgt * SF_NLO_QCD_pdfUp/ SF_NLO_QCD));
+	   HYieldsMetBin_qcdPdfDown->Fill(metNoLepPt,(newwgt * SF_NLO_QCD_pdfDown/ SF_NLO_QCD));
+	   HYieldsMetBin_ewkUp->Fill(metNoLepPt,(newwgt * SF_NLO_EWK_up/ SF_NLO_EWK));
+	   HYieldsMetBin_ewkDown->Fill(metNoLepPt,(newwgt * SF_NLO_EWK_down/ SF_NLO_EWK));
+
 	 }
 
      }
@@ -657,7 +730,7 @@ void wlnujetsControlSample::loop(vector< Double_t > &yRow, vector< Double_t > &e
    // cout << "=============================================================" << endl;
 
    // entry point
-   if (using_wlnujets_MCsample_flag == 1 || using_wtaunujets_MCsample_flag == 1) {
+   if ((using_wlnujets_MCsample_flag == 1 || using_wtaunujets_MCsample_flag == 1) && (GENLEP_TAG != 0)) {
      yRow.push_back(analysisMask.nEvents[index_TotalEntryAndPreselection]); // step before the first step in the selectionManager (the one before metFiltersC for now)
      eRow.push_back(1.0000);
      uncRow.push_back(myGetUncertainty(&analysisMask, index_TotalEntryAndPreselection, uncertainty));
@@ -686,6 +759,9 @@ void wlnujetsControlSample::loop(vector< Double_t > &yRow, vector< Double_t > &e
    myAddOverflowInLastBin(HmetNoLepDistribution);
    myAddOverflowInLastBin(Hjet1ptDistribution);
    myAddOverflowInLastBin(Hjet2ptDistribution);
+   myAddOverflowInLastBin(Hlep1ptDistribution);
+
+   if (using_wlnujets_MCsample_flag) createSystematicsHistogram();
 
    rootFile->Write();
 
