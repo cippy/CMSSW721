@@ -111,6 +111,27 @@ void monojet_SignalRegion::setHistograms() {
 
   AnalysisDarkMatter::setHistograms();
 
+  // following histograms are really needed only when using Zvv or Wlv samples, so they are not instantiated in AnalysisDarkMatter::setHistograms();
+
+  if (suffix == "ZJetsToNuNu" || suffix == "WJetsToLNu") {
+
+    HYieldsMetBin_qcdRenScaleUp = new TH1D("HYieldsMetBin_qcdRenScaleUp","yields in bins of met; #slash{E}_{T};# of events",nMetBins,metBinEdgesVector.data());
+    HYieldsMetBin_qcdRenScaleDown = new TH1D("HYieldsMetBin_qcdRenScaleDown","yields in bins of met; #slash{E}_{T};# of events",nMetBins,metBinEdgesVector.data());
+    HYieldsMetBin_qcdFacScaleUp = new TH1D("HYieldsMetBin_qcdFacScaleUp","yields in bins of met; #slash{E}_{T};# of events",nMetBins,metBinEdgesVector.data());
+    HYieldsMetBin_qcdFacScaleDown = new TH1D("HYieldsMetBin_qcdFacScaleDown","yields in bins of met; #slash{E}_{T};# of events",nMetBins,metBinEdgesVector.data());
+    HYieldsMetBin_qcdPdfUp = new TH1D("HYieldsMetBin_qcdPdfUp","yields in bins of met; #slash{E}_{T};# of events",nMetBins,metBinEdgesVector.data());
+    HYieldsMetBin_qcdPdfDown = new TH1D("HYieldsMetBin_qcdPdfDown","yields in bins of met; #slash{E}_{T};# of events",nMetBins,metBinEdgesVector.data());
+    HYieldsMetBin_ewkUp = new TH1D("HYieldsMetBin_ewkUp","yields in bins of met; #slash{E}_{T};# of events",nMetBins,metBinEdgesVector.data());
+    HYieldsMetBin_ewkDown = new TH1D("HYieldsMetBin_ewkDown","yields in bins of met; #slash{E}_{T};# of events",nMetBins,metBinEdgesVector.data());
+    
+    HSyst_qcdRenScale = new TH1D("HSyst_qcdRenScale","systematic uncertainty for QCD renormalization scale",nMetBins,metBinEdgesVector.data());
+    HSyst_qcdFacScale = new TH1D("HSyst_qcdFacScale","systematic uncertainty for QCD factorization scale",nMetBins,metBinEdgesVector.data());
+    HSyst_qcdPdf = new TH1D("HSyst_qcdPdf","systematic uncertainty for QCD due to PDF uncertainty",nMetBins,metBinEdgesVector.data());
+    HSyst_ewk = new TH1D("HSyst_ewk","systematic uncertainty for EWK",nMetBins,metBinEdgesVector.data());
+    HSyst_total = new TH1D("HSyst_total","total systematic uncertainty (sum in quadrature of all single systematics)",nMetBins,metBinEdgesVector.data());
+
+  }
+
   //histograms specific to monojet selection (but not to control regions) must be set here as in AnalysisDarkMatter::setHistograms()
 
 }
@@ -130,6 +151,19 @@ void monojet_SignalRegion::setNumberParameterValue(const std::string parameterNa
 void monojet_SignalRegion::setVarFromConfigFile() {
 
   AnalysisDarkMatter::setVarFromConfigFile();
+
+}
+
+//===============================================
+
+Double_t monojet_SignalRegion::computeEventWeight() {
+
+  if (ISDATA_FLAG || unweighted_event_flag) return 1.0;
+  else {
+    // sf_nlo_weight = (*ptr_sf_nlo_QCD) * (*ptr_sf_nlo_EWK);
+    // return LUMI * weight * vtxWeight * SF_BTag * sf_nlo_weight; //SF_BTag is in evVarFriend, not sfFriend
+    return LUMI * weight * vtxWeight * SF_BTag * SF_NLO_QCD * SF_NLO_EWK; //SF_BTag is in evVarFriend, not sfFriend
+  }
 
 }
 
@@ -231,7 +265,17 @@ void monojet_SignalRegion::loop(vector< Double_t > &yRow, vector< Double_t > &eR
      fChain->SetBranchStatus("SF_trigmetnomu",1);
      fChain->SetBranchStatus("SF_LepTightLoose",1);
      fChain->SetBranchStatus("SF_LepTight",1);
-     fChain->SetBranchStatus("SF_NLO",1); 
+     fChain->SetBranchStatus("SF_NLO",1);
+     fChain->SetBranchStatus("SF_NLO_QCD",1);
+     fChain->SetBranchStatus("SF_NLO_QCD_renScaleUp",1);
+     fChain->SetBranchStatus("SF_NLO_QCD_renScaleDown",1);
+     fChain->SetBranchStatus("SF_NLO_QCD_facScaleUp",1);
+     fChain->SetBranchStatus("SF_NLO_QCD_facScaleDown",1);
+     fChain->SetBranchStatus("SF_NLO_QCD_pdfUp",1);
+     fChain->SetBranchStatus("SF_NLO_QCD_pdfDown",1);
+     fChain->SetBranchStatus("SF_NLO_EWK",1);
+     fChain->SetBranchStatus("SF_NLO_EWK_up",1);
+     fChain->SetBranchStatus("SF_NLO_EWK_down",1);
 
    }
 
@@ -242,7 +286,8 @@ void monojet_SignalRegion::loop(vector< Double_t > &yRow, vector< Double_t > &eR
    //cout << "CHECK3 " << endl;
    setMask();
    //cout << "CHECK4 " << endl;
-   
+   //set_SF_NLO_pointers(sf_nlo, ptr_sf_nlo_QCD, ptr_sf_nlo_EWK);
+
    cout << "Opening file " <<ROOT_FNAME<< " in folder " << outputFolder << endl;
 
    TFile *rootFile = new TFile((outputFolder + ROOT_FNAME).c_str(),"RECREATE");
@@ -258,11 +303,9 @@ void monojet_SignalRegion::loop(vector< Double_t > &yRow, vector< Double_t > &eR
 
    setHistograms();
 
-   Double_t nTotalWeightedEvents = 0.0;     
-   // deciding  what is the event weight
-   Double_t newwgt;
-
-   if (ISDATA_FLAG || unweighted_event_flag) newwgt = 1.0;
+   // Double_t nTotalWeightedEvents = 0.0;     
+   // // deciding  what is the event weight
+   // Double_t newwgt;
 
    Long64_t nentries = fChain->GetEntriesFast();
    cout<<"monojet_SignalRegion::loop()"<<endl;
@@ -283,12 +326,14 @@ void monojet_SignalRegion::loop(vector< Double_t > &yRow, vector< Double_t > &eR
        cout << "entry: " << jentry << endl;
      }
 
-     if(!ISDATA_FLAG && !unweighted_event_flag) {
+     // if (ISDATA_FLAG || unweighted_event_flag) newwgt = 1.0;
+     // else {
 
-       newwgt = LUMI * vtxWeight * weight * SF_trigmetnomu * SF_BTag;/* / events_ntot*/;  // starting from 17 November, "events_ntot" substitutes SUMWEIGHT and is already present in the trees. Same for weight, which is now defined as "1000 * xsec * genWeight" (1000*xsec is the cross section in fb, since xsec is in pb.)
+     //   newwgt = LUMI * vtxWeight * weight * SF_trigmetnomu * SF_BTag;/* / events_ntot*/;  // starting from 17 November, "events_ntot" substitutes SUMWEIGHT and is already present in the trees. Same for weight, which is now defined as "1000 * xsec * genWeight" (1000*xsec is the cross section in fb, since xsec is in pb.)
 
-     }
+     // }
 
+     newwgt = computeEventWeight();
      nTotalWeightedEvents += newwgt;  // counting events with weights
 
      // beginning of eventMask building
@@ -326,6 +371,20 @@ void monojet_SignalRegion::loop(vector< Double_t > &yRow, vector< Double_t > &eR
 	   Hjet2etaDistribution->Fill(JetClean_eta[1],newwgt);
 	   Hjet2ptDistribution->Fill(JetClean_pt[1],newwgt);
 	 }
+
+	 if (suffix == "ZJetsToNuNu" || suffix == "WJetsToLNu") {
+
+	   HYieldsMetBin_qcdRenScaleUp->Fill(metNoMu_pt,(newwgt * SF_NLO_QCD_renScaleUp/ SF_NLO_QCD));
+	   HYieldsMetBin_qcdRenScaleDown->Fill(metNoMu_pt,(newwgt * SF_NLO_QCD_renScaleDown/ SF_NLO_QCD));
+	   HYieldsMetBin_qcdFacScaleUp->Fill(metNoMu_pt,(newwgt * SF_NLO_QCD_facScaleUp/ SF_NLO_QCD));
+	   HYieldsMetBin_qcdFacScaleDown->Fill(metNoMu_pt,(newwgt * SF_NLO_QCD_facScaleDown/ SF_NLO_QCD));
+	   HYieldsMetBin_qcdPdfUp->Fill(metNoMu_pt,(newwgt * SF_NLO_QCD_pdfUp/ SF_NLO_QCD));
+	   HYieldsMetBin_qcdPdfDown->Fill(metNoMu_pt,(newwgt * SF_NLO_QCD_pdfDown/ SF_NLO_QCD));
+	   HYieldsMetBin_ewkUp->Fill(metNoMu_pt,(newwgt * SF_NLO_EWK_up/ SF_NLO_EWK));
+	   HYieldsMetBin_ewkDown->Fill(metNoMu_pt,(newwgt * SF_NLO_EWK_down/ SF_NLO_EWK));
+
+	 }
+
 
      }
        
@@ -397,6 +456,48 @@ void monojet_SignalRegion::loop(vector< Double_t > &yRow, vector< Double_t > &eR
    myAddOverflowInLastBin(HmetNoLepDistribution);
    myAddOverflowInLastBin(Hjet1ptDistribution);
    myAddOverflowInLastBin(Hjet2ptDistribution);
+
+   if (suffix == "ZJetsToNuNu" || suffix == "WJetsToLNu") {
+
+     createSystematicsHistogram();
+     // following is in function above
+     /*
+     myAddOverflowInLastBin(HYieldsMetBin_qcdRenScaleUp);
+     myAddOverflowInLastBin(HYieldsMetBin_qcdRenScaleDown);
+     myAddOverflowInLastBin(HYieldsMetBin_qcdFacScaleUp);
+     myAddOverflowInLastBin(HYieldsMetBin_qcdFacScaleDown);
+     myAddOverflowInLastBin(HYieldsMetBin_qcdPdfUp);
+     myAddOverflowInLastBin(HYieldsMetBin_qcdPdfDown);
+     myAddOverflowInLastBin(HYieldsMetBin_ewkUp);
+     myAddOverflowInLastBin(HYieldsMetBin_ewkDown);
+
+     // computing systematic uncertainties and saving them as histograms.
+     myBuildSystematicsHistogram(HSyst_qcdRenScale, HYieldsMetBin, HYieldsMetBin_qcdRenScaleUp, HYieldsMetBin_qcdRenScaleDown);
+     myBuildSystematicsHistogram(HSyst_qcdFacScale, HYieldsMetBin, HYieldsMetBin_qcdFacScaleUp, HYieldsMetBin_qcdFacScaleDown);
+     myBuildSystematicsHistogram(HSyst_qcdPdf, HYieldsMetBin, HYieldsMetBin_qcdPdfUp, HYieldsMetBin_qcdPdfDown);
+     myBuildSystematicsHistogram(HSyst_ewk, HYieldsMetBin, HYieldsMetBin_ewkUp, HYieldsMetBin_ewkDown);
+
+     // define an empty histogram to sum uncertainties in a clean way
+     TH1D *Htmp = new TH1D("Htmp","",nMetBins,metBinEdgesVector.data());
+     vector<TH1D*> hptr;
+     hptr.push_back(HSyst_qcdRenScale);
+     hptr.push_back(HSyst_qcdFacScale);
+     hptr.push_back(HSyst_qcdPdf);
+     hptr.push_back(HSyst_ewk);
+     
+     for (Int_t i = 0; i < hptr.size(); i++) {
+       Htmp->Multiply(hptr[i],hptr[i]); // square of bin content for each single systematic histogram
+       HSyst_total->Add(Htmp);             // adding the squares
+     }
+
+     for (Int_t i = 0; i <= (HSyst_total->GetNbinsX() + 1); i++) {  // computing square root of each bin's content (from underflow to overflow bin, but they should be empty)
+       HSyst_total->SetBinContent(i, sqrt(HSyst_total->GetBinContent(i)));
+     }
+
+     delete Htmp;
+     */   
+
+   }
 
    rootFile->Write();
 

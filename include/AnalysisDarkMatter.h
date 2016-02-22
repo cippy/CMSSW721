@@ -13,7 +13,7 @@
 #include <string>
 
 #include "edimarcoTree_v4.h"
-//#include "functionsForAalysis.h"
+#include "functionsForAnalysis.h"
 #include "myClasses.h"
 
 class AnalysisDarkMatter : public edimarcoTree_v4 {
@@ -48,6 +48,11 @@ class AnalysisDarkMatter : public edimarcoTree_v4 {
   virtual void setNumberParameterValue(const std::string, const Double_t);
   virtual void setVarFromConfigFile();
   virtual void setSelections();
+  virtual void setHistograms();
+  virtual void createSystematicsHistogram(); //build histograms with systematic uncertainties
+  /* virtual void set_SF_NLO_name(const std::string); */
+  /* virtual void set_SF_NLO_pointers(const std::string sf_option, Float_t *ptrQCD, Float_t *ptrEWK); */
+  //virtual Double_t computeEventWeight() const;   // return weight for the event
 
   char ROOT_FNAME[100];
   char TXT_FNAME[100];
@@ -77,7 +82,7 @@ class AnalysisDarkMatter : public edimarcoTree_v4 {
   //obsolete, substituted by selectionManager class
   std::vector<Int_t> selStep;  //set when setting the mask analysisMask 
   //array to store index of step to form selection flow (might want to consider two or more steps together and not separated)
-   // in case a step wold be present for some sample but not for others (e.g. the RecoGen match done only in Zll MC), the step is referred to as -1 and the corresponding values are set to -1, so that, when printing the table, yields will be filled with " / / " which means " uneffected" (because that step was not done)
+   // in case a step would be present for some sample but not for others (e.g. the RecoGen match done only in Zll MC), the step is referred to as -1 and the corresponding values are set to -1, so that, when printing the table, yields will be filled with " / / " which means " uneffected" (because that step was not done)
 
   Int_t nMetBins;
 
@@ -90,7 +95,16 @@ class AnalysisDarkMatter : public edimarcoTree_v4 {
   Int_t hasSFfriend_flag;  //tells if sfFriend are present
 
   Int_t calibEle_flag; // tells if using calibrated electron properties or traditional ones. If not 0, a _CalibEle suffix is added to directory name
-    
+  //std::string sf_nlo; // save option passed to main to decide which scale factor to use for NLO cross section
+
+  /* Double_t sf_nlo_weight; */
+  /* Float_t *ptr_sf_nlo_QCD = NULL; */
+  /* Float_t *ptr_sf_nlo_EWK = NULL; */
+
+  // Maybe it would be better to left following two variables in analyzers
+  Double_t nTotalWeightedEvents;  // counter of total events (with weights if any). Initialized to 0 in constructor
+  Double_t newwgt;                           // weight for the event (specific definition depends on sample and on whether data are being analyzed)
+
   //root histograms: these are common among all analysis (signal ad control region)
   TH1D *HYieldsMetBin = NULL;
   TH1D *HvtxDistribution = NULL;   
@@ -104,7 +118,22 @@ class AnalysisDarkMatter : public edimarcoTree_v4 {
   TH1D *Hjet2ptDistribution = NULL;
   TH1D *HmetBinEdges = NULL;
 
-  virtual void setHistograms();
+  //following histograms filled using different scale factor for NLO xsec for Z and W to be used for systematic computation in ratio between MET in signal and control region
+  TH1D *HYieldsMetBin_qcdRenScaleUp = NULL;
+  TH1D *HYieldsMetBin_qcdRenScaleDown = NULL;
+  TH1D *HYieldsMetBin_qcdFacScaleUp = NULL;
+  TH1D *HYieldsMetBin_qcdFacScaleDown = NULL;
+  TH1D *HYieldsMetBin_qcdPdfUp = NULL;
+  TH1D *HYieldsMetBin_qcdPdfDown = NULL;
+  TH1D *HYieldsMetBin_ewkUp = NULL;
+  TH1D *HYieldsMetBin_ewkDown = NULL;
+  //systematic uncertainties
+  TH1D *HSyst_qcdRenScale = NULL;
+  TH1D *HSyst_qcdFacScale = NULL;
+  TH1D *HSyst_qcdPdf = NULL;
+  TH1D *HSyst_ewk = NULL;
+  TH1D *HSyst_total = NULL;
+
 
 };
 

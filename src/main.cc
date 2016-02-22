@@ -72,6 +72,7 @@ int main(int argc, char* argv[]) {
   string directory_name = "";
   string outputFolder = "./"; // current directory by default, but it could be set as 'directory_to_save_files + directory_name'
   string dirName_suffix = ""; // user can add a suffix without modifying the name of directory in config file
+  //string sf_nlo_option = "";
 
   if (argc > 2 ) {
 
@@ -86,29 +87,30 @@ int main(int argc, char* argv[]) {
 	unweighted_event_flag = 1;    //-nw option stands for "no weight"
 	cout << "Option " << thisArgument << " passed: using no event weight (w =1) if allowed" << std::endl;
 
-      }
-
-      if (thisArgument  == "-at" ) {   // "at" means Adish's tree
+      } else if (thisArgument  == "-at" ) {   // "at" means Adish's tree
 	     
 	adishTree_flag = 1;
 	cout << "Option " << thisArgument << " passed: using Adish's trees" << std::endl;
 
-      }
-
-      if (thisArgument  == "-calibEle" ) {   // use electron calibrated properties (pT, energy ecc...) instead of traditional ones
+      } else if (thisArgument  == "-calibEle" ) {   // use electron calibrated properties (pT, energy ecc...) instead of traditional ones
 	     
 	calibEle_flag = 1;
 	cout << "Option " << thisArgument << " passed: using calibrated variables for electrons" << std::endl;
 
-      }
-
-      if (thisArgument  == "-fns" ) {   // fns stands for directory name suffix: user can add a suffix to directory name without changing the config file
+      } else if (thisArgument  == "-dns" ) {   // dns stands for directory name suffix: user can add a suffix to directory name without changing the config file
 	// this option requires a string just after it
 	 
 	dirName_suffix = argv[i+1];
 	cout << "Option " << thisArgument << " passed: attaching suffix \""<<argv[i+1] <<"\" at the end of directory name" << std::endl;
 
-      }
+      } // else if (thisArgument  == "-sfnlo" ) {   // scale factor for NLO xsec for Z and W
+      // 	// this option requires a string just after it, which is the name of scale factors in friend trees names sfFriend_{<sample_name>}.root. If those friend trees are not used, this option is irrelevant
+	 
+      // 	sf_nlo_option = argv[i+1];
+      // 	cout << "Option " << thisArgument << " passed: using  "<< argv[i+1]<< " scale factor" << std::endl;
+
+      // }
+
 
     }
 
@@ -279,6 +281,7 @@ int main(int argc, char* argv[]) {
     if (directory_name != "") {
       if (calibEle_flag == 1 && fabs(lepton_PDGID) == 11) directory_name += "_CalibEle";
       if (unweighted_event_flag == 1) directory_name += "_weq1";
+      //if (sf_nlo_option != "") directory_name += ("_" + sf_nlo_option); // keep commented it's a nightmare to have different directories when I just need one more histogram
       if (dirName_suffix != "") directory_name += ("_" + dirName_suffix); // this addition should be left as the last one when forming directory name
       std::cout << "Files will be saved in directory named '" << directory_name  << "' ." <<std::endl;
     }
@@ -585,6 +588,7 @@ int main(int argc, char* argv[]) {
 	  //cout << " CHECK IN MAIN " << endl;
 	  tree.setBasicConf(sampleName[nSample].c_str(), uncertainty, configFileName, isdata_flag, unweighted_event_flag, sf_friend_flag);
 	  tree.setDirNameSuffix(dirName_suffix);
+	  // tree.set_SF_NLO_name(sf_nlo_option);
 	  tree.loop(yieldsRow, efficiencyRow, uncertaintyRow); 
 	  tree.analysisSelectionManager.exportDefinition(&selectionDefinition);
 
@@ -594,6 +598,7 @@ int main(int argc, char* argv[]) {
 	    zlljetsControlSample tree( chain);
 	    tree.setBasicConf(sampleName[nSample].c_str(), uncertainty, configFileName, isdata_flag, unweighted_event_flag, sf_friend_flag);
 	    tree.setDirNameSuffix(dirName_suffix);
+	    // tree.set_SF_NLO_name(sf_nlo_option);
 	    if (calibEle_flag == 1 && fabs(lepton_PDGID) == 11) tree.setCalibEleFlag();
 	    tree.loop(yieldsRow, efficiencyRow, uncertaintyRow);
 	    tree.analysisSelectionManager.exportDefinition(&selectionDefinition);
@@ -601,6 +606,7 @@ int main(int argc, char* argv[]) {
 	    wlnujetsControlSample tree( chain);
 	    tree.setBasicConf(sampleName[nSample].c_str(), uncertainty, configFileName, isdata_flag, unweighted_event_flag, sf_friend_flag);
 	    tree.setDirNameSuffix(dirName_suffix);
+	    // tree.set_SF_NLO_name(sf_nlo_option);
 	    if (calibEle_flag == 1 && fabs(lepton_PDGID) == 11) tree.setCalibEleFlag();
 	    tree.loop(yieldsRow, efficiencyRow, uncertaintyRow);
 	    tree.analysisSelectionManager.exportDefinition(&selectionDefinition);
