@@ -55,6 +55,10 @@ AnalysisDarkMatter::AnalysisDarkMatter(TTree *tree) : edimarcoTree_v4(tree) {
   calibEle_flag = 0;
   dirName_suffix = ""; //user can add a suffix to directory name from main instead of changing string in config file
 
+  //sf_nlo = "";
+  nTotalWeightedEvents = 0.0;
+  newwgt = 0.0;
+
   Init(tree);
   
 
@@ -226,7 +230,7 @@ void AnalysisDarkMatter::setVarFromConfigFile() {
   outputFolder =  DIRECTORY_TO_SAVE_FILES + DIRECTORY_NAME;
   if (calibEle_flag == 1) outputFolder += "_CalibEle";
   if (unweighted_event_flag == 1) outputFolder += "_weq1";
-  outputFolder += dirName_suffix;  // set to "" if not specified
+  if (dirName_suffix != "") outputFolder += ("_" + dirName_suffix);  // set to "" if not specified
   outputFolder += "/";
 
    nMetBins = (metBinEdgesVector.size()) - 1;
@@ -291,5 +295,84 @@ void AnalysisDarkMatter::setHistograms() {
   }
 
 }
+
+//===============================================
+
+void AnalysisDarkMatter::createSystematicsHistogram() {
+
+  myAddOverflowInLastBin(HYieldsMetBin_qcdRenScaleUp);
+  myAddOverflowInLastBin(HYieldsMetBin_qcdRenScaleDown);
+  myAddOverflowInLastBin(HYieldsMetBin_qcdFacScaleUp);
+  myAddOverflowInLastBin(HYieldsMetBin_qcdFacScaleDown);
+  myAddOverflowInLastBin(HYieldsMetBin_qcdPdfUp);
+  myAddOverflowInLastBin(HYieldsMetBin_qcdPdfDown);
+  myAddOverflowInLastBin(HYieldsMetBin_ewkUp);
+  myAddOverflowInLastBin(HYieldsMetBin_ewkDown);
+
+  // computing systematic uncertainties and saving them as histograms.
+  myBuildSystematicsHistogram(HSyst_qcdRenScale, HYieldsMetBin, HYieldsMetBin_qcdRenScaleUp, HYieldsMetBin_qcdRenScaleDown);
+  myBuildSystematicsHistogram(HSyst_qcdFacScale, HYieldsMetBin, HYieldsMetBin_qcdFacScaleUp, HYieldsMetBin_qcdFacScaleDown);
+  myBuildSystematicsHistogram(HSyst_qcdPdf, HYieldsMetBin, HYieldsMetBin_qcdPdfUp, HYieldsMetBin_qcdPdfDown);
+  myBuildSystematicsHistogram(HSyst_ewk, HYieldsMetBin, HYieldsMetBin_ewkUp, HYieldsMetBin_ewkDown);
+
+  // define an empty histogram to sum uncertainties in a clean way
+  TH1D *Htmp = new TH1D("Htmp","",nMetBins,metBinEdgesVector.data());
+  vector<TH1D*> hptr;
+  hptr.push_back(HSyst_qcdRenScale);
+  hptr.push_back(HSyst_qcdFacScale);
+  hptr.push_back(HSyst_qcdPdf);
+  hptr.push_back(HSyst_ewk);
+     
+  for (Int_t i = 0; i < hptr.size(); i++) {
+    Htmp->Multiply(hptr[i],hptr[i]); // square of bin content for each single systematic histogram
+    HSyst_total->Add(Htmp);             // adding the squares
+  }
+
+  for (Int_t i = 0; i <= (HSyst_total->GetNbinsX() + 1); i++) {  // computing square root of each bin's content (from underflow to overflow bin, but they should be empty)
+    HSyst_total->SetBinContent(i, sqrt(HSyst_total->GetBinContent(i)));
+  }
+
+  delete Htmp;
+
+}
+
+//===============================================
+
+// void AnalysisDarkMatter::set_SF_NLO_name(const std::string s) {
+
+//   sf_nlo = s;
+
+// }
+
+//===============================================
+
+//void AnalysisDarkMatter::set_SF_NLO_pointers(const std::string sf_option, Float_t *ptrQCD, Float_t *ptrEWK) {
+
+  // ptrQCD = &SF_NLO_QCD;
+  // ptrEWK = &SF_NLO_EWK;
+  
+  // if (sf_option != "") {
+  //   if (sf_option == "SF_NLO_QCD_renScaleUp") ptrQCD = &SF_NLO_QCD_renScaleUp;
+  //   else if (sf_option == "SF_NLO_QCD_renScaleDown") ptrQCD = &SF_NLO_QCD_renScaleDown;
+  //   else if (sf_option == "SF_NLO_QCD_facScaleUp") ptrQCD = &SF_NLO_QCD_facScaleUp;
+  //   else if (sf_option == "SF_NLO_QCD_facScaleDown") ptrQCD = &SF_NLO_QCD_facScaleDown;
+  //   else if (sf_option == "SF_NLO_QCD_pdfUp") ptrQCD = &SF_NLO_QCD_pdfUp;
+  //   else if (sf_option == "SF_NLO_QCD_pdfDown") ptrQCD = &SF_NLO_QCD_pdfDown;
+  //   else if (sf_option == "SF_NLO_EWK_up") ptrEWK = &SF_NLO_EWK_up;
+  //   else if (sf_option == "SF_NLO_EWK_down") ptrEWK = &SF_NLO_EWK_down;
+  // }
+ 
+//}
+
+
+//===============================================
+
+// Double_t AnalysisDarkMatter::computeEventWeight() const {
+
+//   if (ISDATA_FLAG || unweighted_event_flag) return 1.0;
+//   else return LUMI * vtxWeight * weight * SF_BTag; //SF_BTag is in evVarFriend, not sfFriend
+
+// }
+
 
 #endif
