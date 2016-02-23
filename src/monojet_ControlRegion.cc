@@ -105,7 +105,7 @@ void monojet_ControlRegion::setNumberParameterValue(const std::string parameterN
 
   AnalysisDarkMatter::setNumberParameterValue(parameterName, value);
 
-  if (parameterName == "LEP_PDG_ID") LEP_PDG_ID = value;
+  if (parameterName == "LEP_PDG_ID") LEP_PDG_ID = (value < 0) ? (-0.5 + value) : (0.5 + value);
   else if (parameterName == "LEP1PT") LEP1PT = value;
   else if (parameterName == "LEP_ISO_04") LEP_ISO_04 = value;
   else if (parameterName == "LEP1ETA") LEP1ETA = value;
@@ -114,7 +114,7 @@ void monojet_ControlRegion::setNumberParameterValue(const std::string parameterN
 
   if (!ISDATA_FLAG) {
 
-    if (parameterName == "GENLEP_TAG") GENLEP_TAG = value;
+    if (parameterName == "GENLEP_TAG") GENLEP_TAG = (value < 0) ? (-0.5 + value) : (0.5 + value);
     else if (parameterName == "GENLEP1PT") GENLEP1PT = value;
     else if (parameterName == "GENLEP1ETA") GENLEP1ETA = value;
 

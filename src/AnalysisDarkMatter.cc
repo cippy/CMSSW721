@@ -115,17 +115,24 @@ void AnalysisDarkMatter::setDirNameSuffix(const std::string s) {
 
 void AnalysisDarkMatter::setNumberParameterValue(const string parameterName, const Double_t value) {
 
+  // variables in file are read as double, if I need int the compiler will truncate. An integer assigned to a double might actually be a little less than the integer in binary notation due to limited number of digits (floats can be even more dangerous). Thus, if a variable is expected to be an int, I sum 0.5 to value before assigning it.
+  // e.g. Suppose you want a flag = 1 (or 1.0). Casting flag to Int might yield 0 if the binary expression for 1.0 is less than 1 (ok that's just an example). On the other hand, I can say Int_t val = (Int_t) 1.0 + 0.5 which will yield val = 1. Note however that casting is not necessary, assignment to int will do it automatically.
+
+  //  -->  N.B.  <---
+  // adding 0.5 works for positive number, if using negative ones, I must subtract 0.5 (or sum -0.5). For 0 it is irrelevant, e.g. both 0.3 and -0.3 will become 0 if assigned to int, so I don't need to care if 0.0 is actually a positive or integer number
+  // flags are expected to be 0 or 1 but let's do the check to be sure
+
   if (parameterName == "LUMI") LUMI = value;
-  //else if (parameterName == "NJETS") NJETS = value;
+  //else if (parameterName == "NJETS") NJETS = (value < 0) ? (-0.5 + value) : (0.5 + value);
   else if (parameterName == "J1PT") J1PT = value;
   else if (parameterName == "J1ETA") J1ETA = value;
   //else if (parameterName == "J2PT") J2PT = value;
   //else if (parameterName == "J2ETA") J2ETA = value;
   //else if (parameterName == "J1J2DPHI") J1J2DPHI = value;
-  else if (parameterName == "TAU_VETO_FLAG") TAU_VETO_FLAG = value;
-  else if (parameterName == "HLT_FLAG") HLT_FLAG = value;
+  else if (parameterName == "TAU_VETO_FLAG") TAU_VETO_FLAG = (value < 0) ? (-0.5 + value) : (0.5 + value);
+  else if (parameterName == "HLT_FLAG") HLT_FLAG = (value < 0) ? (-0.5 + value) : (0.5 + value);
   else if (parameterName == "METNOLEP_START") METNOLEP_START = value;
-  else if (parameterName == "MET_FILTERS_FLAG") MET_FILTERS_FLAG = value;
+  else if (parameterName == "MET_FILTERS_FLAG") MET_FILTERS_FLAG = (value < 0) ? (-0.5 + value) : (0.5 + value);
   else if (parameterName == "JMET_DPHI_MIN") JMET_DPHI_MIN = value;
 
 }
