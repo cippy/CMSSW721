@@ -162,7 +162,9 @@ Double_t monojet_SignalRegion::computeEventWeight() {
   else {
     // sf_nlo_weight = (*ptr_sf_nlo_QCD) * (*ptr_sf_nlo_EWK);
     // return LUMI * weight * vtxWeight * SF_BTag * sf_nlo_weight; //SF_BTag is in evVarFriend, not sfFriend
-    return LUMI * weight * vtxWeight * SF_BTag * SF_NLO_QCD * SF_NLO_EWK; //SF_BTag is in evVarFriend, not sfFriend
+    if (suffix == "ZJetsToNuNu" || suffix == "DYJetsToLL") return LUMI * weight * vtxWeight * SF_BTag * SF_NLO_QCD * SF_NLO_EWK / 1.23; //SF_BTag is in evVarFriend, not sfFriend
+    else if (suffix == "WJetsToLNu") return LUMI * weight * vtxWeight * SF_BTag * SF_NLO_QCD * SF_NLO_EWK / 1.21; //SF_BTag is in evVarFriend, not sfFriend
+    else return LUMI * weight * vtxWeight * SF_BTag * SF_NLO_QCD * SF_NLO_EWK; //SF_BTag is in evVarFriend, not sfFriend
   }
 
 }

@@ -247,6 +247,8 @@ Double_t zlljetsControlSample::computeEventWeight() {
       // return tmp * sf_nlo_weight * SF_LepTightLoose;
       if (fabs(LEP_PDG_ID) == 13) tmp *= SF_trigmetnomu;
       else if (fabs(LEP_PDG_ID) == 11) tmp *= SF_trig1lep;
+      if (suffix == "ZJetsToNuNu" || suffix == "DYJetsToLL") tmp /= 1.23;
+      else if (suffix == "WJetsToLNu") tmp/= 1.21; 
       return tmp * SF_NLO_QCD * SF_NLO_EWK * SF_LepTightLoose;
 
     } else return tmp; 
