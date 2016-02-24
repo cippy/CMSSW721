@@ -1,0 +1,20 @@
+#!/usr/bin/perl
+#print "\n";
+#system("make");
+print "\n";
+system("./tmp/main config/monojet_signalRegion_config_spring15_25ns.txt");
+print "\n\n";
+system("./tmp/main config/zmumujets_ControlRegion_config_spring15_25ns.txt");
+print "\n\n";
+system("./tmp/main config/wmunujets_ControlRegion_config_spring15_25ns.txt");
+print "\n\n";
+system("./tmp/main config/zeejets_ControlRegion_config_spring15_25ns.txt");
+print "\n\n";
+system("./tmp/main config/zeejets_ControlRegion_config_spring15_25ns.txt -calibEle");
+print "\n\n";
+system("./tmp/main config/wenujets_ControlRegion_config_spring15_25ns.txt");
+print "\n\n";
+system("./tmp/main config/wenujets_ControlRegion_config_spring15_25ns.txt -calibEle");
+print "\n\n";
+system("./macro/distribution");
+print "\n\n";
