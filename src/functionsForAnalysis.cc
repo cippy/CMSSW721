@@ -642,9 +642,13 @@ void makeTableTexNoEff(FILE *fp, const Double_t lumi, const Double_t nTotalWeigh
 }
 
 
-void myCreateTexTable(const char* texFileName, const string outputFolder, const Double_t integratedLumi, const Double_t nTotalWeightedEvents, const mask* m) {
+void myCreateTexTable(const char* texFileName, const string outputFolder, const Double_t integratedLumi, const Double_t nTotalWeightedEvents, const mask* m /*const string opt==""*/) {
+
+  //cout << "CHECK: inside myCreateTexTable passing mask *m"<<endl;
 
   FILE *fp;
+  //if (opt == "A" || opt == "a" ) fp = fopen((outputFolder + texFileName).c_str(),"a");
+  //else fp = fopen((outputFolder + texFileName).c_str(),"w");
   fp = fopen((outputFolder + texFileName).c_str(),"w");
 
   if ( fp == NULL)  cout<<"Error: '"<<texFileName<<"' not opened"<<endl;
@@ -655,6 +659,33 @@ void myCreateTexTable(const char* texFileName, const string outputFolder, const 
     fprintf(fp,"\\begin{document}\n");
     fprintf(fp,"\n");
     makeTableTex(fp, integratedLumi, nTotalWeightedEvents, m);
+    fprintf(fp,"\\end{document}\n");      
+    fclose(fp);
+
+  }
+
+}
+
+void myCreateTexTable(const char* texFileName, const string outputFolder, const Double_t integratedLumi, const Double_t nTotalWeightedEvents, const vector<mask*> &m /*const string opt==""*/) {
+
+  //cout << "CHECK: inside myCreateTexTable passing vector<mask*> &m"<<endl;
+
+  FILE *fp;
+  //if (opt == "A" || opt == "a" ) fp = fopen((outputFolder + texFileName).c_str(),"a");
+  //else fp = fopen((outputFolder + texFileName).c_str(),"w");
+  fp = fopen((outputFolder + texFileName).c_str(),"w");
+
+  if ( fp == NULL)  cout<<"Error: '"<<texFileName<<"' not opened"<<endl;
+  else {
+
+    cout<<"creating file '"<<texFileName<<" in folder " << outputFolder << "' ..."<<endl;
+    myAddDefaultPackages(fp,texFileName);
+    fprintf(fp,"\\begin{document}\n");
+    fprintf(fp,"\n");
+    for (Int_t i = 0; i < m.size(); i++) {
+      makeTableTex(fp, integratedLumi, nTotalWeightedEvents, m[i]);
+      fprintf(fp,"\n\n");
+    }
     fprintf(fp,"\\end{document}\n");      
     fclose(fp);
 

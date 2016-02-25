@@ -43,6 +43,7 @@ void makeTableTex(FILE *, const Double_t, const Double_t, const mask*);
 void makeTableTexNoEff(FILE *, const Double_t, const Double_t, const mask*, const std::string);
 void makeTableTexNoEff(FILE *, const Double_t, const Double_t, const mask*);
 void myCreateTexTable(const char*, const std::string, const Double_t, const Double_t, const mask*);
+void myCreateTexTable(const char*, const std::string, const Double_t, const Double_t, const std::vector<mask*> &);
 
 char myAskToSaveFile(const char*);
 
