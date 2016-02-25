@@ -1,4 +1,4 @@
-#define monojet_ControlRegion_cxx
+#define monojet_LeptonControlRegion_cxx
 #include "EmanTreeAnalysis.h"
 //#include "AnalysisDarkMatter.h" // already included in EmanTreeAnalysis.h
 //C or C++ header files
@@ -41,9 +41,9 @@
 using namespace std;
 using namespace myAnalyzerTEman;
 
-#ifdef monojet_ControlRegion_cxx
+#ifdef monojet_LeptonControlRegion_cxx
 
-monojet_ControlRegion::monojet_ControlRegion(TTree *tree) : AnalysisDarkMatter(tree) {
+monojet_LeptonControlRegion::monojet_LeptonControlRegion(TTree *tree) : AnalysisDarkMatter(tree) {
   //cout <<"check in constructor "<<endl;
   //edimarcoTree_v3::Init(tree);
   // suffix = "";
@@ -61,13 +61,13 @@ monojet_ControlRegion::monojet_ControlRegion(TTree *tree) : AnalysisDarkMatter(t
 
 //===============================================
 
-// void monojet_ControlRegion::Init(TTree *tree) {
+// void monojet_LeptonControlRegion::Init(TTree *tree) {
 //   AnalysisDarkMatter::Init(tree);
 // } 
 
 //===============================================
 
-void monojet_ControlRegion::setSelections() {
+void monojet_LeptonControlRegion::setSelections() {
 
   AnalysisDarkMatter::setSelections();
 
@@ -90,7 +90,7 @@ void monojet_ControlRegion::setSelections() {
 
 //===============================================
 
-void monojet_ControlRegion::setHistograms() {
+void monojet_LeptonControlRegion::setHistograms() {
 
   AnalysisDarkMatter::setHistograms();
   
@@ -101,7 +101,7 @@ void monojet_ControlRegion::setHistograms() {
 
 //===============================================
 
-void monojet_ControlRegion::setNumberParameterValue(const std::string parameterName, const Double_t value) {
+void monojet_LeptonControlRegion::setNumberParameterValue(const std::string parameterName, const Double_t value) {
 
   AnalysisDarkMatter::setNumberParameterValue(parameterName, value);
 
@@ -124,7 +124,7 @@ void monojet_ControlRegion::setNumberParameterValue(const std::string parameterN
 
 //===============================================
 
-void monojet_ControlRegion::setControlSampleSpecificParameter() {
+void monojet_LeptonControlRegion::setControlSampleSpecificParameter() {
 
   // no common specific parameter among control samples for now
   
@@ -132,10 +132,10 @@ void monojet_ControlRegion::setControlSampleSpecificParameter() {
 
 //===============================================
 
-void monojet_ControlRegion::setVarFromConfigFile() {
+void monojet_LeptonControlRegion::setVarFromConfigFile() {
 
   AnalysisDarkMatter::setVarFromConfigFile();
-  //monojet_ControlRegion::setControlSampleSpecificParameter();
+  //monojet_LeptonControlRegion::setControlSampleSpecificParameter();
 
 }
 
