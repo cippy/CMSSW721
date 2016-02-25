@@ -180,6 +180,7 @@ class selectionManager {
   void append(const selection*);
   void append(const mask*, const selection*); //given mask and selection, set the position index of selection in the mask and that selection's name
   void append(const selection*, const Int_t); //accept index from user and use selection to get name (this is useful when some selections are applied only on some sample, so that we would have a row with the same events as the previous for those samlples for which selection is not applied, like reco-gen_LepMatch)
+  void append(const std::string);
   Int_t getLastStepIndex() const { return stepIndex.back(); }
   Int_t getFirstStepIndex() const { return stepIndex.front(); }
   std::string getStepDefinition(const Int_t i) const {return stepDefinition[i];}

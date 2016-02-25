@@ -781,6 +781,14 @@ void selectionManager::append(const selection* s, const Int_t a) {
 
 }
 
+void selectionManager::append(const string s) {
+
+  if (this->getVectorSize() == 0) stepIndex.push_back(0);
+  else stepIndex.push_back(getLastStepIndex()+1);
+  stepDefinition.push_back(s);
+
+}
+
 void selectionManager::exportDefinition(vector<string>* vs) {
 
   //copy content of definition array of selectionManager to another array of strings
