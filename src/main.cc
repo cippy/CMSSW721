@@ -25,6 +25,8 @@ using namespace myAnalyzerTAdish;
 
 using namespace std;
 
+void addSumMCinYieldsVector(const vector<string> &, vector<Double_t> &, vector<Double_t> &, vector<Double_t> &);
+void buildFinalTable(FILE*, const vector<string> &, const vector<string> &, const vector<Double_t> &, const vector<Double_t> &, const vector<Double_t> &);
 
 int main(int argc, char* argv[]) {
 
@@ -401,11 +403,33 @@ int main(int argc, char* argv[]) {
   vector< Double_t > yieldsRow;
   vector< Double_t > efficiencyRow;
   vector< Double_t > uncertaintyRow;
+  vector< Double_t > yieldsRow_monoJ;
+  vector< Double_t > efficiencyRow_monoJ;
+  vector< Double_t > uncertaintyRow_monoJ;
+  vector< Double_t > yieldsRow_monoV;
+  vector< Double_t > efficiencyRow_monoV;
+  vector< Double_t > uncertaintyRow_monoV;
+  // vector<vector<Double_t>*> yieldsVectorList;
+  // vector<vector<Double_t>*> efficiencyVectorList;
+  // vector<vector<Double_t>*> uncertaintyVectorList;
+  // yieldsVectorList.push_back(&yieldsRow);
+  // yieldsVectorList.push_back(&yieldsRow_monoJ);
+  // yieldsVectorList.push_back(&yieldsRow_monoV);
+  // efficiencyVectorList.push_back(&efficiencyRow);
+  // efficiencyVectorList.push_back(&efficiencyRow_monoJ);
+  // efficiencyVectorList.push_back(&efficiencyRow_monoV);
+  // uncertaintyVectorList.push_back(&uncertaintyRow);
+  // uncertaintyVectorList.push_back(&uncertaintyRow_monoJ);
+  // uncertaintyVectorList.push_back(&uncertaintyRow_monoV);
   Int_t nSample = 0;
   std::vector<std::string> sampleName;   
 
   std::vector<std::string> selectionDefinition;
+  std::vector<std::string> selectionDefinition_monoJ;
+  std::vector<std::string> selectionDefinition_monoV;
   selectionDefinition.push_back("entry point"); //other steps will be set in the following using the selectionManager object in the analyzer
+  selectionDefinition_monoJ.push_back("entry point");
+  selectionDefinition_monoV.push_back("entry point");
 
   ifstream sampleFile(fileWithSamplesPath.c_str());
   Int_t fileEndReached_flag = 0;
@@ -589,8 +613,11 @@ int main(int argc, char* argv[]) {
 	  tree.setBasicConf(sampleName[nSample].c_str(), uncertainty, configFileName, isdata_flag, unweighted_event_flag, sf_friend_flag);
 	  tree.setDirNameSuffix(dirName_suffix);
 	  // tree.set_SF_NLO_name(sf_nlo_option);
-	  tree.loop(yieldsRow, efficiencyRow, uncertaintyRow); 
+	  //tree.loop(yieldsVectorList, efficiencyVectorList, uncertaintyVectorList);
+	  tree.loop(yieldsRow, efficiencyRow, uncertaintyRow, yieldsRow_monoJ, efficiencyRow_monoJ, uncertaintyRow_monoJ, yieldsRow_monoV, efficiencyRow_monoV, uncertaintyRow_monoV);
 	  tree.analysisSelectionManager.exportDefinition(&selectionDefinition);
+	  tree.analysisSelectionManager_monoJ.exportDefinition(&selectionDefinition_monoJ);
+	  tree.analysisSelectionManager_monoV.exportDefinition(&selectionDefinition_monoV);
 
 	} else if (controlSample_flag == 1) {
 
@@ -602,6 +629,8 @@ int main(int argc, char* argv[]) {
 	    if (calibEle_flag == 1 && fabs(lepton_PDGID) == 11) tree.setCalibEleFlag();
 	    tree.loop(yieldsRow, efficiencyRow, uncertaintyRow);
 	    tree.analysisSelectionManager.exportDefinition(&selectionDefinition);
+	    tree.analysisSelectionManager_monoJ.exportDefinition(&selectionDefinition_monoJ);
+	    tree.analysisSelectionManager_monoV.exportDefinition(&selectionDefinition_monoV);
 	  } else if (controlSample_boson == "W") {
 	    wlnujetsControlSample tree( chain);
 	    tree.setBasicConf(sampleName[nSample].c_str(), uncertainty, configFileName, isdata_flag, unweighted_event_flag, sf_friend_flag);
@@ -610,6 +639,8 @@ int main(int argc, char* argv[]) {
 	    if (calibEle_flag == 1 && fabs(lepton_PDGID) == 11) tree.setCalibEleFlag();
 	    tree.loop(yieldsRow, efficiencyRow, uncertaintyRow);
 	    tree.analysisSelectionManager.exportDefinition(&selectionDefinition);
+	    tree.analysisSelectionManager_monoJ.exportDefinition(&selectionDefinition_monoJ);
+	    tree.analysisSelectionManager_monoV.exportDefinition(&selectionDefinition_monoV);
 	  } 
 
 	} else if (metResolutionAndResponse_flag == 1) {
@@ -650,6 +681,25 @@ int main(int argc, char* argv[]) {
 
   }
 
+  // =====================================================
+
+  addSumMCinYieldsVector(sampleName, yieldsRow, efficiencyRow, uncertaintyRow);
+  //addSumMCinYieldsVector(sampleName, yieldsRow_monoJ, uncertaintyRow_monoJ, efficiencyRow_monoJ);
+  //addSumMCinYieldsVector(sampleName, yieldsRow_monoV, uncertaintyRow_monoV, efficiencyRow_monoV);
+  //test with same array as for total
+  // for (Int_t i = 0; i < (nSample*3); i++) {
+  //   yieldsRow_monoJ.push_back(0.0);
+  //   yieldsRow_monoV.push_back(0.0);
+  //   uncertaintyRow_monoJ.push_back(0.0);
+  //   uncertaintyRow_monoV.push_back(0.0);
+  //   efficiencyRow_monoJ.push_back(0.0);
+  //   efficiencyRow_monoV.push_back(0.0);
+  // }
+  addSumMCinYieldsVector(sampleName, yieldsRow_monoJ, efficiencyRow_monoJ, uncertaintyRow_monoJ);
+  addSumMCinYieldsVector(sampleName, yieldsRow_monoV, efficiencyRow_monoV, uncertaintyRow_monoV);
+  
+  /*
+
   if ( yieldsRow.size() != efficiencyRow.size() ) {
     std::cout << "Warning:  different number of steps for yields and efficiencies." << std::endl; 
     std::cout << "Will use the bigger one." << std::endl; 
@@ -674,7 +724,7 @@ int main(int argc, char* argv[]) {
   // next to yields there are the efficiency or the uncertainties (could add both but table would get too crowded)
   //
   // now we want to add an additional column with the sum of entries for the different samples
-  // so now we add S123 to yieldsRow (S stands for sum), where Si = Ai + Bi +Ci
+  // so now we add S1,2,3 to yieldsRow (S stands for sum), where Si = Ai + Bi +Ci (and yieldsRow becomes A123 B123 C123 S123)
 
   for (Int_t i = 0; i < selectionSize; i++) {
 
@@ -713,9 +763,13 @@ int main(int argc, char* argv[]) {
      
   }
 
+  */
+
+  // =====================================================
   // ==================================
 
-  selectionSize = (yieldsRow.size() >= efficiencyRow.size()) ? (yieldsRow.size()/(nSample+1)) : (efficiencyRow.size()/(nSample+1));  
+  // useless, selectionSize remains unchanged 
+  // selectionSize = (yieldsRow.size() >= efficiencyRow.size()) ? (yieldsRow.size()/(nSample+1)) : (efficiencyRow.size()/(nSample+1));  
   //(nSample+1) because now there is also the sum on MC entries
 
   FILE* fp;
@@ -730,10 +784,25 @@ int main(int argc, char* argv[]) {
 
   } else {
 
-    cout<<"creating file '"<<finalFileName<<"' to save table with yields in folder " << outputFolder << " ..."<<endl;
-    fprintf(fp,"#    step         ");
+    cout << "Print yieldsRow_monoJ" << endl;
+    for (Int_t i = 0; i < yieldsRow_monoJ.size(); i++) {
+      cout << yieldsRow_monoJ[i] << "   ";
+    }
+    cout << endl;
 
-    for(Int_t i = 0; i <= nSample; i++) {
+    cout<<"creating file '"<<finalFileName<<"' to save table with yields in folder " << outputFolder << " ..."<<endl;
+
+    buildFinalTable(fp, sampleName, selectionDefinition, yieldsRow, efficiencyRow, uncertaintyRow);
+    fprintf(fp,"\n\n");
+    buildFinalTable(fp, sampleName, selectionDefinition_monoJ, yieldsRow_monoJ, efficiencyRow_monoJ, uncertaintyRow_monoJ);
+    fprintf(fp,"\n\n");
+    buildFinalTable(fp, sampleName, selectionDefinition_monoJ, yieldsRow_monoV, efficiencyRow_monoV, uncertaintyRow_monoV);
+
+    // The following commented part is put inside buildFinalTable(fp, sampleName, selectionDefinition, yieldsRow, uncertaintyRow, efficiencyRow);
+    /*
+    fprintf(fp,"%-16s","#step");
+
+    for(Int_t i = 0; i <= nSample; i++) {  //should stop at < nSample, but we have one more column holding sum of all MC
 
       if (i == nSample) fprintf(fp,"%-16s ","all non-data");  // last column in file will hold the sum af all MC or backgrounds
       else fprintf(fp,"%-16s ",sampleName[i].c_str());
@@ -789,13 +858,173 @@ int main(int argc, char* argv[]) {
       fprintf(fp,"\n");
 
     }
+    */
+
 
     fclose(fp);
 
-  }
+    // ==================================
+
+  } //end of table writing
 
 
   return 0;
 
 }
+
+
+//==============================================================
+
+void addSumMCinYieldsVector(const vector<string> &sampleName, 		     
+			    vector<Double_t> &yieldsRow, 
+			    vector<Double_t> &efficiencyRow,
+			    vector<Double_t> &uncertaintyRow) {
+
+  // this variable is the only addition to the algorythm contained in this function wrt what was inside main() before
+  Int_t nSample = (Int_t) sampleName.size(); // nSample is used as the index for the loop on all the n samples (from 0 to n-1) plus the column with the sum of all MC. The n-th is the sum of all MC
+
+  if ( yieldsRow.size() != efficiencyRow.size() ) {
+    std::cout << "Warning:  different number of steps for yields and efficiencies." << std::endl; 
+    std::cout << "Will use the bigger one." << std::endl; 
+  }
+
+  Int_t selectionSize = (yieldsRow.size() >= efficiencyRow.size()) ? (yieldsRow.size()/nSample) : (efficiencyRow.size()/nSample);
+
+  // ==================================
+
+  // before printing the table, I add another row with the sum of all "non data" column. 
+  // For the SR, it would be the sum of all backgrounds, regardless they are data-driven or MC estimate
+  // For the CR, it should be the sum of MC background for the Z(ll) sample (now for semplicity it is the sum of all MC).
+
+  // suppose I have tre samples A, B, C and a selection with three steps 1, 2, 3. Then, yieldsRow is filled as A123 B123 C123 (9 entries, the letter refers to the specific sample)
+  // to build the table, which is created row by row, we read the vector as A1, B1, C1, A2, B2 ... so that the table looks like
+  //
+  //   sample A     sample B     sample C
+  //        A1                 B1                C1
+  //        A2                 B2                C2
+  //        A3                 B3                C3
+  //
+  // next to yields there are the efficiency or the uncertainties (could add both but table would get too crowded)
+  //
+  // now we want to add an additional column with the sum of entries for the different samples
+  // so now we add S1,2,3 to yieldsRow (S stands for sum), where Si = Ai + Bi +Ci (and yieldsRow becomes A123 B123 C123 S123)
+
+  for (Int_t i = 0; i < selectionSize; i++) {
+
+    Double_t lastValue = yieldsRow.back();   // keep track of last element to make the efficiency ratio 
+    // when i = 0, it is the last value before adding the "non-data" column (C3 in the previous example), but it is not used because the efficiency is automatically set to 1.0
+    // for the other values of i, it is the last value (call it a), now we compute the following value (call it b) and compute the efficiency as b/a
+
+    yieldsRow.push_back(0.0);   // adding new element for each selection step
+    efficiencyRow.push_back(0.0);
+    uncertaintyRow.push_back(0.0);
+
+    for(Int_t j = 0; j < nSample; j++) {  
+
+      // must skip sample with data, if present
+
+      if ( (std::strcmp("data",sampleName[j].c_str())) ) {  //std::strcmp returns 0 when the strings are equal. otherwise it returns a non zero value
+
+	// adding all values in the same row (i.e. for the same selection step). If an entry is negative (because that step was not considered for that sample), the previous step is summed)
+	Int_t vectorElement = i + j * selectionSize;
+
+	if (yieldsRow.at(vectorElement) < 0) vectorElement = (i - 1) + j * selectionSize;  
+	// can be negative when that step was not filled for a given sample (e.g. the recoGen match is only for DY sample in Z+jets CS)
+	  
+	yieldsRow.back() += yieldsRow.at(vectorElement);  
+	uncertaintyRow.back() += uncertaintyRow.at(vectorElement) * uncertaintyRow.at(vectorElement);   // sum in quadrature of samples' uncertainties  
+
+      }
+
+    }     // end of for(Int_t j = 0; j < nSample; j++)
+
+    uncertaintyRow.back() = sqrt(uncertaintyRow.back());
+    if (i == 0) efficiencyRow.back() = 1.0;
+    else if ( (i != 0) && ( lastValue == 0 )  ) efficiencyRow.back() = 1.0000;  
+    // in the line above, if previous yield is 0, the next is also 0 and the efficiency is set to 1.0  (otherwise it would be of the form 0/0)
+    else efficiencyRow.back() = yieldsRow.back()/lastValue;
+     
+  }
+
+}
+
+//==============================================================
+
+void buildFinalTable(FILE* fp,
+		     const vector<string> &sampleName, 
+		     const vector<string> &selectionDefinition, 
+		     const vector<Double_t> &yieldsRow, 
+		     const vector<Double_t> &efficiencyRow,
+		     const vector<Double_t> &uncertaintyRow) {
+
+  // these two variables are the only addition to the algorythm contained in this function wrt what was inside main() before
+  Int_t nSample = (Int_t) sampleName.size(); // nSample is used as the index for the loop on all the n samples (from 0 to n-1) plus the column with the sum of all MC. The n-th +1 is the sum of all MC
+  Int_t selectionSize = selectionDefinition.size();
+
+  fprintf(fp,"%-20s","# step");
+
+  for(Int_t i = 0; i <= nSample; i++) {  //should stop at < nSample, but we have one more column holding sum of all MC
+
+    if (i == nSample) fprintf(fp,"%-16s ","all non-data");  // last column in file will hold the sum af all MC or backgrounds
+    else fprintf(fp,"%-16s ",sampleName[i].c_str());
+
+  }
+
+  fprintf(fp,"\n");
+
+  for (Int_t i = 0; i < selectionSize; i++) {  // printing table line by line
+
+    fprintf(fp,"%-16s",selectionDefinition[i].c_str());  // first column with definition of selection
+
+    for(Int_t j = 0; j <= nSample; j++) {  // loop to print for all samples
+	  
+      if (j == nSample) {     // for the sum of all MC
+
+	if (yieldsRow.at( i + j * selectionSize) < 0) {
+
+	  string space = "//";
+	  fprintf(fp,"%7s ",space.c_str());
+	  fprintf(fp,"%5s    ",space.c_str());
+
+	} else { 
+
+	  if (yieldsRow.at( i + j * selectionSize) < 10) fprintf(fp,"%7.1lf ",yieldsRow.at( i + j * selectionSize));  //	j * selectionSize refers to number for a sample, i refers to the selection step   
+	  else fprintf(fp,"%7.0lf ",yieldsRow.at( i + j * selectionSize));
+
+	  if (uncertaintyRow.at( i + j * selectionSize) < 10) fprintf(fp,"%7.1lf   ",uncertaintyRow.at( i + j * selectionSize));
+	  else fprintf(fp,"%7.0lf   ",uncertaintyRow.at( i + j * selectionSize));
+
+	}
+
+      } else {    // for any other sample (data or MC)
+
+	if (yieldsRow.at( i + j * selectionSize) < 0) {
+
+	  string space = "//";
+	  fprintf(fp,"%7s ",space.c_str());
+	  fprintf(fp,"%5s    ",space.c_str());
+
+	} else { 
+
+	  if (yieldsRow.at( i + j * selectionSize) < 10) fprintf(fp,"%7.1lf ",yieldsRow.at( i + j * selectionSize));  //	j * selectionSize refers to number for a sample, i refers to the selection step   
+	  else fprintf(fp,"%7.0lf ",yieldsRow.at( i + j * selectionSize));
+	  fprintf(fp,"%5.1lf%%   ",(100 * efficiencyRow.at( i + j * selectionSize)));
+
+	}
+
+      }
+
+    } 
+
+    fprintf(fp,"\n");
+
+  }
+ 
+}
+
+
+//==============================================================
+
+
+
 
