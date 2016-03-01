@@ -21,7 +21,12 @@ echo
 #./tmp/main config/wenujets_ControlRegion_config_spring15_25ns.txt -calibEle
 #echo
 #echo
-./macro/distribution
+echo "producing plots for monojet (exclusive)"
+./macro/distribution 0
+echo
+echo
+echo "producing plots for monoV"
+./macro/distribution 1
 echo
 echo
 echo "========================"
