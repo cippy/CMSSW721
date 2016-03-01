@@ -47,23 +47,26 @@ namespace myAnalyzerTEman {
     void setSelections(); 
     void setMask();
     void setHistograms();
+    void setHistogramLastBinAsOverFlow(const Int_t);
     void setNumberParameterValue(const std::string, const Double_t);
     void setVarFromConfigFile();
     Double_t computeEventWeight();
-    void loop(std::vector< Double_t > &, std::vector< Double_t > &, std::vector< Double_t > &);
+    //void loop(std::vector< std::vector<Double_t>* > &, std::vector< std::vector<Double_t>* > &, std::vector< std::vector<Double_t>* > &);
+    void loop(std::vector< Double_t > &, std::vector< Double_t > &, std::vector< Double_t > &, std::vector< Double_t > &, std::vector< Double_t > &, std::vector< Double_t > &, std::vector< Double_t > &, std::vector< Double_t > &, std::vector< Double_t > &);
 
   };
 
   //====================================================
 
-  class monojet_ControlRegion : public AnalysisDarkMatter {
+  class monojet_LeptonControlRegion : public AnalysisDarkMatter {
   public:
 
-    monojet_ControlRegion(TTree *tree);  
-    virtual ~monojet_ControlRegion() { std::cout<<"~monojet_ControlRegion() called"<<std::endl; }
+    monojet_LeptonControlRegion(TTree *tree);  
+    virtual ~monojet_LeptonControlRegion() { std::cout<<"~monojet_LeptonControlRegion() called"<<std::endl; }
    
     //virtual void setMask();
     virtual void setHistograms();
+    virtual void setHistogramLastBinAsOverFlow(const Int_t);
     virtual void setNumberParameterValue(const std::string, const Double_t);  // set some numeric variables if they are in config file
     virtual void setControlSampleSpecificParameter();
     virtual void setVarFromConfigFile();
@@ -98,6 +101,9 @@ namespace myAnalyzerTEman {
    TH1D *Hlep1ptDistribution = NULL;
    TH1D *Hlep1etaDistribution = NULL;
 
+   TH1D *Hlep1ptDistribution_monoV = NULL;
+   TH1D *Hlep1etaDistribution_monoV = NULL;
+
   };
 
 
@@ -105,7 +111,7 @@ namespace myAnalyzerTEman {
 
 
 
-  class zlljetsControlSample : public monojet_ControlRegion {
+  class zlljetsControlSample : public monojet_LeptonControlRegion {
   public:
 
     zlljetsControlSample(TTree *tree);  
@@ -114,11 +120,13 @@ namespace myAnalyzerTEman {
     void setSelections(); 
     void setMask();
     void setHistograms();
+    void setHistogramLastBinAsOverFlow(const Int_t);
     void setNumberParameterValue(const std::string, const Double_t);  // set some numeric variables if they are in config file
     void setControlSampleSpecificParameter();
     void setVarFromConfigFile();
     Double_t computeEventWeight();
-    void loop(std::vector< Double_t > &, std::vector< Double_t > &, std::vector< Double_t > &);
+    //void loop(std::vector< Double_t > &, std::vector< Double_t > &, std::vector< Double_t > &);
+    void loop(std::vector< Double_t > &, std::vector< Double_t > &, std::vector< Double_t > &, std::vector< Double_t > &, std::vector< Double_t > &, std::vector< Double_t > &, std::vector< Double_t > &, std::vector< Double_t > &, std::vector< Double_t > &);
 
     selection oppChargeLeptonsC;
     selection invMassC;
@@ -148,12 +156,17 @@ namespace myAnalyzerTEman {
     TH1D *HzptDistribution = NULL;    
     TH1D *Hlep2ptDistribution = NULL;
     TH1D *Hlep2etaDistribution = NULL;
+
+    TH1D *HinvMass_monoV = NULL;
+    TH1D *HzptDistribution_monoV = NULL;    
+    TH1D *Hlep2ptDistribution_monoV = NULL;
+    TH1D *Hlep2etaDistribution_monoV = NULL;
    
   };
 
   //====================================================
 
-  class wlnujetsControlSample : public monojet_ControlRegion {
+  class wlnujetsControlSample : public monojet_LeptonControlRegion {
   public:
 
     wlnujetsControlSample(TTree *tree);  
@@ -162,11 +175,13 @@ namespace myAnalyzerTEman {
     void setSelections(); 
     void setMask();
     void setHistograms();
+    void setHistogramLastBinAsOverFlow(const Int_t);
     void setNumberParameterValue(const std::string, const Double_t);  // set some numeric variables if they are in config file
     void setControlSampleSpecificParameter();
     void setVarFromConfigFile();
     Double_t computeEventWeight();
-    void loop(std::vector< Double_t > &, std::vector< Double_t > &, std::vector< Double_t > &);
+    //void loop(std::vector< Double_t > &, std::vector< Double_t > &, std::vector< Double_t > &);
+    void loop(std::vector< Double_t > &, std::vector< Double_t > &, std::vector< Double_t > &, std::vector< Double_t > &, std::vector< Double_t > &, std::vector< Double_t > &, std::vector< Double_t > &, std::vector< Double_t > &, std::vector< Double_t > &);
 
     selection oneLepLooseC;   //if W->munu, select loose muon (if W->enu select electron)
     selection tightLepC;
@@ -181,6 +196,7 @@ namespace myAnalyzerTEman {
     Int_t using_wtaunujets_MCsample_flag;
         
     TH1D *HtransverseMass = NULL;
+    TH1D *HtransverseMass_monoV = NULL;
 
   };
 
