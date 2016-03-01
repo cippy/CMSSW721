@@ -615,9 +615,11 @@ int main(int argc, char* argv[]) {
 	  // tree.set_SF_NLO_name(sf_nlo_option);
 	  //tree.loop(yieldsVectorList, efficiencyVectorList, uncertaintyVectorList);
 	  tree.loop(yieldsRow, efficiencyRow, uncertaintyRow, yieldsRow_monoJ, efficiencyRow_monoJ, uncertaintyRow_monoJ, yieldsRow_monoV, efficiencyRow_monoV, uncertaintyRow_monoV);
-	  tree.analysisSelectionManager.exportDefinition(&selectionDefinition);
-	  tree.analysisSelectionManager_monoJ.exportDefinition(&selectionDefinition_monoJ);
-	  tree.analysisSelectionManager_monoV.exportDefinition(&selectionDefinition_monoV);
+	  if (nSample == 0) {
+	    tree.analysisSelectionManager.exportDefinition(&selectionDefinition);
+	    tree.analysisSelectionManager_monoJ.exportDefinition(&selectionDefinition_monoJ);
+	    tree.analysisSelectionManager_monoV.exportDefinition(&selectionDefinition_monoV);
+	  }
 
 	} else if (controlSample_flag == 1) {
 
@@ -627,20 +629,26 @@ int main(int argc, char* argv[]) {
 	    tree.setDirNameSuffix(dirName_suffix);
 	    // tree.set_SF_NLO_name(sf_nlo_option);
 	    if (calibEle_flag == 1 && fabs(lepton_PDGID) == 11) tree.setCalibEleFlag();
-	    tree.loop(yieldsRow, efficiencyRow, uncertaintyRow);
-	    tree.analysisSelectionManager.exportDefinition(&selectionDefinition);
-	    tree.analysisSelectionManager_monoJ.exportDefinition(&selectionDefinition_monoJ);
-	    tree.analysisSelectionManager_monoV.exportDefinition(&selectionDefinition_monoV);
+	    //tree.loop(yieldsRow, efficiencyRow, uncertaintyRow);
+	    tree.loop(yieldsRow, efficiencyRow, uncertaintyRow, yieldsRow_monoJ, efficiencyRow_monoJ, uncertaintyRow_monoJ, yieldsRow_monoV, efficiencyRow_monoV, uncertaintyRow_monoV);
+	    if (nSample == 0) {
+	      tree.analysisSelectionManager.exportDefinition(&selectionDefinition);
+	      tree.analysisSelectionManager_monoJ.exportDefinition(&selectionDefinition_monoJ);
+	      tree.analysisSelectionManager_monoV.exportDefinition(&selectionDefinition_monoV);
+	    }
 	  } else if (controlSample_boson == "W") {
 	    wlnujetsControlSample tree( chain);
 	    tree.setBasicConf(sampleName[nSample].c_str(), uncertainty, configFileName, isdata_flag, unweighted_event_flag, sf_friend_flag);
 	    tree.setDirNameSuffix(dirName_suffix);
 	    // tree.set_SF_NLO_name(sf_nlo_option);
 	    if (calibEle_flag == 1 && fabs(lepton_PDGID) == 11) tree.setCalibEleFlag();
-	    tree.loop(yieldsRow, efficiencyRow, uncertaintyRow);
-	    tree.analysisSelectionManager.exportDefinition(&selectionDefinition);
-	    tree.analysisSelectionManager_monoJ.exportDefinition(&selectionDefinition_monoJ);
-	    tree.analysisSelectionManager_monoV.exportDefinition(&selectionDefinition_monoV);
+	    //tree.loop(yieldsRow, efficiencyRow, uncertaintyRow);
+	    tree.loop(yieldsRow, efficiencyRow, uncertaintyRow, yieldsRow_monoJ, efficiencyRow_monoJ, uncertaintyRow_monoJ, yieldsRow_monoV, efficiencyRow_monoV, uncertaintyRow_monoV);
+	    if (nSample == 0) {
+	      tree.analysisSelectionManager.exportDefinition(&selectionDefinition);
+	      tree.analysisSelectionManager_monoJ.exportDefinition(&selectionDefinition_monoJ);
+	      tree.analysisSelectionManager_monoV.exportDefinition(&selectionDefinition_monoV);
+	    }
 	  } 
 
 	} else if (metResolutionAndResponse_flag == 1) {
@@ -683,6 +691,12 @@ int main(int argc, char* argv[]) {
 
   // =====================================================
 
+  cout << endl;
+  cout << "yieldsRow.size() = "<<yieldsRow.size() <<endl;
+  cout << "yieldsRow_monoJ.size() = "<<yieldsRow_monoJ.size() <<endl;
+  cout << "yieldsRow_monoV.size() = "<<yieldsRow_monoV.size() <<endl;
+  cout << endl;
+
   addSumMCinYieldsVector(sampleName, yieldsRow, efficiencyRow, uncertaintyRow);
   //addSumMCinYieldsVector(sampleName, yieldsRow_monoJ, uncertaintyRow_monoJ, efficiencyRow_monoJ);
   //addSumMCinYieldsVector(sampleName, yieldsRow_monoV, uncertaintyRow_monoV, efficiencyRow_monoV);
@@ -698,6 +712,11 @@ int main(int argc, char* argv[]) {
   addSumMCinYieldsVector(sampleName, yieldsRow_monoJ, efficiencyRow_monoJ, uncertaintyRow_monoJ);
   addSumMCinYieldsVector(sampleName, yieldsRow_monoV, efficiencyRow_monoV, uncertaintyRow_monoV);
   
+  cout << "yieldsRow.size() = "<<yieldsRow.size() <<"\t\tselectionDefinition.size() = "<<selectionDefinition.size()<<endl;
+  cout << "yieldsRow_monoJ.size() = "<<yieldsRow_monoJ.size() <<"\t\tselectionDefinition_monoJ.size() = "<<selectionDefinition_monoJ.size()<<endl;
+  cout << "yieldsRow_monoV.size() = "<<yieldsRow_monoV.size() <<"\t\tselectionDefinition_monoV.size() = "<<selectionDefinition_monoV.size()<<endl;
+  cout << endl;
+
   /*
 
   if ( yieldsRow.size() != efficiencyRow.size() ) {
@@ -784,11 +803,12 @@ int main(int argc, char* argv[]) {
 
   } else {
 
-    cout << "Print yieldsRow_monoJ" << endl;
-    for (Int_t i = 0; i < yieldsRow_monoJ.size(); i++) {
-      cout << yieldsRow_monoJ[i] << "   ";
-    }
-    cout << endl;
+    // was just a check
+    // cout << "Print yieldsRow_monoJ" << endl;
+    // for (Int_t i = 0; i < yieldsRow_monoJ.size(); i++) {
+    //   cout << yieldsRow_monoJ[i] << "   ";
+    // }
+    // cout << endl;
 
     cout<<"creating file '"<<finalFileName<<"' to save table with yields in folder " << outputFolder << " ..."<<endl;
 
@@ -796,7 +816,7 @@ int main(int argc, char* argv[]) {
     fprintf(fp,"\n\n");
     buildFinalTable(fp, sampleName, selectionDefinition_monoJ, yieldsRow_monoJ, efficiencyRow_monoJ, uncertaintyRow_monoJ);
     fprintf(fp,"\n\n");
-    buildFinalTable(fp, sampleName, selectionDefinition_monoJ, yieldsRow_monoV, efficiencyRow_monoV, uncertaintyRow_monoV);
+    buildFinalTable(fp, sampleName, selectionDefinition_monoV, yieldsRow_monoV, efficiencyRow_monoV, uncertaintyRow_monoV);
 
     // The following commented part is put inside buildFinalTable(fp, sampleName, selectionDefinition, yieldsRow, uncertaintyRow, efficiencyRow);
     /*
@@ -867,6 +887,8 @@ int main(int argc, char* argv[]) {
 
   } //end of table writing
 
+  cout << endl;
+  cout << endl;
 
   return 0;
 
@@ -952,14 +974,14 @@ void addSumMCinYieldsVector(const vector<string> &sampleName,
 
 void buildFinalTable(FILE* fp,
 		     const vector<string> &sampleName, 
-		     const vector<string> &selectionDefinition, 
-		     const vector<Double_t> &yieldsRow, 
-		     const vector<Double_t> &efficiencyRow,
-		     const vector<Double_t> &uncertaintyRow) {
+		     const vector<string> &selDef, 
+		     const vector<Double_t> &yRow, 
+		     const vector<Double_t> &eRow,
+		     const vector<Double_t> &uncRow) {
 
   // these two variables are the only addition to the algorythm contained in this function wrt what was inside main() before
   Int_t nSample = (Int_t) sampleName.size(); // nSample is used as the index for the loop on all the n samples (from 0 to n-1) plus the column with the sum of all MC. The n-th +1 is the sum of all MC
-  Int_t selectionSize = selectionDefinition.size();
+  Int_t selectionSize = selDef.size();
 
   fprintf(fp,"%-20s","# step");
 
@@ -974,13 +996,13 @@ void buildFinalTable(FILE* fp,
 
   for (Int_t i = 0; i < selectionSize; i++) {  // printing table line by line
 
-    fprintf(fp,"%-16s",selectionDefinition[i].c_str());  // first column with definition of selection
+    fprintf(fp,"%-16s",selDef[i].c_str());  // first column with definition of selection
 
     for(Int_t j = 0; j <= nSample; j++) {  // loop to print for all samples
 	  
       if (j == nSample) {     // for the sum of all MC
 
-	if (yieldsRow.at( i + j * selectionSize) < 0) {
+	if (yRow.at( i + j * selectionSize) < 0) {
 
 	  string space = "//";
 	  fprintf(fp,"%7s ",space.c_str());
@@ -988,17 +1010,17 @@ void buildFinalTable(FILE* fp,
 
 	} else { 
 
-	  if (yieldsRow.at( i + j * selectionSize) < 10) fprintf(fp,"%7.1lf ",yieldsRow.at( i + j * selectionSize));  //	j * selectionSize refers to number for a sample, i refers to the selection step   
-	  else fprintf(fp,"%7.0lf ",yieldsRow.at( i + j * selectionSize));
+	  if (yRow.at( i + j * selectionSize) < 10) fprintf(fp,"%7.1lf ",yRow.at( i + j * selectionSize));  //	j * selectionSize refers to number for a sample, i refers to the selection step   
+	  else fprintf(fp,"%7.0lf ",yRow.at( i + j * selectionSize));
 
-	  if (uncertaintyRow.at( i + j * selectionSize) < 10) fprintf(fp,"%7.1lf   ",uncertaintyRow.at( i + j * selectionSize));
-	  else fprintf(fp,"%7.0lf   ",uncertaintyRow.at( i + j * selectionSize));
+	  if (uncRow.at( i + j * selectionSize) < 10) fprintf(fp,"%7.1lf   ",uncRow.at( i + j * selectionSize));
+	  else fprintf(fp,"%7.0lf   ",uncRow.at( i + j * selectionSize));
 
 	}
 
       } else {    // for any other sample (data or MC)
 
-	if (yieldsRow.at( i + j * selectionSize) < 0) {
+	if (yRow.at( i + j * selectionSize) < 0) {
 
 	  string space = "//";
 	  fprintf(fp,"%7s ",space.c_str());
@@ -1006,9 +1028,9 @@ void buildFinalTable(FILE* fp,
 
 	} else { 
 
-	  if (yieldsRow.at( i + j * selectionSize) < 10) fprintf(fp,"%7.1lf ",yieldsRow.at( i + j * selectionSize));  //	j * selectionSize refers to number for a sample, i refers to the selection step   
-	  else fprintf(fp,"%7.0lf ",yieldsRow.at( i + j * selectionSize));
-	  fprintf(fp,"%5.1lf%%   ",(100 * efficiencyRow.at( i + j * selectionSize)));
+	  if (yRow.at( i + j * selectionSize) < 10) fprintf(fp,"%7.1lf ",yRow.at( i + j * selectionSize));  //	j * selectionSize refers to number for a sample, i refers to the selection step   
+	  else fprintf(fp,"%7.0lf ",yRow.at( i + j * selectionSize));
+	  fprintf(fp,"%5.1lf%%   ",(100 * eRow.at( i + j * selectionSize)));
 
 	}
 

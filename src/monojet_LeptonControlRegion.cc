@@ -74,12 +74,12 @@ void monojet_LeptonControlRegion::setSelections() {
   if (fabs(LEP_PDG_ID) == 13) {  // if we have Z -> mumu do stuff...
 
     lepLooseVetoC.set("ele veto","electrons veto");
-    if (METNOLEP_START != 0) metNoLepC.set(Form("recoil > %2.0lf",METNOLEP_START),Form("metNoMu > %2.0lf",METNOLEP_START));
+    if (METNOLEP_START != 0) recoilC.set(Form("recoil > %2.0lf",METNOLEP_START),Form("metNoMu > %2.0lf",METNOLEP_START));
 
   } else if (fabs(LEP_PDG_ID) == 11) {   // if we have Z -> ee do different stuff...
 
     lepLooseVetoC.set("muon veto","muons veto");
-    if (METNOLEP_START != 0) metNoLepC.set(Form("recoil > %2.0lf",METNOLEP_START),Form("metNoEle > %2.0lf",METNOLEP_START));
+    if (METNOLEP_START != 0) recoilC.set(Form("recoil > %2.0lf",METNOLEP_START),Form("metNoEle > %2.0lf",METNOLEP_START));
   }
 
   selection::checkMaskLength();
@@ -96,6 +96,21 @@ void monojet_LeptonControlRegion::setHistograms() {
   
   Hlep1ptDistribution = new TH1D("Hlep1ptDistribution","",200,0.0,1000.0);
   Hlep1etaDistribution = new TH1D("Hlep1etaDistribution","",100,-5.0,5.0);
+
+  Hlep1ptDistribution_monoV = new TH1D("Hlep1ptDistribution_monoV","",200,0.0,1000.0);
+  Hlep1etaDistribution_monoV = new TH1D("Hlep1etaDistribution_monoV","",100,-5.0,5.0);
+
+}
+
+//===============================================
+
+void monojet_LeptonControlRegion::setHistogramLastBinAsOverFlow(const Int_t hasScaledHistograms = 0) {
+
+  AnalysisDarkMatter::setHistogramLastBinAsOverFlow(hasScaledHistograms);
+
+  myAddOverflowInLastBin(Hlep1ptDistribution);
+
+  myAddOverflowInLastBin(Hlep1ptDistribution_monoV);
 
 }
 
